@@ -12,21 +12,52 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
+import importlib.util
+from urllib.parse import urlparse, parse_qs, unquote
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+def _load_dotenv(dotenv_path):
+    if not os.path.exists(dotenv_path):
+        return
+    with open(dotenv_path, "r", encoding="utf-8") as f:
+        for raw_line in f:
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if key and key not in os.environ:
+                os.environ[key] = value
+
+
+_load_dotenv(BASE_DIR / ".env")
+
+def _env_bool(name, default=False):
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in ("1", "true", "yes", "on")
+
+
+def _env_csv(name, default=""):
+    raw = os.getenv(name, default)
+    return [part.strip() for part in raw.split(",") if part.strip()]
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-^i#4elgkn&m1f(8#3ool$weg-ej2sh-dgyr^f(%u$&3t%i_wol'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dev-only-change-me')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = _env_bool("DEBUG", default=True)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = _env_csv("ALLOWED_HOSTS", default="127.0.0.1,localhost")
+CSRF_TRUSTED_ORIGINS = _env_csv("CSRF_TRUSTED_ORIGINS", default="")
 
 
 # Application definition
@@ -72,13 +103,42 @@ WSGI_APPLICATION = 'room_booking.wsgi.application'
 
 
 # Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+def _database_config_from_url(database_url):
+    if not database_url:
+        return {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+
+    parsed = urlparse(database_url)
+    if parsed.scheme not in ('postgres', 'postgresql'):
+        return {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+
+    query = parse_qs(parsed.query)
+    options = {}
+    if query.get('sslmode'):
+        options['sslmode'] = query['sslmode'][0]
+    if query.get('channel_binding'):
+        options['channel_binding'] = query['channel_binding'][0]
+
+    config = {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': unquote(parsed.path.lstrip('/')),
+        'USER': unquote(parsed.username or ''),
+        'PASSWORD': unquote(parsed.password or ''),
+        'HOST': parsed.hostname or '',
+        'PORT': str(parsed.port or '5432'),
+    }
+    if options:
+        config['OPTIONS'] = options
+    return config
+
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': _database_config_from_url(os.getenv('DATABASE_URL')),
 }
 
 
@@ -116,19 +176,38 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'), 
 ]
 
+WHITENOISE_AVAILABLE = importlib.util.find_spec("whitenoise") is not None
+if WHITENOISE_AVAILABLE:
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = _env_bool("SECURE_SSL_REDIRECT", default=True)
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "31536000"))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+if WHITENOISE_AVAILABLE:
+    STORAGES = {
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        },
+    }
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Email (console backend for development)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'royal-hotel@example.com'
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'royal-hotel@example.com')
 
 # Payments (use environment variables for real credentials)
 DEFAULT_CURRENCY = os.getenv('DEFAULT_CURRENCY', 'KES')
