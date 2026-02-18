@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+        <div id="about">
+            <div class="container">
+                <div class="section-header">
+                    <h2>About Royal Hotel</h2>
+                    <p>
+                        Established in 1995, Royal Hotel has been the premier destination for travelers seeking a perfect blend of luxury, comfort, and heritage.
+                    </p>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 img-cols">
+                        <div class="img-col">
+                            <img class="img-fluid" src="{% static 'img/about/about-1.jpg' %}" alt="Hotel Exterior">
+                        </div>
+                    </div>
+                    <div class="col-md-6 content-cols">
+                        <div class="content-col">
+                            <h3>A Legacy of Hospitality</h3>
+                            <p>
+                                For over nearly three decades, we have defined the standard for luxury lodging. What started as a small boutique inn has grown into a world-renowned landmark, known for its iconic architecture and unwavering commitment to guest satisfaction.
+                            </p>
+                            <p>
+                                Every brick in our building tells a story of elegance. We pride ourselves on maintaining a classic atmosphere while integrating the latest in smart-hotel technology.
+                            </p>
+                            <a href="#">View Our History</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6 img-cols d-block d-md-none">
+                        <div class="img-col">
+                            <img class="img-fluid" src="{% static 'img/about/about-2.jpg' %}" alt="Restaurant">
+                        </div>
+                    </div>
+                    <div class="col-md-6 content-cols">
+                        <div class="content-col">
+                            <h3>Fine Dining & Culinary Art</h3>
+                            <p>
+                                Our award-winning restaurant, *The Royal Palate*, offers an exquisite menu crafted by Michelin-starred chefs. We source all our ingredients from local organic farms to ensure every bite is fresh and flavorful.
+                            </p>
+                            <p>
+                                From our signature breakfast buffet to intimate candlelit dinners, we provide a gastronomic journey that satisfies the most discerning palates.
+                            </p>
+                            <a href="#">Explore Menu</a>
+                        </div>
+                    </div>
+                    <div class="col-md-6 img-cols d-none d-md-block">
+                        <div class="img-col">
+                            <img class="img-fluid" src="{% static 'img/about/about-2.jpg' %}" alt="Restaurant">
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6 img-cols">
+                        <div class="img-col">
+                            <img class="img-fluid" src="{% static 'img/about/about-3.jpg' %}" alt="Spa and Wellness">
+                        </div>
+                    </div>
+                    <div class="col-md-6 content-cols">
+                        <div class="content-col">
+                            <h3>Wellness & Serenity</h3>
+                            <p>
+                                Escape the hustle and bustle of the city in our full-service spa and wellness center. We offer a range of treatments, including Swedish massages, rejuvenating facials, and a heated indoor swimming pool.
+                            </p>
+                            <p>
+                                Our state-of-the-art fitness center is open 24/7, allowing you to maintain your routine while enjoying panoramic views of the city skyline.
+                            </p>
+                            <a href="#">Book a Treatment</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endblock %}

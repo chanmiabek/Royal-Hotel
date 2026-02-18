@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <div class="section-header">
+        <h2>Payment Failed</h2>
+        <p>Your payment did not complete. Please try again.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <p><strong>Booking ID:</strong> {{ booking.id }}</p>
+            <a class="btn btn-primary" href="{% url 'payment_page' booking.id %}">Try Again</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+        
+        <div id="booking">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Reserve Your Stay</h2>
+                    <p>
+                        Secure your room at Royal Hotel today. Fill out the form below, and our team will confirm your reservation within 24 hours.
+                    </p>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="booking-form">
+                            <div id="success"></div>
+                            <form name="sentMessage" id="bookingForm" method="post" action="{% url 'booking' %}" novalidate="novalidate">
+                                {% csrf_token %}
+                                <div class="form-row">
+                                    <div class="control-group col-md-6">
+                                        <label>First Name</label>
+                                        <input type="text" class="form-control" id="fname" name="fname" placeholder="e.g. John" required="required" data-validation-required-message="Please enter your first name" />
+                                        <p class="help-block text-danger"></p>
+                                    </div>
+                                    <div class="control-group col-md-6">
+                                        <label>Last Name</label>
+                                        <input type="text" class="form-control" id="lname" name="lname" placeholder="e.g. Smith" required="required" data-validation-required-message="Please enter your last name" />
+                                        <p class="help-block text-danger"></p>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="control-group col-md-6">
+                                        <label>Mobile Number</label>
+                                        <input type="text" class="form-control" id="mobile" name="mobile" placeholder="e.g. +1 234 567 8900" required="required" data-validation-required-message="Please enter your mobile number" />
+                                        <p class="help-block text-danger"></p>
+                                    </div>
+                                    <div class="control-group col-md-6">
+                                        <label>Email Address</label>
+                                        <input type="email" class="form-control" id="email" name="email" placeholder="e.g. john.smith@example.com" required="required" data-validation-required-message="Please enter your email" />
+                                        <p class="help-block text-danger"></p>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="control-group col-md-6">
+                                        <label>Room</label>
+                                        <select class="form-control" id="room_id" name="room_id" required="required" data-validation-required-message="Please select a room">
+                                            <option value="">Select a room</option>
+                                            {% for room in rooms %}
+                                                <option value="{{ room.id }}" {% if selected_room_id == room.id|stringformat:"s" %}selected{% endif %}>{{ room.title }} - ${{ room.price|floatformat:0 }}/night</option>
+                                            {% endfor %}
+                                        </select>
+                                        <p class="help-block text-danger"></p>
+                                    </div>
+                                    <div class="control-group col-md-6">
+                                        <label>Guests</label>
+                                        <input type="number" class="form-control" id="guests" name="guests" min="1" value="1" required="required" data-validation-required-message="Please enter number of guests" />
+                                        <p class="help-block text-danger"></p>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="control-group col-md-6">
+                                        <label>Check-In Date</label>
+                                        <input type="text" class="form-control datetimepicker-input" id="date-1" name="date-1" data-toggle="datetimepicker" data-target="#date-1" placeholder="Select Date" required="required" data-validation-required-message="Please select a check-in date"/>
+                                        <p class="help-block text-danger"></p>
+                                    </div>
+                                    <div class="control-group col-md-6">
+                                        <label>Check-Out Date</label>
+                                        <input type="text" class="form-control datetimepicker-input" id="date-2" name="date-2" data-toggle="datetimepicker" data-target="#date-2" placeholder="Select Date" required="required" data-validation-required-message="Please select a check-out date"/>
+                                        <p class="help-block text-danger"></p>
+                                    </div>
+                                </div>
+                                <div class="control-group">
+                                    <label>Special Requests or Dietary Requirements</label>
+                                    <textarea class="form-control" id="request" name="request" placeholder="e.g. Quiet room, high floor, or airport pickup"></textarea>
+                                    <p class="help-block text-danger"></p>
+                                </div>
+                                <div class="button"><button type="submit" id="bookingButton" class="btn btn-primary">Confirm Booking</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endblock %}

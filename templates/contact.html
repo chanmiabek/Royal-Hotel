@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+        
+        <div id="contact">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Get In Touch</h2>
+                    <p>
+                        Have questions about our services or need help with a reservation? Our team is available 24/7 to assist you with any inquiries.
+                    </p>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="row contact-info">
+                            <div class="col-md-4">
+                                <div class="info-item">
+                                    <p><i class="fa fa-map-marker"></i> 22 Wolf Road, California, USA</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="info-item">
+                                    <p><i class="fa fa-envelope"></i> <a href="mailto:reservations@royalhotel.com">reservations@royalhotel.com</a></p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="info-item">
+                                    <p><i class="fa fa-phone"></i> <a href="tel:0799091016">0799091016</a></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                       <form method="POST" name="sentMessage" id="contactForm" novalidate="novalidate">
+                      {% csrf_token %}
+    
+                <div class="form-row">
+                    <div class="control-group col-sm-6">
+                       <label>Full Name</label>
+                    <input name="name" type="text" class="form-control" id="name" placeholder="e.g. John Smith" required="required" />
+                   </div>
+                  <div class="control-group col-sm-6">
+            <label>Email Address</label>
+            <input name="email" type="email" class="form-control" id="email" placeholder="e.g. email@example.com" required="required" />
+        </div>
+    </div>
+    
+    <div class="control-group">
+        <label>Subject</label>
+        <input name="subject" type="text" class="form-control" id="subject" placeholder="How can we help you?" required="required" />
+    </div>
+    
+    <div class="control-group">
+        <label>Message</label> 
+        <textarea name="message" class="form-control" id="message" rows="5" placeholder="Write your message here..." required="required"></textarea>
+    </div>
+    
+    <div class="button">
+        <button type="submit" id="sendMessageButton" class="btn btn-primary">Send Message</button>
+    </div>
+</form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endblock %}

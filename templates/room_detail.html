@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <div class="section-header">
+        <h2>{{ room.title }}</h2>
+        <p>{{ room.description }}</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            {% if room.image %}
+                <img src="{{ room.image.url }}" class="img-fluid" alt="{{ room.title }}">
+            {% endif %}
+        </div>
+        <div class="col-md-6">
+            <ul class="room-size">
+                <li><strong>Size:</strong> {{ room.size }} sq ft</li>
+                <li><strong>Beds:</strong> {{ room.beds }}</li>
+                <li><strong>Capacity:</strong> {{ room.capacity }} guests</li>
+            </ul>
+            <h3>${{ room.price|floatformat:0 }} / night</h3>
+            <a class="btn btn-primary" href="{% url 'booking' %}">Book Now</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

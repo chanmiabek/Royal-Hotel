@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <div class="section-header">
+        <h2>Booking Confirmed</h2>
+        <p>Thank you for choosing Royal Hotel. Your reservation has been received.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="booking-form">
+                <h4>Reservation Details</h4>
+                <p><strong>Booking ID:</strong> {{ booking.id }}</p>
+                <p><strong>Name:</strong> {{ booking.first_name }} {{ booking.last_name }}</p>
+                <p><strong>Email:</strong> {{ booking.email }}</p>
+                <p><strong>Room:</strong> {{ booking.room.title }}</p>
+                <p><strong>Check-In:</strong> {{ booking.check_in }}</p>
+                <p><strong>Check-Out:</strong> {{ booking.check_out }}</p>
+                <p><strong>Guests:</strong> {{ booking.guests }}</p>
+                {% if booking.total_price %}
+                    <p><strong>Total Price:</strong> ${{ booking.total_price }}</p>
+                {% endif %}
+                {% if booking.special_request %}
+                    <p><strong>Special Request:</strong> {{ booking.special_request }}</p>
+                {% endif %}
+                <div class="mt-3">
+                    <a class="btn btn-primary" href="{% url 'payment_page' booking.id %}">Pay Now</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

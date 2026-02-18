@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <div class="section-header">
+        <h2>Complete Payment</h2>
+        <p>Booking #{{ booking.id }} — {{ amount }} {{ currency }}</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <h4>Pay by Card (Stripe)</h4>
+            {% if stripe_publishable_key %}
+                <form id="stripe-form">
+                    <div id="card-element" class="form-control" style="padding: 12px;"></div>
+                    <input type="hidden" id="booking_id" value="{{ booking.id }}">
+                    <button type="submit" class="btn btn-primary mt-3">Pay with Card</button>
+                </form>
+                <div id="stripe-result" class="mt-2"></div>
+            {% else %}
+                <p>Stripe is not configured.</p>
+            {% endif %}
+        </div>
+
+        <div class="col-md-6">
+            <h4>PayPal</h4>
+            <form method="post" action="{% url 'paypal_create_order' %}">
+                {% csrf_token %}
+                <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                <button type="submit" class="btn btn-dark">Pay with PayPal</button>
+            </form>
+
+            <hr>
+
+            <h4>M-Pesa STK Push</h4>
+            <form method="post" action="{% url 'mpesa_stk_push' %}">
+                {% csrf_token %}
+                <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="text" name="phone" class="form-control" placeholder="2547XXXXXXXX" required>
+                </div>
+                <button type="submit" class="btn btn-success">Send STK Push</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if stripe_publishable_key %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    var stripe = Stripe('{{ stripe_publishable_key }}');
+    var elements = stripe.elements();
+    var card = elements.create('card');
+    card.mount('#card-element');
+
+    var stripeForm = document.getElementById('stripe-form');
+    var resultEl = document.getElementById('stripe-result');
+
+    stripeForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        resultEl.textContent = 'Processing...';
+
+        var data = new FormData();
+        data.append('booking_id', document.getElementById('booking_id').value);
+
+        fetch("{% url 'stripe_create_intent' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: data
+        }).then(function(response) {
+            return response.json();
+        }).then(function(payload) {
+            if (payload.error) {
+                resultEl.textContent = payload.error;
+                return;
+            }
+            return stripe.confirmCardPayment(payload.client_secret, {
+                payment_method: {
+                    card: card
+                }
+            }).then(function(result) {
+                if (result.error) {
+                    resultEl.textContent = result.error.message;
+                    return;
+                }
+                var confirmData = new FormData();
+                confirmData.append('payment_id', payload.payment_id);
+                confirmData.append('payment_intent_id', result.paymentIntent.id);
+                return fetch("{% url 'stripe_confirm' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: confirmData
+                }).then(function(res) { return res.json(); })
+                .then(function(finalize) {
+                    if (finalize.redirect_url) {
+                        window.location.href = finalize.redirect_url;
+                        return;
+                    }
+                    if (finalize.status === 'SUCCEEDED') {
+                        resultEl.textContent = 'Payment successful.';
+                    } else {
+                        resultEl.textContent = 'Payment status: ' + finalize.status;
+                    }
+                });
+            });
+        }).catch(function() {
+            resultEl.textContent = 'Payment error. Please try again.';
+        });
+    });
+</script>
+{% endif %}
+{% endblock %}

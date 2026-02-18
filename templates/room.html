@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block content %}
+<div id="rooms">
+    <div class="container">
+        <div class="section-header">
+            <h2>Our Rooms</h2>
+            <p>Experience luxury and comfort in our hand-picked accommodations.</p>
+        </div>
+        <div class="row mb-4">
+            <div class="col-12">
+                <form method="get" action="{% url 'room_list' %}">
+                    <div class="form-row">
+                        <div class="col-md-4">
+                            <label>Check-In</label>
+                            <input type="date" class="form-control" name="check_in" value="{{ check_in|date:'Y-m-d' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label>Check-Out</label>
+                            <input type="date" class="form-control" name="check_out" value="{{ check_out|date:'Y-m-d' }}">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">Check Availability</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="row">
+            {% for room in rooms %}
+            <div class="col-md-12">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="room-img">
+                            <div class="box12">
+                                {% if room.image %}
+                                    <img src="{{ room.image.url }}" alt="{{ room.title }}">
+                                {% endif %}
+                                <div class="box-content">
+                                    <h3 class="title">{{ room.title }}</h3>
+                                    <ul class="icon">
+                                        <li><a href="#" data-toggle="modal" data-target="#modal-{{ room.id }}"><i class="fa fa-link"></i></a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="room-des">
+                            <h3><a href="#" data-toggle="modal" data-target="#modal-{{ room.id }}">{{ room.title }}</a></h3>
+                            <p>{{ room.description }}</p>
+                            <ul class="room-size">
+                                <li><i class="fa fa-arrow-right"></i>Size: {{ room.size }} sq ft </li>
+                                <li><i class="fa fa-arrow-right"></i>Beds: {{ room.beds }} </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="room-rate">
+                            <h3>From</h3>
+                            <h1>${{ room.price|floatformat:0 }}</h1>
+                            <a href="{% url 'booking' %}">Book Now</a>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+            </div>
+            {% empty %}
+                <p class="text-center">No rooms available at the moment.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% for room in rooms %}
+<div id="modal-{{ room.id }}" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">{{ room.title }}</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-12">
+                        {% if room.image %}
+                            <img src="{{ room.image.url }}" class="img-fluid mb-3">
+                        {% endif %}
+                        <h2>Description</h2>
+                        <p>{{ room.description }}</p>
+                        <div class="modal-link">
+                            <a href="{% url 'booking' %}">Book This Room Now</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

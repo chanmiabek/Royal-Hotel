@@ -1,0 +1,323 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<!-- Header Slider Start -->
+<div id="headerSlider" class="carousel slide" data-ride="carousel">
+    <ol class="carousel-indicators">
+        <li data-target="#headerSlider" data-slide-to="0" class="active"></li>
+        <li data-target="#headerSlider" data-slide-to="1"></li>
+        <li data-target="#headerSlider" data-slide-to="2"></li>
+    </ol>
+    <div class="carousel-inner">
+        <div class="carousel-item active">
+            <img src="{% static 'img/slider/header-slider-1.jpg' %}" alt="Royal Hotel">
+            <div class="carousel-caption">
+                <h1 class="animated fadeInRight">Welcome to Royal Hotel</h1>
+            </div>
+        </div>
+        <div class="carousel-item">
+            <img src="{% static 'img/slider/header-slider-2.jpg' %}" alt="Royal Hotel">
+            <div class="carousel-caption">
+                <h1 class="animated fadeInLeft">Luxury & Comfort</h1>
+            </div>
+        </div>
+        <div class="carousel-item">
+            <img src="{% static 'img/slider/header-slider-3.jpg' %}" alt="Royal Hotel">
+            <div class="carousel-caption">
+                <h1 class="animated fadeInRight">Your Perfect Stay</h1>
+            </div>
+        </div>
+    </div>
+    <a class="carousel-control-prev" href="#headerSlider" role="button" data-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="sr-only">Previous</span>
+    </a>
+    <a class="carousel-control-next" href="#headerSlider" role="button" data-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="sr-only">Next</span>
+    </a>
+</div>
+<!-- Header Slider End -->
+
+<!-- Search Section Start -->
+<div id="search">
+    <div class="container">
+        <form method="get" action="{% url 'room_list' %}">
+            <div class="form-row">
+                <div class="control-group col-md-3">
+                    <label>Check-In</label>
+                    <div class="form-group">
+                        <div class="input-group date" id="date-3" data-target-input="nearest">
+                            <input type="text" class="form-control datetimepicker-input" name="check_in" data-target="#date-3"/>
+                            <div class="input-group-append" data-target="#date-3" data-toggle="datetimepicker">
+                                <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="control-group col-md-3">
+                    <label>Check-Out</label>
+                    <div class="form-group">
+                        <div class="input-group date" id="date-4" data-target-input="nearest">
+                            <input type="text" class="form-control datetimepicker-input" name="check_out" data-target="#date-4"/>
+                            <div class="input-group-append" data-target="#date-4" data-toggle="datetimepicker">
+                                <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="control-group col-md-3">
+                    <div class="form-row">
+                        <div class="control-group col-md-6">
+                            <label>Adult</label>
+                            <select class="custom-select" name="adults">
+                                <option selected value="0">0</option>
+                                {% for i in "12345678910"|make_list %}
+                                <option value="{{ forloop.counter }}">{{ forloop.counter }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="control-group col-md-6 kid">
+                            <label>Kid</label>
+                            <select class="custom-select" name="kids">
+                                <option selected value="0">0</option>
+                                {% for i in "12345678910"|make_list %}
+                                <option value="{{ forloop.counter }}">{{ forloop.counter }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="control-group col-md-3">
+                    <button type="submit" class="btn btn-block">Search Rooms</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- Search Section End -->
+
+<!-- Welcome Section Start -->
+<div id="welcome">
+    <div class="container">
+        <h3>Welcome to Royal Hotel</h3>
+        <p>Experience luxury and comfort at Royal Hotel. We offer world-class amenities, exceptional service, and memorable stays. Whether you're traveling for business or leisure, our hotel provides the perfect home away from home.</p>
+        <a href="{% url 'booking' %}" class="btn btn-primary">Book Now</a>
+    </div>
+</div>
+<!-- Welcome Section End -->
+
+<!-- Amenities Section Start -->
+<div id="amenities" class="home-amenities">
+    <div class="container">
+        <div class="section-header">
+            <h2>Amenities & Services</h2>
+            <p>Discover our world-class amenities designed to make your stay comfortable and memorable.</p>
+        </div>
+        <div class="row">
+            <div class="col-md-3 col-sm-6 icons">
+                <i class="icon icon-2"></i>
+                <h3>Air Conditioner</h3>
+                <p>Stay cool and comfortable with individual climate control.</p>
+            </div>
+            <div class="col-md-3 col-sm-6 icons">
+                <i class="icon icon-3"></i>
+                <h3>Bathtub</h3>
+                <p>Relax and unwind in our luxurious bathtubs.</p>
+            </div>
+            <div class="col-md-3 col-sm-6 icons">
+                <i class="icon icon-4"></i>
+                <h3>Shower</h3>
+                <p>Modern rainfall shower heads for a refreshing experience.</p>
+            </div>
+            <div class="col-md-3 col-sm-6 icons">
+                <i class="icon icon-6"></i>
+                <h3>Television</h3>
+                <p>Flat-screen TVs with premium channels.</p>
+            </div>
+            <div class="col-md-3 col-sm-6 icons">
+                <i class="icon icon-7"></i>
+                <h3>WiFi</h3>
+                <p>High-speed internet access throughout the hotel.</p>
+            </div>
+            <div class="col-md-3 col-sm-6 icons">
+                <i class="icon icon-8"></i>
+                <h3>Telephone</h3>
+                <p>Direct dial telephones in every room.</p>
+            </div>
+            <div class="col-md-3 col-sm-6 icons">
+                <i class="icon icon-9"></i>
+                <h3>Mini Bar</h3>
+                <p>Stocked mini bars with premium beverages.</p>
+            </div>
+            <div class="col-md-3 col-sm-6 icons">
+                <i class="icon icon-10"></i>
+                <h3>Kitchen</h3>
+                <p>Fully equipped kitchens in select suites.</p>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Amenities Section End -->
+
+<!-- Room Section Start -->
+<div id="rooms">
+    <div class="container">
+        <div class="section-header">
+            <h2>Our Rooms</h2>
+            <p>Choose from our selection of luxurious rooms and suites.</p>
+        </div>
+        <div class="row">
+            {% for room in featured_rooms %}
+            <div class="col-md-12">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="room-img">
+                            <div class="box12">
+                                {% if room.image %}
+                                <img src="{{ room.image.url }}" alt="{{ room.title }}">
+                                {% else %}
+                                <img src="{% static 'img/room/room-' %}{{ forloop.counter }}.jpg" alt="{{ room.title }}">
+                                {% endif %}
+                                <div class="box-content">
+                                    <h3 class="title">{{ room.title }}</h3>
+                                    <ul class="icon">
+                                        <li><a href="{% url 'room_detail' room.id %}" data-toggle="modal" data-target="#roomModal{{ room.id }}"><i class="fa fa-link"></i></a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="room-des">
+                            <h3><a href="#" data-toggle="modal" data-target="#roomModal{{ room.id }}">{{ room.title }}</a></h3>
+                            <p>{{ room.description|truncatewords:20 }}</p>
+                            <ul class="room-size">
+                                <li><i class="fa fa-arrow-right"></i>Size: {{ room.size }} sq ft</li>
+                                <li><i class="fa fa-arrow-right"></i>Beds: {{ room.beds }}</li>
+                                <li><i class="fa fa-arrow-right"></i>Capacity: {{ room.capacity }} guests</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="room-rate">
+                            <h3>From</h3>
+                            <h1>${{ room.price }}</h1>
+                            <small>per night</small>
+                            <a href="{% url 'booking' %}?room={{ room.id }}" class="btn btn-primary">Book Now</a>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+            </div>
+
+            <!-- Modal for Room -->
+            <div id="roomModal{{ room.id }}" class="modal fade" tabindex="-1" role="dialog">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">{{ room.title }}</h5>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="port-slider">
+                                        {% if room.image %}
+                                        <div><img src="{{ room.image.url }}" alt="{{ room.title }}"></div>
+                                        {% else %}
+                                        <div><img src="{% static 'img/room/room-1.jpg' %}" alt="{{ room.title }}"></div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-12 mt-4">
+                                    <h2>{{ room.title }}</h2>
+                                    <p>{{ room.description }}</p>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h5>Room Features:</h5>
+                                            <ul>
+                                                <li><strong>Size:</strong> {{ room.size }} sq ft</li>
+                                                <li><strong>Beds:</strong> {{ room.beds }}</li>
+                                                <li><strong>Capacity:</strong> {{ room.capacity }} guests</li>
+                                                <li><strong>Category:</strong> {{ room.get_category_display }}</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h5>Price:</h5>
+                                            <h3 class="text-primary">${{ room.price }} <small>/night</small></h3>
+                                        </div>
+                                    </div>
+                                    <div class="modal-link mt-4">
+                                        <a href="{% url 'booking' %}?room={{ room.id }}" class="btn btn-primary">Book Now</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center">
+                <p>No rooms available at the moment. Please check back later.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+<!-- Room Section End -->
+
+<!-- Subscribe Section Start -->
+<div id="subscribe">
+    <div class="container">
+        <div class="section-header">
+            <h2>Subscribe for Special Offers</h2>
+            <p>Subscribe to our newsletter and receive exclusive offers and updates.</p>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="subscribe-form">
+                    <form method="post" action="{% url 'subscribe' %}">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input type="email" name="email" class="form-control" placeholder="Enter your email here" required>
+                            <div class="input-group-append">
+                                <button type="submit" class="btn btn-primary">Subscribe</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Subscribe Section End -->
+
+<!-- Call Section Start -->
+<div id="call-us">
+    <div class="container">
+        <div class="section-header">
+            <h2>Click Below to Call Us</h2>
+            <p>Have questions? Our team is available 24/7 to assist you.</p>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <a href="tel:+12345678900" class="call-button">+1 234 567 8900</a>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Call Section End -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize date pickers
+    $(function () {
+        $('#date-3, #date-4, #date-1, #date-2').datetimepicker({
+            format: 'L',
+            format: 'MM/DD/YYYY'
+        });
+    });
+</script>
+{% endblock %}
