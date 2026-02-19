@@ -219,6 +219,9 @@ if not DEBUG:
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 if WHITENOISE_AVAILABLE:
     STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
         "staticfiles": {
             "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
         },
