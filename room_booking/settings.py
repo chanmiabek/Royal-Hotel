@@ -46,18 +46,34 @@ def _env_csv(name, default=""):
     raw = os.getenv(name, default)
     return [part.strip() for part in raw.split(",") if part.strip()]
 
+def _normalize_allowed_hosts(values):
+    hosts = []
+    for value in values:
+        parsed = urlparse(value)
+        host = parsed.netloc or parsed.path
+        if host := host.split("/")[0].strip():
+            hosts.append(host)
+    if not hosts:
+        return ["royal-hotel-mwb5.onrender.com", "localhost", "127.0.0.1"]
+    return list(dict.fromkeys(hosts))
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dev-only-change-me')
+SECRET_KEY = os.getenv('SECRET_KEY', 'dev-only-change-this-to-a-long-random-secret-key-value-1234567890')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = _env_bool("DEBUG", default=True)
 
-ALLOWED_HOSTS = _env_csv("ALLOWED_HOSTS", default="127.0.0.1,localhost")
-CSRF_TRUSTED_ORIGINS = _env_csv("CSRF_TRUSTED_ORIGINS", default="")
+ALLOWED_HOSTS = _normalize_allowed_hosts(
+    _env_csv("ALLOWED_HOSTS", default="royal-hotel-mwb5.onrender.com,localhost,127.0.0.1")
+)
+CSRF_TRUSTED_ORIGINS = _env_csv(
+    "CSRF_TRUSTED_ORIGINS",
+    default="https://royal-hotel-mwb5.onrender.com",
+)
 
 
 # Application definition
