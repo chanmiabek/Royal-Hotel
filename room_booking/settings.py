@@ -53,6 +53,9 @@ def _normalize_allowed_hosts(values):
         host = parsed.netloc or parsed.path
         if host := host.split("/")[0].strip():
             hosts.append(host)
+    render_host = os.getenv("RENDER_EXTERNAL_HOSTNAME", "").strip()
+    if render_host:
+        hosts.append(render_host)
     if not hosts:
         return ["royal-hotel-mwb5.onrender.com", "localhost", "127.0.0.1"]
     return list(dict.fromkeys(hosts))
@@ -70,6 +73,8 @@ DEBUG = _env_bool("DEBUG", default=True)
 ALLOWED_HOSTS = _normalize_allowed_hosts(
     _env_csv("ALLOWED_HOSTS", default="royal-hotel-mwb5.onrender.com,localhost,127.0.0.1")
 )
+if DEBUG:
+    ALLOWED_HOSTS.append("testserver")
 CSRF_TRUSTED_ORIGINS = _env_csv(
     "CSRF_TRUSTED_ORIGINS",
     default="https://royal-hotel-mwb5.onrender.com",
