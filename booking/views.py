@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.db.models import Exists, OuterRef, Count, Q
+from django.db import connection
 from django.db.utils import ProgrammingError, OperationalError
 from decimal import Decimal, InvalidOperation
 import json
@@ -22,18 +23,25 @@ except Exception:
     requests = None
 
 
+def _booking_tables_ready():
+    required_tables = {Room._meta.db_table, Booking._meta.db_table}
+    try:
+        existing_tables = set(connection.introspection.table_names())
+    except (ProgrammingError, OperationalError):
+        return False
+    return required_tables.issubset(existing_tables)
+
+
 def _with_booking_status(queryset):
+    if not _booking_tables_ready():
+        return queryset.none()
     today = datetime.today().date()
     confirmed_bookings = Booking.objects.filter(
         room=OuterRef('pk'),
         status='CONFIRMED',
         check_out__gt=today,
     )
-    try:
-        return queryset.annotate(is_booked=Exists(confirmed_bookings))
-    except (ProgrammingError, OperationalError):
-        # Database tables may not exist yet during first deploy before migrations.
-        return queryset.none()
+    return queryset.annotate(is_booked=Exists(confirmed_bookings))
 
 
 def _mark_completed_bookings():
@@ -51,16 +59,18 @@ def _mark_completed_bookings():
 # Home page view
 def home(request):
     _mark_completed_bookings()
+    if not _booking_tables_ready():
+        return render(request, 'home.html', {'featured_rooms': []})
     # Get featured rooms for homepage
-    try:
-        featured_rooms = list(_with_booking_status(Room.objects.all())[:3])
-    except (ProgrammingError, OperationalError):
-        featured_rooms = []
+    featured_rooms = list(_with_booking_status(Room.objects.all())[:3])
     return render(request, 'home.html', {'featured_rooms': featured_rooms})
 
 # Room listing view
 def room_list(request):
     _mark_completed_bookings()
+    if not _booking_tables_ready():
+        messages.error(request, "Database is initializing. Please try again shortly.")
+        return render(request, 'room.html', {'rooms': [], 'check_in': None, 'check_out': None})
     rooms = _with_booking_status(Room.objects.filter(available=True))
     date_in = request.GET.get('check_in')
     date_out = request.GET.get('check_out')
@@ -91,12 +101,18 @@ def room_list(request):
 # Room detail view
 def room_detail(request, room_id):
     _mark_completed_bookings()
+    if not _booking_tables_ready():
+        messages.error(request, "Database is initializing. Please try again shortly.")
+        return redirect('room_list')
     room = get_object_or_404(_with_booking_status(Room.objects.all()), id=room_id)
     return render(request, 'room_detail.html', {'room': room})
 
 #Index view (alternative to room_list)
 def index(request):
     _mark_completed_bookings()
+    if not _booking_tables_ready():
+        messages.error(request, "Database is initializing. Please try again shortly.")
+        return render(request, 'room.html', {'rooms': []})
     rooms = _with_booking_status(Room.objects.all())
     return render(request, 'room.html', {'rooms': rooms})
 
@@ -175,6 +191,11 @@ def _send_receipt_email(request, booking):
 
 def booking_view(request):
     _mark_completed_bookings()
+    if not _booking_tables_ready():
+        messages.error(request, "Database is initializing. Please try again shortly.")
+        if request.method == "POST":
+            return redirect('booking')
+        return render(request, 'booking.html', {'rooms': [], 'selected_room_id': ''})
     if request.method == "POST":
         # Get form data
         fname = request.POST.get('fname')
