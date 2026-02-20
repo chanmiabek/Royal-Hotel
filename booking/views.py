@@ -29,7 +29,11 @@ def _with_booking_status(queryset):
         status='CONFIRMED',
         check_out__gt=today,
     )
-    return queryset.annotate(is_booked=Exists(confirmed_bookings))
+    try:
+        return queryset.annotate(is_booked=Exists(confirmed_bookings))
+    except (ProgrammingError, OperationalError):
+        # Database tables may not exist yet during first deploy before migrations.
+        return queryset.none()
 
 
 def _mark_completed_bookings():
@@ -48,7 +52,10 @@ def _mark_completed_bookings():
 def home(request):
     _mark_completed_bookings()
     # Get featured rooms for homepage
-    featured_rooms = _with_booking_status(Room.objects.all())[:3]
+    try:
+        featured_rooms = list(_with_booking_status(Room.objects.all())[:3])
+    except (ProgrammingError, OperationalError):
+        featured_rooms = []
     return render(request, 'home.html', {'featured_rooms': featured_rooms})
 
 # Room listing view
