@@ -191,6 +191,14 @@
                     <div class="col-md-6">
                         <div class="room-des">
                             <h3><a href="#" data-toggle="modal" data-target="#roomModal{{ room.id }}">{{ room.title }}</a></h3>
+                            <p>
+                                <strong>Status:</strong>
+                                {% if room.is_booked %}
+                                    <span class="badge badge-danger">Booked</span>
+                                {% else %}
+                                    <span class="badge badge-success">Available</span>
+                                {% endif %}
+                            </p>
                             <p>{{ room.description|truncatewords:20 }}</p>
                             <ul class="room-size">
                                 <li><i class="fa fa-arrow-right"></i>Size: {{ room.size }} sq ft</li>
@@ -220,6 +228,7 @@
                             <button type="button" class="close" data-dismiss="modal">&times;</button>
                         </div>
                         <div class="modal-body">
+                            
                             <div class="row">
                                 <div class="col-12">
                                     <div class="port-slider">
@@ -237,6 +246,14 @@
                                         <div class="col-md-6">
                                             <h5>Room Features:</h5>
                                             <ul>
+                                                <li>
+                                                    <strong>Status:</strong>
+                                                    {% if room.is_booked %}
+                                                        <span class="badge badge-danger">Booked</span>
+                                                    {% else %}
+                                                        <span class="badge badge-success">Available</span>
+                                                    {% endif %}
+                                                </li>
                                                 <li><strong>Size:</strong> {{ room.size }} sq ft</li>
                                                 <li><strong>Beds:</strong> {{ room.beds }}</li>
                                                 <li><strong>Capacity:</strong> {{ room.capacity }} guests</li>

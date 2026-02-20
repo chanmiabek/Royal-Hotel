@@ -26,6 +26,78 @@
     <!-- Main Stylesheet File -->
     <link href="{% static 'css/hover-style.css' %}" rel="stylesheet">
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    <style>
+        .top-menu .dropdown .dropdown-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 10px;
+            line-height: 60px;
+            border: none;
+            border-radius: 0;
+            background: transparent;
+            color: #FFD700;
+            transition: all .2s ease;
+        }
+        .top-menu .dropdown .dropdown-toggle:hover,
+        .top-menu .dropdown.show .dropdown-toggle {
+            color: #ffffff;
+            box-shadow: none;
+        }
+        .top-menu .dropdown {
+            position: relative;
+        }
+        .top-menu .dropdown-menu {
+            min-width: 220px;
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            left: auto;
+            display: block;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(8px);
+            z-index: 2000;
+            background: #222222;
+            border: 1px solid #3a3a3a;
+            border-radius: 0;
+            box-shadow: 0 14px 28px rgba(0, 0, 0, .12);
+            padding: 6px;
+            margin-top: 6px;
+            transition: opacity .2s ease, transform .2s ease, visibility .2s ease;
+        }
+        .top-menu .dropdown.show .dropdown-menu,
+        .top-menu .dropdown:hover .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .top-menu .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-radius: 0;
+            padding: 10px 12px;
+            font-size: 14px;
+            color: #FFD700;
+            transition: all .2s ease;
+        }
+        .top-menu .dropdown-item i {
+            width: 16px;
+            text-align: center;
+        }
+        .top-menu .dropdown-item:hover {
+            background: #FFD700;
+            color: #222222;
+        }
+        @media (max-width: 991px) {
+            .top-menu .dropdown-menu {
+                right: auto;
+                left: 0;
+                min-width: 200px;
+            }
+        }
+    </style>
     
     {% block extra_css %}{% endblock %}
 </head>
@@ -56,17 +128,29 @@
                     <a href="{% url 'booking' %}">Booking</a>
                 </li>
                 {% if user.is_authenticated %}
-                <li class="nav-item dropdown">
+                <li class="nav-item dropdown {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'my_bookings' or request.resolver_match.url_name == 'admin_users' or request.resolver_match.url_name == 'admin_payments' or request.resolver_match.url_name == 'admin_booked_rooms' %}active{% endif %}">
                     <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <i class="fa fa-user"></i> {{ user.first_name|default:user.username }}
                     </a>
                     <div class="dropdown-menu" aria-labelledby="userDropdown">
-                        <a class="dropdown-item" href="#">
+                        <a class="dropdown-item" href="{% url 'profile' %}">
                             <i class="fa fa-user-circle"></i> My Profile
                         </a>
-                        <a class="dropdown-item" href="#">
+                        {% if user.is_staff or user.is_superuser %}
+                        <a class="dropdown-item" href="{% url 'admin_booked_rooms' %}">
+                            <i class="fa fa-bed"></i> Booked Rooms
+                        </a>
+                        <a class="dropdown-item" href="{% url 'admin_users' %}">
+                            <i class="fa fa-users"></i> Manage Users
+                        </a>
+                        <a class="dropdown-item" href="{% url 'admin_payments' %}">
+                            <i class="fa fa-money"></i> Manage Payments
+                        </a>
+                        {% else %}
+                        <a class="dropdown-item" href="{% url 'my_bookings' %}">
                             <i class="fa fa-calendar-check-o"></i> My Bookings
                         </a>
+                        {% endif %}
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="{% url 'logout' %}">
                             <i class="fa fa-sign-out"></i> Logout

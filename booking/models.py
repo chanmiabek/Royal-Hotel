@@ -16,7 +16,7 @@ class Room(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     size = models.IntegerField(help_text="Size in sq ft")
     beds = models.CharField(max_length=50, help_text="e.g. 2 Single(s)")
-    image = models.ImageField(upload_to='rooms/', blank=True, null=True)
+    image = models.ImageField(upload_to='room/', blank=True, null=True)
     available = models.BooleanField(default=True)
     capacity = models.IntegerField(default=2, help_text="Max guests")
     
@@ -71,6 +71,7 @@ class Payment(models.Model):
         ('SUCCEEDED', 'Succeeded'),
         ('FAILED', 'Failed'),
         ('CANCELLED', 'Cancelled'),
+        ('REFUNDED', 'Refunded'),
     )
 
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='payments')

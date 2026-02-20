@@ -14,6 +14,14 @@
         </div>
         <div class="col-md-6">
             <ul class="room-size">
+                <li>
+                    <strong>Status:</strong>
+                    {% if room.is_booked %}
+                        <span class="badge badge-danger">Booked</span>
+                    {% else %}
+                        <span class="badge badge-success">Available</span>
+                    {% endif %}
+                </li>
                 <li><strong>Size:</strong> {{ room.size }} sq ft</li>
                 <li><strong>Beds:</strong> {{ room.beds }}</li>
                 <li><strong>Capacity:</strong> {{ room.capacity }} guests</li>

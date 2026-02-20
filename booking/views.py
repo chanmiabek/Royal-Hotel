@@ -6,6 +6,8 @@ from django.conf import settings
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from django.db.models import Exists, OuterRef, Count, Q
 from decimal import Decimal, InvalidOperation
 import json
 import io
@@ -18,15 +20,36 @@ try:
 except Exception:
     requests = None
 
+
+def _with_booking_status(queryset):
+    today = datetime.today().date()
+    confirmed_bookings = Booking.objects.filter(
+        room=OuterRef('pk'),
+        status='CONFIRMED',
+        check_out__gt=today,
+    )
+    return queryset.annotate(is_booked=Exists(confirmed_bookings))
+
+
+def _mark_completed_bookings():
+    today = datetime.today().date()
+    Booking.objects.filter(
+        status='CONFIRMED',
+        check_out__lte=today,
+    ).update(status='COMPLETED')
+
+
 # Home page view
 def home(request):
+    _mark_completed_bookings()
     # Get featured rooms for homepage
-    featured_rooms = Room.objects.all()[:3]
+    featured_rooms = _with_booking_status(Room.objects.all())[:3]
     return render(request, 'home.html', {'featured_rooms': featured_rooms})
 
 # Room listing view
 def room_list(request):
-    rooms = Room.objects.filter(available=True)
+    _mark_completed_bookings()
+    rooms = _with_booking_status(Room.objects.filter(available=True))
     date_in = request.GET.get('check_in')
     date_out = request.GET.get('check_out')
     check_in = None
@@ -40,7 +63,7 @@ def room_list(request):
                 messages.error(request, "Check-out date must be after check-in date.")
             else:
                 rooms = rooms.exclude(
-                    booking__status__in=['PENDING', 'CONFIRMED'],
+                    booking__status='CONFIRMED',
                     booking__check_in__lt=check_out,
                     booking__check_out__gt=check_in,
                 )
@@ -55,12 +78,14 @@ def room_list(request):
 
 # Room detail view
 def room_detail(request, room_id):
-    room = get_object_or_404(Room, id=room_id)
+    _mark_completed_bookings()
+    room = get_object_or_404(_with_booking_status(Room.objects.all()), id=room_id)
     return render(request, 'room_detail.html', {'room': room})
 
 #Index view (alternative to room_list)
 def index(request):
-    rooms = Room.objects.all()
+    _mark_completed_bookings()
+    rooms = _with_booking_status(Room.objects.all())
     return render(request, 'room.html', {'rooms': rooms})
 
 # Static pages
@@ -96,7 +121,7 @@ def contact(request):
 def _room_is_available(room, check_in, check_out):
     return not Booking.objects.filter(
         room=room,
-        status__in=['PENDING', 'CONFIRMED'],
+        status='CONFIRMED',
         check_in__lt=check_out,
         check_out__gt=check_in,
     ).exists()
@@ -137,6 +162,7 @@ def _send_receipt_email(request, booking):
         pass
 
 def booking_view(request):
+    _mark_completed_bookings()
     if request.method == "POST":
         # Get form data
         fname = request.POST.get('fname')
@@ -695,6 +721,89 @@ def logout_view(request):
     logout(request)
     messages.success(request, "You have been logged out successfully.")
     return redirect('index')
+
+
+@login_required(login_url='login')
+def profile_view(request):
+    return render(request, 'profile.html')
+
+
+@login_required(login_url='login')
+def my_bookings_view(request):
+    _mark_completed_bookings()
+    bookings = Booking.objects.filter(user=request.user).select_related('room').order_by('-created_at')
+    return render(request, 'my_bookings.html', {'bookings': bookings})
+
+
+@login_required(login_url='login')
+def admin_users_view(request):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "You do not have permission to view this page.")
+        return redirect('index')
+
+    users = User.objects.all().annotate(
+        total_bookings=Count('booking', distinct=True),
+        confirmed_bookings=Count('booking', filter=Q(booking__status='CONFIRMED'), distinct=True),
+    ).order_by('-date_joined')
+    return render(request, 'admin_users.html', {'users': users})
+
+
+@login_required(login_url='login')
+def admin_payments_view(request):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "You do not have permission to view this page.")
+        return redirect('index')
+
+    if request.method == "POST":
+        payment_id = request.POST.get('payment_id')
+        new_status = request.POST.get('status')
+        valid_statuses = {code for code, _ in Payment.STATUSES}
+
+        payment = get_object_or_404(Payment, id=payment_id)
+        if new_status not in valid_statuses:
+            messages.error(request, "Invalid payment status selected.")
+            return redirect('admin_payments')
+
+        payment.status = new_status
+        payment.save(update_fields=['status', 'updated_at'])
+
+        if new_status == 'SUCCEEDED' and payment.booking.status == 'PENDING':
+            payment.booking.status = 'CONFIRMED'
+            payment.booking.save(update_fields=['status', 'updated_at'])
+        elif new_status in ['CANCELLED', 'REFUNDED'] and payment.booking.status in ['PENDING', 'CONFIRMED']:
+            payment.booking.status = 'CANCELLED'
+            payment.booking.save(update_fields=['status', 'updated_at'])
+
+        messages.success(request, f"Payment #{payment.id} updated to {new_status}.")
+        return redirect('admin_payments')
+
+    payments = Payment.objects.select_related('booking', 'booking__room').order_by('-created_at')
+    status_filter = request.GET.get('status')
+    if status_filter:
+        payments = payments.filter(status=status_filter)
+
+    context = {
+        'payments': payments,
+        'statuses': Payment.STATUSES,
+        'selected_status': status_filter or '',
+    }
+    return render(request, 'admin_payments.html', context)
+
+
+@login_required(login_url='login')
+def admin_booked_rooms_view(request):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "You do not have permission to view this page.")
+        return redirect('index')
+
+    _mark_completed_bookings()
+    today = datetime.today().date()
+    bookings = Booking.objects.filter(
+        status='CONFIRMED',
+        check_out__gt=today,
+    ).select_related('room', 'user').order_by('check_in', 'room__title')
+
+    return render(request, 'admin_booked_rooms.html', {'bookings': bookings})
 
 # Room view (legacy, redirect to room_list)
 def room(request):

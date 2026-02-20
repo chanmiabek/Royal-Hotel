@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5">
+    <div class="section-header">
+        <h2>My Bookings</h2>
+        <p>Track the rooms you have booked and manage payment status.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover bg-white">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>Room</th>
+                            <th>Check-In</th>
+                            <th>Check-Out</th>
+                            <th>Guests</th>
+                            <th>Status</th>
+                            <th>Total</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in bookings %}
+                        <tr>
+                            <td>#{{ booking.id }}</td>
+                            <td>{{ booking.room.title|default:"-" }}</td>
+                            <td>{{ booking.check_in }}</td>
+                            <td>{{ booking.check_out }}</td>
+                            <td>{{ booking.guests }}</td>
+                            <td>{{ booking.status }}</td>
+                            <td>
+                                {% if booking.total_price %}
+                                    ${{ booking.total_price }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a class="btn btn-sm btn-outline-primary" href="{% url 'booking_confirmation' booking.id %}">Details</a>
+                                {% if booking.status == 'PENDING' %}
+                                <a class="btn btn-sm btn-primary" href="{% url 'payment_page' booking.id %}">Pay</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">You have no bookings yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

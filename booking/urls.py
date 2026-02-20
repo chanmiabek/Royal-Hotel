@@ -37,6 +37,11 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('register/', views.register_view, name='register'),
     path('logout/', views.logout_view, name='logout'),
+    path('profile/', views.profile_view, name='profile'),
+    path('my-bookings/', views.my_bookings_view, name='my_bookings'),
+    path('admin-users/', views.admin_users_view, name='admin_users'),
+    path('admin-payments/', views.admin_payments_view, name='admin_payments'),
+    path('admin-booked-rooms/', views.admin_booked_rooms_view, name='admin_booked_rooms'),
     
     # Contact
     path('contact/', views.contact, name='contact'),

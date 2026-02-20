@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5">
+    <div class="section-header">
+        <h2>Payment Management</h2>
+        <p>Review user payments and update status for refunds or other actions.</p>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <form method="get" class="form-inline">
+                <label class="mr-2" for="statusFilter">Filter Status</label>
+                <select id="statusFilter" name="status" class="form-control mr-2">
+                    <option value="">All</option>
+                    {% for code, label in statuses %}
+                    <option value="{{ code }}" {% if selected_status == code %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary">Apply</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover bg-white">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Payment ID</th>
+                            <th>Booking ID</th>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Room</th>
+                            <th>Provider</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Reference</th>
+                            <th>Date</th>
+                            <th>Manage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr>
+                            <td>#{{ payment.id }}</td>
+                            <td>#{{ payment.booking.id }}</td>
+                            <td>{{ payment.booking.first_name }} {{ payment.booking.last_name }}</td>
+                            <td>{{ payment.booking.email }}</td>
+                            <td>{{ payment.booking.room.title|default:"-" }}</td>
+                            <td>{{ payment.get_provider_display }}</td>
+                            <td>{{ payment.amount }} {{ payment.currency }}</td>
+                            <td>{{ payment.get_status_display }}</td>
+                            <td>{{ payment.reference|default:"-" }}</td>
+                            <td>{{ payment.created_at|date:"Y-m-d H:i" }}</td>
+                            <td>
+                                <form method="post" class="form-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="payment_id" value="{{ payment.id }}">
+                                    <select name="status" class="form-control form-control-sm mr-2">
+                                        {% for code, label in statuses %}
+                                        <option value="{{ code }}" {% if payment.status == code %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">Update</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="11" class="text-center py-4">No payment records found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

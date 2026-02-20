@@ -134,8 +134,8 @@ def _database_config_from_url(database_url):
     parsed = urlparse(database_url)
     if parsed.scheme not in ('postgres', 'postgresql'):
         return {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': BASE_DIR / 'db.postgresql',
         }
 
     query = parse_qs(parsed.query)

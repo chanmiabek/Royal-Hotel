@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5">
+    <div class="section-header">
+        <h2>Registered Users</h2>
+        <p>Admin view of all user accounts and booking details.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover bg-white">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Full Name</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Active</th>
+                            <th>Date Joined</th>
+                            <th>Last Login</th>
+                            <th>Total Bookings</th>
+                            <th>Confirmed Bookings</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for account in users %}
+                        <tr>
+                            <td>{{ account.id }}</td>
+                            <td>{{ account.first_name|default:"-" }} {{ account.last_name|default:"" }}</td>
+                            <td>{{ account.username }}</td>
+                            <td>{{ account.email|default:"-" }}</td>
+                            <td>
+                                {% if account.is_superuser %}
+                                    Superuser
+                                {% elif account.is_staff %}
+                                    Staff
+                                {% else %}
+                                    User
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if account.is_active %}
+                                    Yes
+                                {% else %}
+                                    No
+                                {% endif %}
+                            </td>
+                            <td>{{ account.date_joined|date:"Y-m-d H:i" }}</td>
+                            <td>{{ account.last_login|date:"Y-m-d H:i"|default:"Never" }}</td>
+                            <td>{{ account.total_bookings }}</td>
+                            <td>{{ account.confirmed_bookings }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="10" class="text-center py-4">No user accounts found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

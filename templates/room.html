@@ -49,6 +49,14 @@
                     <div class="col-md-6">
                         <div class="room-des">
                             <h3><a href="#" data-toggle="modal" data-target="#modal-{{ room.id }}">{{ room.title }}</a></h3>
+                            <p>
+                                <strong>Status:</strong>
+                                {% if room.is_booked %}
+                                    <span class="badge badge-danger">Booked</span>
+                                {% else %}
+                                    <span class="badge badge-success">Available</span>
+                                {% endif %}
+                            </p>
                             <p>{{ room.description }}</p>
                             <ul class="room-size">
                                 <li><i class="fa fa-arrow-right"></i>Size: {{ room.size }} sq ft </li>
@@ -89,6 +97,14 @@
                             <img src="{{ room.image.url }}" class="img-fluid mb-3">
                         {% endif %}
                         <h2>Description</h2>
+                        <p>
+                            <strong>Status:</strong>
+                            {% if room.is_booked %}
+                                <span class="badge badge-danger">Booked</span>
+                            {% else %}
+                                <span class="badge badge-success">Available</span>
+                            {% endif %}
+                        </p>
                         <p>{{ room.description }}</p>
                         <div class="modal-link">
                             <a href="{% url 'booking' %}">Book This Room Now</a>
