@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.db.models import Exists, OuterRef, Count, Q
+from django.db.utils import ProgrammingError, OperationalError
 from decimal import Decimal, InvalidOperation
 import json
 import io
@@ -33,10 +34,14 @@ def _with_booking_status(queryset):
 
 def _mark_completed_bookings():
     today = datetime.today().date()
-    Booking.objects.filter(
-        status='CONFIRMED',
-        check_out__lte=today,
-    ).update(status='COMPLETED')
+    try:
+        Booking.objects.filter(
+            status='CONFIRMED',
+            check_out__lte=today,
+        ).update(status='COMPLETED')
+    except (ProgrammingError, OperationalError):
+        # Database tables may not exist yet during first deploy before migrations.
+        return
 
 
 # Home page view
