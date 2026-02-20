@@ -13,6 +13,8 @@ from django.db.utils import ProgrammingError, OperationalError
 from decimal import Decimal, InvalidOperation
 import json
 import io
+import base64
+from urllib.parse import urlencode
 from django.contrib.auth.models import User
 from datetime import datetime
 from .models import Room, Booking, ContactMessage, Payment
@@ -310,15 +312,33 @@ def booking_confirmation(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id)
     return render(request, 'booking_confirmation.html', {'booking': booking})
 
+
+def _redirect_to_booked_room(request, booking, message_text=None):
+    if message_text:
+        messages.success(request, message_text)
+    if booking.room_id:
+        return redirect('room_detail', room_id=booking.room_id)
+    return redirect('booking_confirmation', booking_id=booking.id)
+
+
 # Payment result pages
 def payment_success(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id)
     _send_receipt_email(request, booking)
-    return render(request, 'payment_success.html', {'booking': booking})
+    return _redirect_to_booked_room(
+        request,
+        booking,
+        "Payment confirmed. Your booking is successful. Here is your booked room.",
+    )
 
 def payment_failed(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id)
-    return render(request, 'payment_failed.html', {'booking': booking})
+    reason = request.GET.get('reason')
+    if reason:
+        messages.error(request, f"Payment was not successful: {reason}")
+    else:
+        messages.error(request, "Payment was not successful. Please try again.")
+    return redirect('payment_page', booking_id=booking.id)
 
 # Payment page
 def payment_page(request, booking_id):
@@ -430,7 +450,11 @@ def stripe_confirm(request):
         payment.status = 'FAILED'
     payment.save()
 
-    redirect_url = reverse('payment_success', args=[payment.booking.id]) if payment.status == 'SUCCEEDED' else reverse('payment_failed', args=[payment.booking.id])
+    if payment.status == 'SUCCEEDED':
+        redirect_url = reverse('payment_success', args=[payment.booking.id])
+    else:
+        reason = intent.get('last_payment_error', {}).get('message') or intent.get('status', 'payment_failed')
+        redirect_url = f"{reverse('payment_failed', args=[payment.booking.id])}?{urlencode({'reason': reason})}"
     return JsonResponse({'status': payment.status, 'redirect_url': redirect_url})
 
 @csrf_exempt
@@ -558,19 +582,19 @@ def paypal_return(request):
     if not order_id:
         messages.error(request, "Missing PayPal token.")
         if booking_id:
-            return redirect('payment_failed', booking_id=booking_id)
+            return redirect(f"{reverse('payment_failed', args=[booking_id])}?reason=missing_paypal_token")
         return redirect('index')
 
     access_token = _paypal_get_access_token()
     if requests is None:
         messages.error(request, "Payment dependency is not installed.")
         if booking_id:
-            return redirect('payment_failed', booking_id=booking_id)
+            return redirect(f"{reverse('payment_failed', args=[booking_id])}?reason=payment_dependency_missing")
         return redirect('index')
     if not access_token:
         messages.error(request, "PayPal is not configured.")
         if booking_id:
-            return redirect('payment_failed', booking_id=booking_id)
+            return redirect(f"{reverse('payment_failed', args=[booking_id])}?reason=paypal_not_configured")
         return redirect('index')
 
     try:
@@ -582,7 +606,7 @@ def paypal_return(request):
     except Exception:
         messages.error(request, "PayPal service is unavailable. Please try again.")
         if booking_id:
-            return redirect('payment_failed', booking_id=booking_id)
+            return redirect(f"{reverse('payment_failed', args=[booking_id])}?reason=paypal_service_unavailable")
         return redirect('index')
 
     payment = Payment.objects.filter(reference=order_id, provider='PAYPAL').first()
@@ -593,9 +617,9 @@ def paypal_return(request):
             payment.save()
         messages.error(request, "PayPal capture failed.")
         if payment:
-            return redirect('payment_failed', booking_id=payment.booking.id)
+            return redirect(f"{reverse('payment_failed', args=[payment.booking.id])}?reason=paypal_capture_failed")
         if booking_id:
-            return redirect('payment_failed', booking_id=booking_id)
+            return redirect(f"{reverse('payment_failed', args=[booking_id])}?reason=paypal_capture_failed")
         return redirect('index')
 
     capture = response.json()
@@ -607,7 +631,6 @@ def paypal_return(request):
         payment.save()
         _send_receipt_email(request, payment.booking)
 
-    messages.success(request, "Payment successful.")
     if payment:
         return redirect('payment_success', booking_id=payment.booking.id)
     return redirect('index')
@@ -616,7 +639,7 @@ def paypal_cancel(request):
     messages.info(request, "PayPal payment cancelled.")
     booking_id = request.GET.get('booking_id')
     if booking_id:
-        return redirect('payment_failed', booking_id=booking_id)
+        return redirect(f"{reverse('payment_failed', args=[booking_id])}?reason=paypal_payment_cancelled")
     return redirect('index')
 
 def invoice_pdf(request, booking_id):
@@ -657,6 +680,93 @@ def invoice_pdf(request, booking_id):
     return response
 
 # M-Pesa STK Push (stub until Daraja credentials are provided)
+def _normalize_mpesa_phone(phone):
+    digits = "".join(ch for ch in (phone or "") if ch.isdigit())
+    if digits.startswith("0") and len(digits) == 10:
+        return "254" + digits[1:]
+    if digits.startswith("254") and len(digits) == 12:
+        return digits
+    if digits.startswith("7") and len(digits) == 9:
+        return "254" + digits
+    return None
+
+
+def _mpesa_get_access_token():
+    if requests is None:
+        return None
+    if not settings.MPESA_CONSUMER_KEY or not settings.MPESA_CONSUMER_SECRET:
+        return None
+    auth_url = getattr(settings, "MPESA_AUTH_URL", "")
+    if not auth_url:
+        return None
+
+    try:
+        response = requests.get(
+            auth_url,
+            auth=(settings.MPESA_CONSUMER_KEY, settings.MPESA_CONSUMER_SECRET),
+            timeout=15,
+        )
+    except Exception:
+        return None
+
+    if response.status_code >= 300:
+        return None
+    return (response.json() or {}).get("access_token")
+
+
+def _mpesa_query_stk_status(payment):
+    if requests is None:
+        return None, "Payment dependency is not installed."
+    if payment.provider != "MPESA" or not payment.reference:
+        return None, "Invalid M-Pesa payment reference."
+
+    required_values = [
+        settings.MPESA_SHORTCODE,
+        settings.MPESA_PASSKEY,
+        getattr(settings, "MPESA_STK_QUERY_URL", ""),
+    ]
+    if any(not value for value in required_values):
+        return None, "M-Pesa query settings are incomplete."
+
+    access_token = _mpesa_get_access_token()
+    if not access_token:
+        return None, "Unable to authenticate with M-Pesa."
+
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    password = base64.b64encode(
+        f"{settings.MPESA_SHORTCODE}{settings.MPESA_PASSKEY}{timestamp}".encode("utf-8")
+    ).decode("utf-8")
+    payload = {
+        "BusinessShortCode": settings.MPESA_SHORTCODE,
+        "Password": password,
+        "Timestamp": timestamp,
+        "CheckoutRequestID": payment.reference,
+    }
+
+    try:
+        response = requests.post(
+            settings.MPESA_STK_QUERY_URL,
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            },
+            data=json.dumps(payload),
+            timeout=20,
+        )
+    except Exception:
+        return None, "Unable to reach M-Pesa query service."
+
+    try:
+        query_response = response.json() or {}
+    except Exception:
+        query_response = {"raw_text": response.text}
+
+    if response.status_code >= 300 or query_response.get("ResponseCode") != "0":
+        return query_response, query_response.get("errorMessage") or query_response.get("ResponseDescription") or "STK query failed."
+
+    return query_response, None
+
+
 def mpesa_stk_push(request):
     if request.method != "POST":
         return HttpResponseBadRequest("Invalid method")
@@ -668,9 +778,94 @@ def mpesa_stk_push(request):
         return redirect('index')
 
     booking = get_object_or_404(Booking, id=booking_id)
+    normalized_phone = _normalize_mpesa_phone(phone)
+    if not normalized_phone:
+        messages.error(request, "Invalid phone number. Use format 07XXXXXXXX or 2547XXXXXXXX.")
+        return redirect('payment_page', booking_id=booking.id)
 
-    if not settings.MPESA_CONSUMER_KEY or not settings.MPESA_STK_URL:
+    if requests is None:
+        messages.error(request, "Payment dependency is not installed.")
+        return redirect('payment_page', booking_id=booking.id)
+
+    required_values = [
+        settings.MPESA_CONSUMER_KEY,
+        settings.MPESA_CONSUMER_SECRET,
+        settings.MPESA_SHORTCODE,
+        settings.MPESA_PASSKEY,
+        settings.MPESA_STK_URL,
+        settings.MPESA_CALLBACK_URL,
+        getattr(settings, "MPESA_AUTH_URL", ""),
+    ]
+    if any(not value for value in required_values):
         messages.error(request, "M-Pesa is not configured.")
+        return redirect('payment_page', booking_id=booking.id)
+
+    access_token = _mpesa_get_access_token()
+    if not access_token:
+        messages.error(request, "Unable to authenticate with M-Pesa.")
+        return redirect('payment_page', booking_id=booking.id)
+
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    password = base64.b64encode(
+        f"{settings.MPESA_SHORTCODE}{settings.MPESA_PASSKEY}{timestamp}".encode("utf-8")
+    ).decode("utf-8")
+    amount = _get_booking_amount(booking)
+    try:
+        amount_int = max(1, int(Decimal(amount)))
+    except (InvalidOperation, TypeError, ValueError):
+        messages.error(request, "Invalid booking amount for M-Pesa payment.")
+        return redirect('payment_page', booking_id=booking.id)
+
+    payload = {
+        "BusinessShortCode": settings.MPESA_SHORTCODE,
+        "Password": password,
+        "Timestamp": timestamp,
+        "TransactionType": getattr(settings, "MPESA_TRANSACTION_TYPE", "CustomerPayBillOnline"),
+        "Amount": amount_int,
+        "PartyA": normalized_phone,
+        "PartyB": settings.MPESA_SHORTCODE,
+        "PhoneNumber": normalized_phone,
+        "CallBackURL": settings.MPESA_CALLBACK_URL,
+        "AccountReference": f"BOOKING-{booking.id}",
+        "TransactionDesc": getattr(settings, "MPESA_TRANSACTION_DESC", "Hotel Booking Payment"),
+    }
+
+    try:
+        response = requests.post(
+            settings.MPESA_STK_URL,
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            },
+            data=json.dumps(payload),
+            timeout=20,
+        )
+    except Exception:
+        messages.error(request, "M-Pesa service is unavailable. Please try again.")
+        return redirect('payment_page', booking_id=booking.id)
+
+    response_data = {}
+    try:
+        response_data = response.json() or {}
+    except Exception:
+        response_data = {"raw_text": response.text}
+
+    if response.status_code >= 300 or response_data.get("ResponseCode") != "0":
+        Payment.objects.create(
+            booking=booking,
+            provider='MPESA',
+            status='FAILED',
+            amount=_get_booking_amount(booking),
+            currency=getattr(settings, 'DEFAULT_CURRENCY', 'KES'),
+            reference=response_data.get("CheckoutRequestID"),
+            raw_response={"request": payload, "response": response_data},
+        )
+        messages.error(
+            request,
+            response_data.get("errorMessage")
+            or response_data.get("ResponseDescription")
+            or "M-Pesa STK Push failed.",
+        )
         return redirect('payment_page', booking_id=booking.id)
 
     payment = Payment.objects.create(
@@ -679,12 +874,71 @@ def mpesa_stk_push(request):
         status='PENDING',
         amount=_get_booking_amount(booking),
         currency=getattr(settings, 'DEFAULT_CURRENCY', 'KES'),
-        reference=None,
-        raw_response={'phone': phone, 'note': 'STK Push stub. Configure Daraja credentials to go live.'},
+        reference=response_data.get("CheckoutRequestID"),
+        raw_response={
+            "request": payload,
+            "response": response_data,
+            "phone": normalized_phone,
+            "merchant_request_id": response_data.get("MerchantRequestID"),
+        },
     )
 
-    messages.success(request, "STK Push initiated. Complete payment on your phone.")
+    messages.info(
+        request,
+        "STK Push sent to your phone. Complete payment to confirm booking. "
+        "You will be notified once payment is verified.",
+    )
     return redirect('booking_confirmation', booking_id=booking.id)
+
+
+@csrf_exempt
+def mpesa_callback(request):
+    try:
+        payload = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({"ResultCode": 0, "ResultDesc": "Accepted"})
+
+    callback = (payload.get("Body") or {}).get("stkCallback") or {}
+    checkout_request_id = callback.get("CheckoutRequestID")
+    result_code = callback.get("ResultCode")
+    result_code_str = str(result_code) if result_code is not None else ""
+    result_desc = callback.get("ResultDesc")
+
+    payment = Payment.objects.filter(
+        provider='MPESA',
+        reference=checkout_request_id,
+    ).order_by("-id").first()
+
+    if not payment:
+        return JsonResponse({"ResultCode": 0, "ResultDesc": "Accepted"})
+
+    metadata = {}
+    items = ((callback.get("CallbackMetadata") or {}).get("Item") or [])
+    for item in items:
+        name = item.get("Name")
+        value = item.get("Value")
+        if name:
+            metadata[name] = value
+
+    existing_raw = payment.raw_response if isinstance(payment.raw_response, dict) else {}
+    updated_raw = dict(existing_raw)
+    updated_raw["callback"] = callback
+    updated_raw["metadata"] = metadata
+    if result_desc:
+        updated_raw["callback_result_desc"] = result_desc
+    payment.raw_response = updated_raw
+
+    if result_code_str == "0":
+        payment.status = 'SUCCEEDED'
+        payment.booking.status = 'CONFIRMED'
+        payment.booking.save(update_fields=['status', 'updated_at'])
+    elif result_code_str == "1032":
+        payment.status = 'CANCELLED'
+    else:
+        payment.status = 'FAILED'
+    payment.save(update_fields=['status', 'raw_response', 'updated_at'])
+
+    return JsonResponse({"ResultCode": 0, "ResultDesc": "Accepted"})
 
 # Login view
 def login_view(request):
@@ -789,10 +1043,44 @@ def admin_payments_view(request):
 
     if request.method == "POST":
         payment_id = request.POST.get('payment_id')
+        action = request.POST.get('action', 'update_status')
         new_status = request.POST.get('status')
         valid_statuses = {code for code, _ in Payment.STATUSES}
 
         payment = get_object_or_404(Payment, id=payment_id)
+        if action == "query_mpesa":
+            query_response, query_error = _mpesa_query_stk_status(payment)
+            if query_error:
+                messages.error(request, query_error)
+                return redirect('admin_payments')
+
+            existing_raw = payment.raw_response if isinstance(payment.raw_response, dict) else {}
+            updated_raw = dict(existing_raw)
+            updated_raw["stk_query"] = query_response
+
+            result_code = query_response.get("ResultCode")
+            result_code_str = str(result_code) if result_code is not None else ""
+            if result_code_str == "0":
+                payment.status = 'SUCCEEDED'
+                if payment.booking.status == 'PENDING':
+                    payment.booking.status = 'CONFIRMED'
+                    payment.booking.save(update_fields=['status', 'updated_at'])
+            elif result_code_str == "1032":
+                payment.status = 'CANCELLED'
+                if payment.booking.status in ['PENDING', 'CONFIRMED']:
+                    payment.booking.status = 'CANCELLED'
+                    payment.booking.save(update_fields=['status', 'updated_at'])
+            elif result_code_str in ['1', '1037', '2001']:
+                payment.status = 'FAILED'
+
+            payment.raw_response = updated_raw
+            payment.save(update_fields=['status', 'raw_response', 'updated_at'])
+            messages.success(
+                request,
+                f"STK query complete for payment #{payment.id}. ResultCode: {query_response.get('ResultCode', 'N/A')}.",
+            )
+            return redirect('admin_payments')
+
         if new_status not in valid_statuses:
             messages.error(request, "Invalid payment status selected.")
             return redirect('admin_payments')

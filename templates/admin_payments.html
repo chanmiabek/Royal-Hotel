@@ -57,6 +57,7 @@
                                 <form method="post" class="form-inline">
                                     {% csrf_token %}
                                     <input type="hidden" name="payment_id" value="{{ payment.id }}">
+                                    <input type="hidden" name="action" value="update_status">
                                     <select name="status" class="form-control form-control-sm mr-2">
                                         {% for code, label in statuses %}
                                         <option value="{{ code }}" {% if payment.status == code %}selected{% endif %}>{{ label }}</option>
@@ -64,6 +65,14 @@
                                     </select>
                                     <button type="submit" class="btn btn-sm btn-outline-primary">Update</button>
                                 </form>
+                                {% if payment.provider == 'MPESA' and payment.status == 'PENDING' %}
+                                <form method="post" class="mt-2">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="payment_id" value="{{ payment.id }}">
+                                    <input type="hidden" name="action" value="query_mpesa">
+                                    <button type="submit" class="btn btn-sm btn-success">Query STK</button>
+                                </form>
+                                {% endif %}
                             </td>
                         </tr>
                         {% empty %}

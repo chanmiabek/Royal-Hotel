@@ -53,8 +53,7 @@ def _normalize_allowed_hosts(values):
         host = parsed.netloc or parsed.path
         if host := host.split("/")[0].strip():
             hosts.append(host)
-    render_host = os.getenv("RENDER_EXTERNAL_HOSTNAME", "").strip()
-    if render_host:
+    if render_host := os.getenv("RENDER_EXTERNAL_HOSTNAME", "").strip():
         hosts.append(render_host)
     if not hosts:
         return ["royal-hotel-mwb5.onrender.com", "localhost", "127.0.0.1"]
@@ -134,8 +133,8 @@ def _database_config_from_url(database_url):
     parsed = urlparse(database_url)
     if parsed.scheme not in ('postgres', 'postgresql'):
         return {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': BASE_DIR / 'db.postgresql',
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
 
     query = parse_qs(parsed.query)
@@ -249,4 +248,17 @@ MPESA_CONSUMER_SECRET = os.getenv('MPESA_CONSUMER_SECRET', '')
 MPESA_SHORTCODE = os.getenv('MPESA_SHORTCODE', '')
 MPESA_PASSKEY = os.getenv('MPESA_PASSKEY', '')
 MPESA_CALLBACK_URL = os.getenv('MPESA_CALLBACK_URL', '')
-MPESA_STK_URL = os.getenv('MPESA_STK_URL', '')
+MPESA_AUTH_URL = os.getenv(
+    'MPESA_AUTH_URL',
+    'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials'
+)
+MPESA_STK_URL = os.getenv(
+    'MPESA_STK_URL',
+    'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest'
+)
+MPESA_STK_QUERY_URL = os.getenv(
+    'MPESA_STK_QUERY_URL',
+    'https://sandbox.safaricom.co.ke/mpesa/stkpushquery/v1/query'
+)
+MPESA_TRANSACTION_TYPE = os.getenv('MPESA_TRANSACTION_TYPE', 'CustomerPayBillOnline')
+MPESA_TRANSACTION_DESC = os.getenv('MPESA_TRANSACTION_DESC', 'Hotel Booking Payment')

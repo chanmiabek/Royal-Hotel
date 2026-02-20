@@ -32,6 +32,7 @@ urlpatterns = [
     path('payments/paypal/return/', views.paypal_return, name='paypal_return'),
     path('payments/paypal/cancel/', views.paypal_cancel, name='paypal_cancel'),
     path('payments/mpesa/stk-push/', views.mpesa_stk_push, name='mpesa_stk_push'),
+    path('payments/mpesa/callback/', views.mpesa_callback, name='mpesa_callback'),
     
     # Authentication
     path('login/', views.login_view, name='login'),
