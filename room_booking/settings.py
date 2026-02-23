@@ -124,18 +124,23 @@ WSGI_APPLICATION = 'room_booking.wsgi.application'
 
 # Database
 def _database_config_from_url(database_url):
+    sqlite_fallback = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
     if not database_url:
-        return {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+        return sqlite_fallback
 
     parsed = urlparse(database_url)
     if parsed.scheme not in ('postgres', 'postgresql'):
-        return {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+        return sqlite_fallback
+
+    has_postgres_driver = (
+        importlib.util.find_spec("psycopg") is not None
+        or importlib.util.find_spec("psycopg2") is not None
+    )
+    if not has_postgres_driver:
+        return sqlite_fallback
 
     query = parse_qs(parsed.query)
     options = {}
@@ -157,8 +162,13 @@ def _database_config_from_url(database_url):
     return config
 
 
+database_url = os.getenv('DATABASE_URL')
+use_database_url_in_debug = _env_bool('USE_DATABASE_URL_IN_DEBUG', default=False)
+if DEBUG and not use_database_url_in_debug:
+    database_url = None
+
 DATABASES = {
-    'default': _database_config_from_url(os.getenv('DATABASE_URL')),
+    'default': _database_config_from_url(database_url),
 }
 
 

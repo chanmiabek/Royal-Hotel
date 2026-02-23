@@ -37,7 +37,7 @@ def _booking_tables_ready():
 def _with_booking_status(queryset):
     if not _booking_tables_ready():
         return queryset.none()
-    today = datetime.today().date()
+    today = datetime.now().date()
     confirmed_bookings = Booking.objects.filter(
         room=OuterRef('pk'),
         status='CONFIRMED',
@@ -47,7 +47,7 @@ def _with_booking_status(queryset):
 
 
 def _mark_completed_bookings():
-    today = datetime.today().date()
+    today = datetime.now().date()
     try:
         Booking.objects.filter(
             status='CONFIRMED',
@@ -170,7 +170,8 @@ def _send_receipt_email(request, booking):
     amount = _get_booking_amount(booking)
     invoice_url = request.build_absolute_uri(reverse('invoice_pdf', args=[booking.id]))
     room_title = booking.room.title if booking.room else "N/A"
-    try:
+    import contextlib
+    with contextlib.suppress(Exception):
         send_mail(
             subject=f"Royal Hotel Receipt #{booking.id}",
             message=(
@@ -188,10 +189,8 @@ def _send_receipt_email(request, booking):
             recipient_list=[booking.email],
             fail_silently=True,
         )
-    except Exception:
-        pass
 
-def booking_view(request):
+def booking_view(request):  # sourcery skip: low-code-quality
     _mark_completed_bookings()
     if not _booking_tables_ready():
         messages.error(request, "Database is initializing. Please try again shortly.")
@@ -265,7 +264,8 @@ def booking_view(request):
             new_booking.save()
 
             if new_booking.email:
-                try:
+                import contextlib
+                with contextlib.suppress(Exception):
                     send_mail(
                         subject=f"Royal Hotel Booking Confirmation #{new_booking.id}",
                         message=(
@@ -282,8 +282,6 @@ def booking_view(request):
                         recipient_list=[new_booking.email],
                         fail_silently=True,
                     )
-                except Exception:
-                    pass
 
             messages.success(request, "Your reservation has been submitted successfully!")
             return redirect('booking_confirmation', booking_id=new_booking.id)
@@ -333,8 +331,7 @@ def payment_success(request, booking_id):
 
 def payment_failed(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id)
-    reason = request.GET.get('reason')
-    if reason:
+    if reason := request.GET.get('reason'):
         messages.error(request, f"Payment was not successful: {reason}")
     else:
         messages.error(request, "Payment was not successful. Please try again.")
@@ -468,17 +465,15 @@ def stripe_webhook(request):
     data = event.get('data', {}).get('object', {})
     if event_type == 'payment_intent.succeeded':
         intent_id = data.get('id')
-        payment = Payment.objects.filter(reference=intent_id, provider='STRIPE').first()
-        if payment:
+        if payment := Payment.objects.filter(reference=intent_id, provider='STRIPE').first():
             payment.status = 'SUCCEEDED'
             payment.raw_response = data
             payment.booking.status = 'CONFIRMED'
             payment.booking.save()
             payment.save()
-            try:
+            import contextlib
+            with contextlib.suppress(Exception):
                 _send_receipt_email(request, payment.booking)
-            except Exception:
-                pass
 
     return JsonResponse({'received': True})
 
@@ -564,11 +559,7 @@ def paypal_create_order(request):
         raw_response=order,
     )
 
-    approve_url = None
-    for link in order.get('links', []):
-        if link.get('rel') == 'approve':
-            approve_url = link.get('href')
-            break
+    approve_url = next((link.get('href') for link in order.get('links', []) if link.get('rel') == 'approve'), None)
 
     if not approve_url:
         messages.error(request, "PayPal approval link not found.")
@@ -576,26 +567,23 @@ def paypal_create_order(request):
 
     return redirect(approve_url)
 
+def _paypal_error_redirect(request, message, booking_id=None, reason=None):
+    messages.error(request, message)
+    if booking_id:
+        reason_param = f"?reason={reason}" if reason else ""
+        return redirect(f"{reverse('payment_failed', args=[booking_id])}{reason_param}")
+
 def paypal_return(request):
     order_id = request.GET.get('token')
     booking_id = request.GET.get('booking_id')
     if not order_id:
-        messages.error(request, "Missing PayPal token.")
-        if booking_id:
-            return redirect(f"{reverse('payment_failed', args=[booking_id])}?reason=missing_paypal_token")
-        return redirect('index')
+        return _paypal_error_redirect(request, "Missing PayPal token.", booking_id, "missing_paypal_token")
 
     access_token = _paypal_get_access_token()
     if requests is None:
-        messages.error(request, "Payment dependency is not installed.")
-        if booking_id:
-            return redirect(f"{reverse('payment_failed', args=[booking_id])}?reason=payment_dependency_missing")
-        return redirect('index')
+        return _paypal_error_redirect(request, "Payment dependency is not installed.", booking_id, "payment_dependency_missing")
     if not access_token:
-        messages.error(request, "PayPal is not configured.")
-        if booking_id:
-            return redirect(f"{reverse('payment_failed', args=[booking_id])}?reason=paypal_not_configured")
-        return redirect('index')
+        return _paypal_error_redirect(request, "PayPal is not configured.", booking_id, "paypal_not_configured")
 
     try:
         response = requests.post(
@@ -607,7 +595,6 @@ def paypal_return(request):
         messages.error(request, "PayPal service is unavailable. Please try again.")
         if booking_id:
             return redirect(f"{reverse('payment_failed', args=[booking_id])}?reason=paypal_service_unavailable")
-        return redirect('index')
 
     payment = Payment.objects.filter(reference=order_id, provider='PAYPAL').first()
     if response.status_code >= 300:
@@ -622,18 +609,12 @@ def paypal_return(request):
             return redirect(f"{reverse('payment_failed', args=[booking_id])}?reason=paypal_capture_failed")
         return redirect('index')
 
-    capture = response.json()
-    if payment:
-        payment.raw_response = capture
-        payment.status = 'SUCCEEDED'
-        payment.booking.status = 'CONFIRMED'
-        payment.booking.save()
-        payment.save()
-        _send_receipt_email(request, payment.booking)
-
+        capture = response.json()
+        if payment:
+            _handle_paypal_successful_payment(request, payment, capture)
+    
     if payment:
         return redirect('payment_success', booking_id=payment.booking.id)
-    return redirect('index')
 
 def paypal_cancel(request):
     messages.info(request, "PayPal payment cancelled.")
@@ -683,12 +664,13 @@ def invoice_pdf(request, booking_id):
 def _normalize_mpesa_phone(phone):
     digits = "".join(ch for ch in (phone or "") if ch.isdigit())
     if digits.startswith("0") and len(digits) == 10:
-        return "254" + digits[1:]
-    if digits.startswith("254") and len(digits) == 12:
+        return f"254{digits[1:]}"
+    elif digits.startswith("254") and len(digits) == 12:
         return digits
-    if digits.startswith("7") and len(digits) == 9:
-        return "254" + digits
-    return None
+    elif digits.startswith("7") and len(digits) == 9:
+        return f"254{digits}"
+    else:
+        return None
 
 
 def _mpesa_get_access_token():
@@ -725,7 +707,7 @@ def _mpesa_query_stk_status(payment):
         settings.MPESA_PASSKEY,
         getattr(settings, "MPESA_STK_QUERY_URL", ""),
     ]
-    if any(not value for value in required_values):
+    if not all(required_values):
         return None, "M-Pesa query settings are incomplete."
 
     access_token = _mpesa_get_access_token()
@@ -796,7 +778,7 @@ def mpesa_stk_push(request):
         settings.MPESA_CALLBACK_URL,
         getattr(settings, "MPESA_AUTH_URL", ""),
     ]
-    if any(not value for value in required_values):
+    if not all(required_values):
         messages.error(request, "M-Pesa is not configured.")
         return redirect('payment_page', booking_id=booking.id)
 
@@ -1036,7 +1018,7 @@ def admin_users_view(request):
 
 
 @login_required(login_url='login')
-def admin_payments_view(request):
+def admin_payments_view(request):  # sourcery skip: low-code-quality
     if not (request.user.is_staff or request.user.is_superuser):
         messages.error(request, "You do not have permission to view this page.")
         return redirect('index')
@@ -1070,7 +1052,7 @@ def admin_payments_view(request):
                 if payment.booking.status in ['PENDING', 'CONFIRMED']:
                     payment.booking.status = 'CANCELLED'
                     payment.booking.save(update_fields=['status', 'updated_at'])
-            elif result_code_str in ['1', '1037', '2001']:
+            elif result_code_str in {'1', '1037', '2001'}:
                 payment.status = 'FAILED'
 
             payment.raw_response = updated_raw
@@ -1104,7 +1086,7 @@ def admin_payments_view(request):
         payments = payments.filter(status=status_filter)
 
     context = {
-        'payments': payments,
+        'payments': payments,       
         'statuses': Payment.STATUSES,
         'selected_status': status_filter or '',
     }
@@ -1118,7 +1100,7 @@ def admin_booked_rooms_view(request):
         return redirect('index')
 
     _mark_completed_bookings()
-    today = datetime.today().date()
+    today = datetime.now().date()
     bookings = Booking.objects.filter(
         status='CONFIRMED',
         check_out__gt=today,
@@ -1134,8 +1116,7 @@ def room(request):
 def subscribe(request):
     if request.method != "POST":
         return redirect('index')
-    email = request.POST.get('email')
-    if email:
+    if email := request.POST.get('email'):
         messages.success(request, "Thanks for subscribing to our offers.")
         return redirect('index')
     messages.error(request, "Please enter a valid email address.")

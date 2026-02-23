@@ -47,9 +47,7 @@ class RoomAdmin(admin.ModelAdmin):
 
     @admin.display(description="Status", ordering="is_booked")
     def booking_status(self, obj):
-        if getattr(obj, "is_booked", False):
-            return "Booked"
-        return "Available"
+        return "Booked" if getattr(obj, "is_booked", False) else "Available"
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
