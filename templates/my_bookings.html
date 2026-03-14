@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 {% block content %}
+<section class="premium-shell">
 <div class="container py-5">
     <div class="section-header">
         <h2>{% trans "My Bookings" %}</h2>
@@ -28,7 +29,6 @@
                 <table class="table table-bordered table-hover bg-white">
                     <thead class="thead-light">
                         <tr>
-                            <th>Booking ID</th>
                             <th>{% trans "Room" %}</th>
                             <th>{% trans "Check-In" %}</th>
                             <th>{% trans "Check-Out" %}</th>
@@ -41,7 +41,6 @@
                     <tbody>
                         {% for booking in bookings %}
                         <tr>
-                            <td>#{{ booking.id }}</td>
                             <td>{{ booking.room.title|default:"-" }}</td>
                             <td>{{ booking.check_in }}</td>
                             <td>{{ booking.check_out }}</td>
@@ -66,7 +65,7 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="8" class="text-center py-4">{% trans "You have no bookings yet." %}</td>
+                            <td colspan="7" class="text-center py-4">{% trans "You have no bookings yet." %}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -75,4 +74,5 @@
         </div>
     </div>
 </div>
+</section>
 {% endblock %}

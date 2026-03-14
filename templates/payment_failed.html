@@ -1,17 +1,46 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% block extra_css %}
+<style>
+    .payment-shell {
+        background: transparent;
+        padding: 60px 0;
+    }
+    .payment-card {
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.15);
+        padding: 28px;
+    }
+    .payment-title {
+        font-size: 26px;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+    .payment-subtitle {
+        color: #64748b;
+        margin-bottom: 20px;
+    }
+    .payment-card .btn {
+        border-radius: 999px;
+        font-weight: 600;
+        padding: 8px 18px;
+    }
+</style>
+{% endblock %}
 {% block content %}
-<div class="container">
-    <div class="section-header">
-        <h2>{% trans "Payment Failed" %}</h2>
-        <p>{% trans "Your payment did not complete. Please try again." %}</p>
-    </div>
-
-    <div class="row">
-        <div class="col-12">
-            <p><strong>{% trans "Booking ID:" %}</strong> {{ booking.id }}</p>
-            <a class="btn btn-primary" href="{% url 'payment_page' booking.id %}">{% trans "Try Again" %}</a>
+<section class="payment-shell">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-7">
+                <div class="payment-card text-center">
+                    <h2 class="payment-title">{% trans "Payment Failed" %}</h2>
+                    <p class="payment-subtitle">{% trans "Your payment did not complete. Please try again." %}</p>
+                    <p><strong>{% trans "Room:" %}</strong> {{ booking.room.title|default:"N/A" }}</p>
+                    <a class="btn btn-primary mt-3" href="{% url 'payment_page' booking.id %}">{% trans "Try Again" %}</a>
+                </div>
+            </div>
         </div>
     </div>
-</div>
+</section>
 {% endblock %}

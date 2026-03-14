@@ -76,18 +76,32 @@
     padding: 16px 18px 20px;
 }
 .hotel-card__title {
-    font-size: 16px;
-    font-weight: 700;
+    font-size: 18px;
+    font-weight: 800;
     margin: 0;
-    color: #111827;
+    color: #FFD700;
+    letter-spacing: 0.2px;
+    text-shadow: 0 2px 8px rgba(255, 215, 0, 0.35);
 }
 .hotel-card--detail .hotel-card__title {
     font-size: 20px;
+    font-weight: 800;
 }
 .hotel-card__location {
     font-size: 13px;
     color: #6b7280;
     margin: 0;
+}
+.hotel-card__address {
+    font-size: 13px;
+    color: #4b5563;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.hotel-card__address i {
+    color: #f59e0b;
 }
 .hotel-card__rating {
     display: flex;
@@ -110,6 +124,21 @@
     gap: 6px;
     font-size: 14px;
     color: #374151;
+}
+.hotel-card__meta-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: #6b7280;
+}
+.hotel-card__meta-row span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.hotel-card__meta-row i {
+    color: #2563eb;
 }
 .room-card__price {
     font-weight: 700;

@@ -849,6 +849,57 @@ h6 {
     margin-right: 6px;
 }
 
+/* ================================================= */
+/* --------------- Premium Shell Style ------------- */
+/* ================================================= */
+
+.premium-shell {
+    background: transparent;
+    padding: 60px 0;
+}
+
+.premium-shell .section-header h2 {
+    color: #111827;
+}
+
+.premium-shell .section-header p {
+    color: #64748b;
+}
+
+.premium-shell .booking-form,
+.premium-shell .table-responsive {
+    background: #ffffff;
+    border-radius: 18px;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.12);
+    padding: 24px;
+}
+
+.premium-shell .table-responsive {
+    padding: 16px;
+}
+
+.premium-shell .form-control {
+    border-radius: 12px;
+    border-color: #e2e8f0;
+    box-shadow: none;
+}
+
+.premium-shell .form-control:focus {
+    border-color: #f5c542;
+    box-shadow: 0 0 0 0.2rem rgba(245, 197, 66, 0.2);
+}
+
+.premium-shell .btn {
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+@media (max-width: 767.98px) {
+    .premium-shell {
+        padding: 40px 0;
+    }
+}
+
 .room-amenities {
     list-style: none;
     padding: 0;

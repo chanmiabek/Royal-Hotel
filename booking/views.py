@@ -88,6 +88,21 @@ def _owner_has_hotel(user):
     return Hotel.objects.filter(owner=user).exists()
 
 
+def _get_admin_emails():
+    admin_emails = [email for _, email in getattr(settings, 'ADMINS', []) if email]
+    if admin_emails:
+        return list(dict.fromkeys(admin_emails))
+    try:
+        return list(
+            User.objects.filter(is_staff=True)
+            .exclude(email__isnull=True)
+            .exclude(email='')
+            .values_list('email', flat=True)
+        )
+    except Exception:
+        return []
+
+
 def owner_required(view_func):
     @wraps(view_func)
     def _wrapped(request, *args, **kwargs):
@@ -443,9 +458,10 @@ def _send_receipt_email(request, booking):
     amount = _ensure_booking_total(booking)
     invoice_url = request.build_absolute_uri(reverse('invoice_pdf', args=[booking.id]))
     room_title = booking.room.title if booking.room else "N/A"
+    receipt_subject = f"Royal Hotel Receipt - {room_title}" if room_title != "N/A" else "Royal Hotel Receipt"
     html_message = (
         f"<p>Hello {booking.first_name},</p>"
-        f"<p>Payment received for Booking #{booking.id}.</p>"
+        f"<p>Payment received for {room_title}.</p>"
         "<table style=\"border-collapse: collapse; width: 100%;\">"
         "<tr><th style=\"text-align:left; padding: 6px; border-bottom: 1px solid #ddd;\">Detail</th>"
         "<th style=\"text-align:left; padding: 6px; border-bottom: 1px solid #ddd;\">Value</th></tr>"
@@ -461,10 +477,10 @@ def _send_receipt_email(request, booking):
     import contextlib
     with contextlib.suppress(Exception):
         send_mail(
-            subject=f"Royal Hotel Receipt #{booking.id}",
+            subject=receipt_subject,
             message=(
                 f"Hello {booking.first_name},\n\n"
-                f"Payment received for Booking #{booking.id}.\n"
+                f"Payment received for {room_title}.\n"
                 f"Room: {room_title}\n"
                 f"Check-in: {booking.check_in}\n"
                 f"Check-out: {booking.check_out}\n"
@@ -485,7 +501,7 @@ def _send_receipt_email(request, booking):
     if owner_email:
         with contextlib.suppress(Exception):
             send_mail(
-                subject=f"New Booking Confirmed #{booking.id}",
+                subject=f"New Booking Confirmed - {room_title}",
                 message=(
                     f"A booking has been confirmed.\n\n"
                     f"Guest: {booking.first_name} {booking.last_name}\n"
@@ -503,6 +519,40 @@ def _send_receipt_email(request, booking):
                     f"<li>Check-in: {booking.check_in}</li>"
                     f"<li>Check-out: {booking.check_out}</li>"
                     "</ul>"
+                ),
+                fail_silently=True,
+            )
+
+    admin_emails = _get_admin_emails()
+    if admin_emails:
+        with contextlib.suppress(Exception):
+            send_mail(
+                subject=f"Payment Confirmed - {room_title}",
+                message=(
+                    "A booking payment has been confirmed.\n\n"
+                    f"Booking ID: {booking.id}\n"
+                    f"Guest: {booking.first_name} {booking.last_name}\n"
+                    f"Room: {room_title}\n"
+                    f"Check-in: {booking.check_in}\n"
+                    f"Check-out: {booking.check_out}\n"
+                    f"Guests: {booking.guests}\n"
+                    f"Total: {amount} {getattr(settings, 'DEFAULT_CURRENCY', 'KES')}\n"
+                    f"Invoice: {invoice_url}\n"
+                ),
+                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
+                recipient_list=admin_emails,
+                html_message=(
+                    "<p>A booking payment has been confirmed.</p>"
+                    "<ul>"
+                    f"<li>Booking ID: {booking.id}</li>"
+                    f"<li>Guest: {booking.first_name} {booking.last_name}</li>"
+                    f"<li>Room: {room_title}</li>"
+                    f"<li>Check-in: {booking.check_in}</li>"
+                    f"<li>Check-out: {booking.check_out}</li>"
+                    f"<li>Guests: {booking.guests}</li>"
+                    f"<li>Total: {amount} {getattr(settings, 'DEFAULT_CURRENCY', 'KES')}</li>"
+                    "</ul>"
+                    f"<p>Invoice: <a href=\"{invoice_url}\">{invoice_url}</a></p>"
                 ),
                 fail_silently=True,
             )
@@ -1464,7 +1514,49 @@ def logout_view(request):
 
 @login_required(login_url='login')
 def profile_view(request):
-    return render(request, 'profile.html')
+    profile = _get_or_create_profile(request.user)
+    if request.method == "POST":
+        action = request.POST.get('action', 'update')
+        if action == "reset_profile":
+            request.user.first_name = ""
+            request.user.last_name = ""
+            if profile:
+                profile.mobile = ""
+                profile.save(update_fields=['mobile'])
+            request.user.save(update_fields=['first_name', 'last_name'])
+            messages.success(request, "Your profile has been reset.")
+            return redirect('profile')
+
+        first_name = (request.POST.get('first_name') or '').strip()
+        last_name = (request.POST.get('last_name') or '').strip()
+        email = (request.POST.get('email') or '').strip()
+        mobile = (request.POST.get('mobile') or '').strip()
+
+        if not email:
+            messages.error(request, "Email is required.")
+            return redirect('profile')
+
+        if (
+            User.objects.filter(username__iexact=email).exclude(id=request.user.id).exists()
+            or User.objects.filter(email__iexact=email).exclude(id=request.user.id).exists()
+        ):
+            messages.error(request, "That email is already in use.")
+            return redirect('profile')
+
+        request.user.first_name = first_name
+        request.user.last_name = last_name
+        request.user.email = email
+        request.user.username = email
+        request.user.save(update_fields=['first_name', 'last_name', 'email', 'username'])
+
+        if profile is not None:
+            profile.mobile = mobile
+            profile.save(update_fields=['mobile'])
+
+        messages.success(request, "Profile updated successfully.")
+        return redirect('profile')
+
+    return render(request, 'profile.html', {'profile': profile})
 
 
 @login_required(login_url='login')
@@ -1720,10 +1812,28 @@ def owner_add_room(request):
             image=image,
             owner=request.user,
             hotel=hotel,
-            available=False,
-            is_approved=False,
+            available=True,
+            is_approved=True,
         )
-        messages.success(request, "Room submitted. It will be listed once approved by admin.")
+        admin_emails = _get_admin_emails()
+        if admin_emails:
+            import contextlib
+            with contextlib.suppress(Exception):
+                send_mail(
+                    subject=f"New Room Published - {title}",
+                    message=(
+                        "A new room has been published by a hotel owner.\n\n"
+                        f"Room: {title}\n"
+                        f"Hotel: {hotel.name}\n"
+                        f"Owner: {request.user.first_name} {request.user.last_name}\n"
+                        f"Price: KES {price_value}\n"
+                        f"Capacity: {capacity_value}\n"
+                    ),
+                    from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
+                    recipient_list=admin_emails,
+                    fail_silently=True,
+                )
+        messages.success(request, "Room added successfully and is now live.")
         return redirect('owner_dashboard')
 
     return render(

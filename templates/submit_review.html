@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
 {% load i18n %}
 {% block content %}
+<section class="premium-shell">
 <div class="container py-5">
     <div class="section-header">
         <h2>{% trans "Leave a Review" %}</h2>
-        <p>Booking #{{ booking.id }} - {{ booking.room.title }}</p>
+        <p>{% trans "Room:" %} {{ booking.room.title }}</p>
     </div>
     <div class="row">
         <div class="col-md-8 mx-auto">
@@ -34,4 +35,5 @@
         </div>
     </div>
 </div>
+</section>
 {% endblock %}

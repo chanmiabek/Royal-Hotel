@@ -1,34 +1,71 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% block extra_css %}
+<style>
+    .confirm-shell {
+        background: transparent;
+        padding: 60px 0;
+    }
+    .confirm-card {
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.15);
+        padding: 28px;
+    }
+    .confirm-title {
+        font-size: 26px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    .confirm-subtitle {
+        color: #64748b;
+        margin-bottom: 20px;
+    }
+    .confirm-grid {
+        display: grid;
+        gap: 8px;
+        color: #475569;
+        font-size: 14px;
+    }
+    .confirm-grid strong {
+        color: #0f172a;
+    }
+    .confirm-actions .btn {
+        border-radius: 999px;
+        padding: 10px 22px;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
 {% block content %}
-<div class="container">
-    <div class="section-header">
-        <h2>{% trans "Booking Confirmed" %}</h2>
-        <p>{% trans "Thank you for choosing Royal Hotel. Your reservation has been received." %}</p>
-    </div>
-
-    <div class="row">
-        <div class="col-12">
-            <div class="booking-form">
-                <h4>{% trans "Reservation Details" %}</h4>
-                <p><strong>{% trans "Booking ID:" %}</strong> {{ booking.id }}</p>
-                <p><strong>{% trans "Name:" %}</strong> {{ booking.first_name }} {{ booking.last_name }}</p>
-                <p><strong>{% trans "Email:" %}</strong> {{ booking.email }}</p>
-                <p><strong>{% trans "Room:" %}</strong> {{ booking.room.title }}</p>
-                <p><strong>{% trans "Check-In:" %}</strong> {{ booking.check_in }}</p>
-                <p><strong>{% trans "Check-Out:" %}</strong> {{ booking.check_out }}</p>
-                <p><strong>{% trans "Guests:" %}</strong> {{ booking.guests }}</p>
-                {% if booking.total_price %}
-                    <p><strong>{% trans "Total Price:" %}</strong> KES {{ booking.total_price }}</p>
-                {% endif %}
-                {% if booking.special_request %}
-                    <p><strong>{% trans "Special Request:" %}</strong> {{ booking.special_request }}</p>
-                {% endif %}
-                <div class="mt-3">
-                    <a class="btn btn-primary" href="{% url 'payment_page' booking.id %}">{% trans "Pay Now" %}</a>
+<section class="confirm-shell">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="confirm-card">
+                    <h2 class="confirm-title">{% trans "Booking Confirmed" %}</h2>
+                    <p class="confirm-subtitle">{% trans "Thank you for choosing Royal Hotel. Your reservation has been received." %}</p>
+                    <h4 class="mb-3">{% trans "Reservation Details" %}</h4>
+                    <div class="confirm-grid">
+                        <div><strong>{% trans "Name:" %}</strong> {{ booking.first_name }} {{ booking.last_name }}</div>
+                        <div><strong>{% trans "Email:" %}</strong> {{ booking.email }}</div>
+                        <div><strong>{% trans "Room:" %}</strong> {{ booking.room.title }}</div>
+                        <div><strong>{% trans "Check-In:" %}</strong> {{ booking.check_in }}</div>
+                        <div><strong>{% trans "Check-Out:" %}</strong> {{ booking.check_out }}</div>
+                        <div><strong>{% trans "Guests:" %}</strong> {{ booking.guests }}</div>
+                        {% if booking.total_price %}
+                            <div><strong>{% trans "Total Price:" %}</strong> KES {{ booking.total_price }}</div>
+                        {% endif %}
+                        {% if booking.special_request %}
+                            <div><strong>{% trans "Special Request:" %}</strong> {{ booking.special_request }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="confirm-actions mt-4">
+                        <a class="btn btn-primary" href="{% url 'payment_page' booking.id %}">{% trans "Pay Now" %}</a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
 {% endblock %}

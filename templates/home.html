@@ -146,12 +146,25 @@
                         {{ hotel.city }}{% if hotel.city and hotel.country %}, {% endif %}{{ hotel.country }}
                     </p>
                     {% endif %}
+                    {% if hotel.address %}
+                    <p class="hotel-card__address">
+                        <i class="fa fa-map-marker"></i> {{ hotel.address }}
+                    </p>
+                    {% endif %}
                     {% if hotel.star_rating %}
                     <div class="hotel-card__rating">
                         <span class="hotel-card__score">{{ hotel.star_rating }}</span>
                         <span>{% trans "Rating" %}</span>
                     </div>
                     {% endif %}
+                    <div class="hotel-card__meta-row">
+                        {% if hotel.phone %}
+                        <span><i class="fa fa-phone"></i> {{ hotel.phone }}</span>
+                        {% endif %}
+                        {% if hotel.email %}
+                        <span><i class="fa fa-envelope"></i> {{ hotel.email }}</span>
+                        {% endif %}
+                    </div>
                     <p class="hotel-card__location">{{ hotel.description|default:""|truncatewords:18 }}</p>
                 </div>
             </a>

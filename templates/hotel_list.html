@@ -4,6 +4,7 @@
 <link href="{% static 'css/hotel-cards.css' %}" rel="stylesheet">
 {% endblock %}
 {% block content %}
+<section class="premium-shell">
 <section id="hotels" class="hotel-collection">
     <div class="container">
         <div class="section-header">
@@ -29,12 +30,25 @@
                         {{ hotel.city }}{% if hotel.city and hotel.country %}, {% endif %}{{ hotel.country }}
                     </p>
                     {% endif %}
+                    {% if hotel.address %}
+                    <p class="hotel-card__address">
+                        <i class="fa fa-map-marker"></i> {{ hotel.address }}
+                    </p>
+                    {% endif %}
                     {% if hotel.star_rating %}
                     <div class="hotel-card__rating">
                         <span class="hotel-card__score">{{ hotel.star_rating }}</span>
                         <span class="hotel-card__rating-label">{% trans "Rating" %}</span>
                     </div>
                     {% endif %}
+                    <div class="hotel-card__meta-row">
+                        {% if hotel.phone %}
+                        <span><i class="fa fa-phone"></i> {{ hotel.phone }}</span>
+                        {% endif %}
+                        {% if hotel.email %}
+                        <span><i class="fa fa-envelope"></i> {{ hotel.email }}</span>
+                        {% endif %}
+                    </div>
                 </div>
             </a>
             {% empty %}
@@ -43,5 +57,6 @@
         </div>
     </div>
     
+</section>
 </section>
 {% endblock %}

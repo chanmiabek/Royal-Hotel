@@ -177,7 +177,6 @@
                             <table class="table table-bordered table-hover bg-white mb-0">
                                 <thead class="thead-light">
                                     <tr>
-                                        <th>Booking ID</th>
                                         <th>{% trans "Room" %}</th>
                                         <th>{% trans "Guest" %}</th>
                                         <th>{% trans "Check-In" %}</th>
@@ -188,7 +187,6 @@
                                 <tbody>
                                     {% for booking in recent_bookings %}
                                     <tr>
-                                        <td>#{{ booking.id }}</td>
                                         <td>{{ booking.room.title }}</td>
                                         <td>{{ booking.first_name }} {{ booking.last_name }}</td>
                                         <td>{{ booking.check_in }}</td>
@@ -197,7 +195,7 @@
                                     </tr>
                                     {% empty %}
                                     <tr>
-                                        <td colspan="6" class="text-center py-4">{% trans "No bookings yet." %}</td>
+                                        <td colspan="5" class="text-center py-4">{% trans "No bookings yet." %}</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>

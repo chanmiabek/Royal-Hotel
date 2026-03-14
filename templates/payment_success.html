@@ -1,22 +1,63 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% block extra_css %}
+<style>
+    .payment-shell {
+        background: transparent;
+        padding: 60px 0;
+    }
+    .payment-card {
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.15);
+        padding: 28px;
+    }
+    .payment-title {
+        font-size: 26px;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+    .payment-subtitle {
+        color: #64748b;
+        margin-bottom: 20px;
+    }
+    .payment-grid {
+        display: grid;
+        gap: 8px;
+        font-size: 14px;
+        color: #475569;
+    }
+    .payment-grid strong {
+        color: #0f172a;
+    }
+    .payment-actions .btn {
+        border-radius: 999px;
+        font-weight: 600;
+        padding: 8px 18px;
+    }
+</style>
+{% endblock %}
 {% block content %}
-<div class="container">
-    <div class="section-header">
-        <h2>{% trans "Payment Successful" %}</h2>
-        <p>{% trans "Your payment was successful." %}</p>
-    </div>
-
-    <div class="row">
-        <div class="col-12">
-            <p><strong>{% trans "Booking ID:" %}</strong> {{ booking.id }}</p>
-            <p><strong>{% trans "Name:" %}</strong> {{ booking.first_name }} {{ booking.last_name }}</p>
-            <p><strong>{% trans "Room:" %}</strong> {{ booking.room.title }}</p>
-            <p><strong>{% trans "Check-In:" %}</strong> {{ booking.check_in }}</p>
-            <p><strong>{% trans "Check-Out:" %}</strong> {{ booking.check_out }}</p>
-            <a class="btn btn-primary" href="{% url 'booking_confirmation' booking.id %}">{% trans "View Booking" %}</a>
-            <a class="btn btn-outline-primary" href="{% url 'invoice_pdf' booking.id %}">{% trans "Download Invoice (PDF)" %}</a>
+<section class="payment-shell">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="payment-card">
+                    <h2 class="payment-title">{% trans "Payment Successful" %}</h2>
+                    <p class="payment-subtitle">{% trans "Your payment was successful." %}</p>
+                    <div class="payment-grid">
+                        <div><strong>{% trans "Name:" %}</strong> {{ booking.first_name }} {{ booking.last_name }}</div>
+                        <div><strong>{% trans "Room:" %}</strong> {{ booking.room.title }}</div>
+                        <div><strong>{% trans "Check-In:" %}</strong> {{ booking.check_in }}</div>
+                        <div><strong>{% trans "Check-Out:" %}</strong> {{ booking.check_out }}</div>
+                    </div>
+                    <div class="payment-actions mt-4">
+                        <a class="btn btn-primary" href="{% url 'booking_confirmation' booking.id %}">{% trans "View Booking" %}</a>
+                        <a class="btn btn-outline-primary ml-2" href="{% url 'invoice_pdf' booking.id %}">{% trans "Download Invoice (PDF)" %}</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
+</section>
 {% endblock %}

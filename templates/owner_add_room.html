@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
 {% load i18n %}
 {% block content %}
+<section class="premium-shell">
 <div class="container py-5">
     <div class="section-header">
         <h2>{% trans "Add a Room" %}</h2>
-        <p>{% trans "Submit a new room listing for approval." %}</p>
+        <p>{% trans "Create a new room listing that goes live immediately." %}</p>
     </div>
     <div class="row">
         <div class="col-md-8 mx-auto">
@@ -78,9 +79,10 @@
                     <label>{% trans "Room Image" %}</label>
                     <input type="file" name="image" class="form-control-file">
                 </div>
-                <button type="submit" class="btn btn-primary">{% trans "Submit for Approval" %}</button>
+                <button type="submit" class="btn btn-primary">{% trans "Publish Room" %}</button>
             </form>
         </div>
     </div>
 </div>
+</section>
 {% endblock %}

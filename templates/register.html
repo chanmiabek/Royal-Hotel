@@ -1,43 +1,88 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% block extra_css %}
+<style>
+    .auth-shell {
+        background: transparent;
+        padding: 60px 0;
+    }
+    .auth-card {
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.15);
+        padding: 28px;
+    }
+    .auth-title {
+        font-size: 26px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    .auth-subtitle {
+        color: #64748b;
+        margin-bottom: 20px;
+    }
+    .auth-card .form-control {
+        border-radius: 12px;
+        border-color: #e2e8f0;
+        box-shadow: none;
+    }
+    .auth-card .form-control:focus {
+        border-color: #f5c542;
+        box-shadow: 0 0 0 0.2rem rgba(245, 197, 66, 0.2);
+    }
+    .auth-card .btn-primary {
+        border-radius: 999px;
+        padding: 10px 22px;
+        font-weight: 600;
+    }
+    .auth-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 16px;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .auth-links a {
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
 {% block content %}
-<div id="login">
+<section class="auth-shell">
     <div class="container">
-        <div class="section-header">
-            <h2>{% trans "Create Account" %}</h2>
-            <p>{% trans "Register to save your details and manage your reservations." %}</p>
-        </div>
-        <div class="row">
-            <div class="col-md-8 mx-auto">
-                <div class="login-form">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="auth-card">
+                    <h2 class="auth-title">{% trans "Create Account" %}</h2>
+                    <p class="auth-subtitle">{% trans "Register to save your details and manage your reservations." %}</p>
                     <form method="POST">
                         {% csrf_token %}
-                        <div class="form-row">
-                            <div class="control-group col-sm-12">
-                                <label>{% trans "Your Name" %}</label>
-                                <input type="text" name="name" class="form-control" required="required" />
-                            </div>
-                            <div class="control-group col-sm-12">
-                                <label>{% trans "Email" %}</label>
-                                <input type="email" name="email" class="form-control" required="required" />
-                            </div>
-                            <div class="control-group col-sm-12">
-                                <label>{% trans "Password" %}</label>
-                                <input type="password" name="password" class="form-control" required="required" />
-                            </div>
-                            <div class="control-group col-sm-12">
-                                <label>{% trans "Repeat Password" %}</label>
-                                <input type="password" name="repeat_password" class="form-control" required="required" />
-                            </div>
+                        <div class="form-group">
+                            <label>{% trans "Your Name" %}</label>
+                            <input type="text" name="name" class="form-control" required>
                         </div>
-                        <div class="button">
-                            <button type="submit">{% trans "Register" %}</button>
+                        <div class="form-group">
+                            <label>{% trans "Email" %}</label>
+                            <input type="email" name="email" class="form-control" required>
                         </div>
-                        <p class="mt-3">{% trans "Already have an account?" %} <a href="{% url 'login' %}">{% trans "Login" %}</a>.</p>
+                        <div class="form-group">
+                            <label>{% trans "Password" %}</label>
+                            <input type="password" name="password" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>{% trans "Repeat Password" %}</label>
+                            <input type="password" name="repeat_password" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">{% trans "Register" %}</button>
+                        <div class="auth-links">
+                            <span>{% trans "Already have an account?" %} <a href="{% url 'login' %}">{% trans "Login" %}</a></span>
+                            <a href="{% url 'password_reset' %}">{% trans "Forgot password?" %}</a>
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
 {% endblock %}
