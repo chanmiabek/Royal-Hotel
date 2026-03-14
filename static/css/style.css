@@ -288,6 +288,88 @@ h6 {
 }
 
 /* ================================================= */
+/* ------------- Carousel Search Overlay ----------- */
+/* ================================================= */
+
+#headerSlider .carousel-search {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+}
+
+#headerSlider .carousel-search .search-card {
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid #FFD700;
+    border-radius: 8px;
+    padding: 18px 18px 8px 18px;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25);
+}
+
+#headerSlider .carousel-search label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #222222;
+}
+
+#headerSlider .carousel-search .input-group-text {
+    border-radius: 0;
+}
+
+#headerSlider .carousel-search input,
+#headerSlider .carousel-search select,
+#headerSlider .carousel-search button {
+    box-shadow: none;
+    border-radius: 0;
+}
+
+#headerSlider .carousel-search input:focus,
+#headerSlider .carousel-search select:focus,
+#headerSlider .carousel-search button:focus {
+    border-color: #FFD700;
+}
+
+#headerSlider .carousel-search .btn {
+    margin-top: 31px;
+    color: #FFD700;
+    background: #222222;
+    border-color: #222222;
+}
+
+#headerSlider .carousel-search .btn:hover {
+    color: #222222;
+    background: #FFD700;
+    border-color: #FFD700;
+}
+
+@media (max-width: 991.98px) {
+    #headerSlider .carousel-search {
+        top: 55%;
+    }
+}
+
+@media (max-width: 767.98px) {
+    #headerSlider .carousel-search {
+        position: static;
+        transform: none;
+        margin-top: 15px;
+    }
+
+    #headerSlider .carousel-search .btn {
+        margin-top: 15px;
+    }
+
+    #headerSlider .carousel-search .kid {
+        margin-top: 15px;
+    }
+}
+/* ================================================= */
+/* -------------- Home Hero Overlay ---------------- */
+/* ================================================= */
+
+/* ================================================= */
 /* ----------------- Search Style ------------------ */
 /* ================================================= */
 
@@ -765,6 +847,32 @@ h6 {
 
 #rooms .room-size li i {
     margin-right: 6px;
+}
+
+.room-amenities {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 15px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+}
+
+.room-amenities li {
+    background: #f2f2f2;
+    color: #222222;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 999px;
+}
+
+.room-amenities-block {
+    margin-top: 12px;
+}
+
+.room-amenities-block .room-amenities {
+    justify-content: flex-start;
 }
 
 #rooms .room-icon {
@@ -1351,14 +1459,90 @@ input::-ms-input-placeholder {
 
 #footer {
     position: relative;
-    padding: 30px 0 25px 0;
-    text-align: center;
-    background: #222222;
+    padding: 28px 0 12px 0;
+    text-align: left;
+    background: #1b1b1b;
+    color: #e5e7eb;
 }
 
-#footer .social {
-    position: relative;
-    margin-bottom: 20px;
+#footer .container {
+    max-width: 1140px;
+}
+
+#footer .row {
+    align-items: flex-start;
+}
+
+#footer .footer-compact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 28px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#footer .footer-block {
+    min-width: 200px;
+}
+
+#footer .footer-about {
+    flex: 1.4;
+    min-width: 260px;
+}
+
+#footer .footer-links {
+    flex: 0.8;
+    min-width: 180px;
+}
+
+#footer .footer-contact {
+    flex: 1;
+    min-width: 240px;
+}
+
+#footer .footer-legal {
+    flex: 1 1 100%;
+    text-align: center;
+}
+
+#footer .footer-widget {
+    margin-bottom: 12px;
+}
+
+#footer h3 {
+    color: #ffffff;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+}
+
+#footer p {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    color: #cbd5e1;
+    line-height: 1.45;
+}
+
+#footer ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#footer ul li {
+    margin-bottom: 6px;
+}
+
+#footer .footer-widget ul a {
+    display: inline-block;
+    padding: 2px 0;
+}
+
+#footer .footer-inline-links {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 #footer a {
@@ -1369,14 +1553,62 @@ input::-ms-input-placeholder {
     color: #ffffff;
 }
 
-#footer .social a {
-    display: inline-block;
-    width: 40px;
-    height: 40px;
-    padding: 5px 10px;
+#footer .input-group .form-control {
+    border-radius: 999px 0 0 999px;
+    border-color: #333333;
+    background: #111111;
+    color: #ffffff;
+}
+
+#footer .input-group .form-control::placeholder {
+    color: #94a3b8;
+}
+
+#footer .input-group-append .btn {
+    border-radius: 0 999px 999px 0;
     background: #FFD700;
     color: #222222;
-    font-size: 20px;
+    font-weight: 600;
+}
+
+#footer .call-button {
+    display: inline-block;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: #FFD700;
+    color: #222222;
+    font-weight: 600;
+}
+
+#footer .call-button:hover {
+    background: #ffffff;
+    color: #222222;
+}
+
+#footer .footer-mini {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+#footer .social {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-start;
+    margin: 0;
+}
+
+#footer .social a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: #FFD700;
+    color: #222222;
+    font-size: 16px;
+    border-radius: 50%;
 }
 
 #footer .social a:hover {
@@ -1384,7 +1616,40 @@ input::-ms-input-placeholder {
     color: #FFD700;
 }
 
-#footer p {
-    margin: 0;
-    font-size: 18px;
+#footer .copyright,
+#footer .credit {
+    text-align: center;
+    margin: 4px 0;
+    font-size: 12px;
+}
+
+@media (max-width: 767px) {
+    #footer {
+        text-align: center;
+    }
+    #footer .footer-compact {
+        justify-content: center;
+    }
+    #footer .footer-block {
+        text-align: center;
+    }
+    #footer .footer-inline-links {
+        align-items: center;
+    }
+    #footer .footer-mini {
+        justify-content: center;
+        flex-direction: column;
+    }
+    #footer .input-group {
+        flex-direction: column;
+    }
+    #footer .input-group .form-control,
+    #footer .input-group-append .btn {
+        border-radius: 999px;
+        width: 100%;
+    }
+    #footer .input-group-append {
+        margin-top: 10px;
+        width: 100%;
+    }
 }

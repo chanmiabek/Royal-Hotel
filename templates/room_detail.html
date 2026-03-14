@@ -1,34 +1,90 @@
 {% extends 'base.html' %}
+{% load static i18n %}
+{% block extra_css %}
+<link href="{% static 'css/hotel-cards.css' %}" rel="stylesheet">
+{% endblock %}
 {% block content %}
-<div class="container">
-    <div class="section-header">
-        <h2>{{ room.title }}</h2>
-        <p>{{ room.description }}</p>
-    </div>
+<section class="hotel-collection">
+    <div class="container">
+        <div class="section-header">
+            <h2>{{ room.title }}</h2>
+            <p>{{ room.description }}</p>
+        </div>
 
-    <div class="row">
-        <div class="col-md-6">
-            {% if room.image %}
-                <img src="{{ room.image.url }}" class="img-fluid" alt="{{ room.title }}">
-            {% endif %}
-        </div>
-        <div class="col-md-6">
-            <ul class="room-size">
-                <li>
-                    <strong>Status:</strong>
+        <div class="hotel-card hotel-card--detail">
+            <div class="hotel-card__media">
+                {% if room.image %}
+                    <img src="{{ room.image.url }}" alt="{{ room.title }}">
+                {% endif %}
+                <span class="hotel-card__fav">
+                    <i class="fa fa-heart-o"></i>
+                </span>
+            </div>
+            <div class="hotel-card__body">
+                <div>
+                    <strong>{% trans "Status:" %}</strong>
                     {% if room.is_booked %}
-                        <span class="badge badge-danger">Booked</span>
+                        <span class="badge badge-danger">{% trans "Currently Booked" %}</span>
                     {% else %}
-                        <span class="badge badge-success">Available</span>
+                        <span class="badge badge-success">{% trans "Available" %}</span>
                     {% endif %}
-                </li>
-                <li><strong>Size:</strong> {{ room.size }} sq ft</li>
-                <li><strong>Beds:</strong> {{ room.beds }}</li>
-                <li><strong>Capacity:</strong> {{ room.capacity }} guests</li>
-            </ul>
-            <h3>${{ room.price|floatformat:0 }} / night</h3>
-            <a class="btn btn-primary" href="{% url 'booking' %}">Book Now</a>
+                </div>
+                <div class="hotel-card__meta">
+                    <div><strong>{% trans "Size:" %}</strong> {{ room.size }} {% trans "sq ft" %}</div>
+                    <div><strong>{% trans "Beds:" %}</strong> {{ room.beds }}</div>
+                    <div><strong>{% trans "Capacity:" %}</strong> {{ room.capacity }} {% trans "guests" %}</div>
+                    {% if room.hotel %}
+                    <div><strong>{% trans "Hotel:" %}</strong> <a href="{% url 'hotel_detail' room.hotel.id %}">{{ room.hotel.name }}</a></div>
+                    {% endif %}
+                </div>
+                {% if room.amenities_list %}
+                <div>
+                    <h6 class="mb-2">{% trans "Amenities" %}</h6>
+                    <ul class="room-amenities">
+                        {% for amenity in room.amenities_list %}
+                        <li>{{ amenity }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                <div class="d-flex align-items-center justify-content-between flex-wrap">
+                    <span class="room-card__price">KES {{ room.price|floatformat:0 }} / {% trans "night" %}</span>
+                    <div class="room-card__actions">
+                        <a class="btn btn-primary" href="{% url 'booking' %}?room={{ room.id }}&check_in={{ check_in }}&check_out={{ check_out }}&guests={{ guests }}">
+                            {% trans "Book Now" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <div class="section-header">
+            <h2>{% trans "Guest Reviews" %}</h2>
+            <p>{% trans "Reviewed by" %} {{ room.reviews.count }}</p>
+        </div>
+
+        {% if reviews %}
+            {% for review in reviews %}
+                <div class="review-card mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <strong>{{ review.title }}</strong>
+                        <span>
+                            {% for star in "12345" %}
+                                {% if forloop.counter <= review.rating %}
+                                    <i class="fa fa-star text-warning"></i>
+                                {% else %}
+                                    <i class="fa fa-star-o text-warning"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </span>
+                    </div>
+                    <p class="mb-1">{{ review.comment }}</p>
+                    <small class="text-muted">{% trans "Reviewed by" %} {{ review.user.first_name|default:review.user.username }}</small>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>{% trans "No reviews yet. Be the first to review after your stay." %}</p>
+        {% endif %}
     </div>
-</div>
+</section>
 {% endblock %}

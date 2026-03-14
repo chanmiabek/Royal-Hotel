@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block content %}
+<div class="container py-5">
+    <div class="section-header">
+        <h2>{% trans "Room Approvals" %}</h2>
+        <p>{% trans "Manage pending and approved room listings." %}</p>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <form method="get">
+                <label>{% trans "Status" %}</label>
+                <select name="status" class="form-control" onchange="this.form.submit()">
+                    <option value="pending" {% if status == 'pending' %}selected{% endif %}>{% trans "Pending" %}</option>
+                    <option value="approved" {% if status == 'approved' %}selected{% endif %}>{% trans "Approved" %}</option>
+                    <option value="all" {% if status == 'all' %}selected{% endif %}>{% trans "All" %}</option>
+                </select>
+            </form>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover bg-white">
+            <thead class="thead-light">
+                <tr>
+                    <th>Room</th>
+                    <th>{% trans "Hotel" %}</th>
+                    <th>{% trans "Owner" %}</th>
+                    <th>{% trans "Category" %}</th>
+                    <th>{% trans "Price" %}</th>
+                    <th>{% trans "Approved" %}</th>
+                    <th>{% trans "Available" %}</th>
+                    <th>{% trans "Actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for room in rooms %}
+                <tr>
+                    <td>{{ room.title }}</td>
+                    <td>{{ room.hotel.name|default:"-" }}</td>
+                    <td>
+                        {% if room.owner %}
+                            {{ room.owner.email|default:"-" }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{{ room.get_category_display }}</td>
+                    <td>{{ room.price }}</td>
+                    <td>{% if room.is_approved %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                    <td>{% if room.available %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                    <td>
+                        <form method="post" action="{% url 'admin_approve_room' room.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-success">{% trans "Approve" %}</button>
+                        </form>
+                        <form method="post" action="{% url 'admin_reject_room' room.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <input type="text" name="reason" class="form-control form-control-sm d-inline-block" placeholder="{% trans 'Reason (optional)' %}" style="width: 180px;">
+                            <button type="submit" class="btn btn-sm btn-danger">{% trans "Reject" %}</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-4">{% trans "No rooms found for this filter." %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

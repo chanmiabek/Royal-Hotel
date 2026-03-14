@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block extra_css %}
+<style>
+    .owner-portal {
+        background: radial-gradient(circle at top left, #f8f0d0 0%, #f7f7f7 45%, #ffffff 100%);
+        min-height: calc(100vh - 120px);
+    }
+    .owner-hero {
+        background: linear-gradient(120deg, #1a1a1a 0%, #2b2b2b 50%, #3b2a00 100%);
+        border-radius: 18px;
+        color: #f8f1d2;
+        padding: 32px;
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+        gap: 24px;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+        margin-bottom: 32px;
+    }
+    .owner-hero__badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px;
+        border-radius: 999px;
+        background: rgba(255, 215, 0, 0.18);
+        color: #ffdd6c;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        font-size: 12px;
+        text-transform: uppercase;
+    }
+    .owner-hero__title {
+        font-size: 30px;
+        font-weight: 700;
+        margin: 16px 0 8px;
+    }
+    .owner-hero__meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.75);
+    }
+    .owner-hero__actions .btn {
+        border-radius: 999px;
+        padding: 8px 18px;
+        font-weight: 600;
+    }
+    .owner-hero__stats {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 20px;
+        display: grid;
+        gap: 16px;
+    }
+    .owner-stat {
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 12px;
+        padding: 16px;
+    }
+    .owner-stat h6 {
+        margin-bottom: 6px;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+    .owner-stat h3 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+    }
+    .owner-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+    }
+    .owner-card .card-header {
+        background: #fdf7e3;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        font-weight: 600;
+    }
+    .owner-section-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+    }
+    @media (max-width: 991px) {
+        .owner-hero {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="owner-portal">
+    <div class="container py-5">
+        <div class="owner-hero">
+            <div>
+                <span class="owner-hero__badge">{% trans "Partner Dashboard" %}</span>
+                <h2 class="owner-hero__title">
+                    {% if hotel %}{{ hotel.name }}{% else %}{% trans "Owner Dashboard" %}{% endif %}
+                </h2>
+                <p class="mb-3">{% trans "Manage your hotel listing, rooms, and bookings in one place." %}</p>
+                <div class="owner-hero__meta mb-3">
+                    {% if hotel %}
+                        <span><i class="fa fa-map-marker"></i> {{ hotel.city }}{% if hotel.city and hotel.country %}, {% endif %}{{ hotel.country }}</span>
+                        <span><i class="fa fa-envelope"></i> {{ hotel.email|default:"-" }}</span>
+                        <span><i class="fa fa-check-circle"></i> {% trans "Approved" %}</span>
+                    {% else %}
+                        <span><i class="fa fa-info-circle"></i> {% trans "Hotel not linked yet." %}</span>
+                    {% endif %}
+                </div>
+                <div class="owner-hero__actions">
+                    <a href="{% url 'owner_add_room' %}" class="btn btn-light mr-2">{% trans "Add New Room" %}</a>
+                    {% if hotel %}
+                    <a href="{% url 'hotel_detail' hotel.id %}" class="btn btn-outline-light">{% trans "View Public Listing" %}</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="owner-hero__stats">
+                <div class="owner-stat">
+                    <h6>{% trans "Total Rooms" %}</h6>
+                    <h3>{{ total_rooms }}</h3>
+                </div>
+                <div class="owner-stat">
+                    <h6>{% trans "Confirmed Bookings" %}</h6>
+                    <h3>{{ confirmed_bookings }}</h3>
+                </div>
+                <div class="owner-stat">
+                    <h6>{% trans "Pending Bookings" %}</h6>
+                    <h3>{{ pending_bookings }}</h3>
+                </div>
+                <div class="owner-stat">
+                    <h6>{% trans "Total Revenue" %}</h6>
+                    <h3>{{ revenue_total }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-lg-4 mb-4 mb-lg-0">
+                <div class="card owner-card h-100">
+                    <div class="card-header">{% trans "Hotel Profile" %}</div>
+                    <div class="card-body">
+                        {% if hotel %}
+                            <h5 class="mb-2">{{ hotel.name }}</h5>
+                            <p class="text-muted mb-1">{{ hotel.address|default:"-" }}</p>
+                            <p class="text-muted mb-1">{{ hotel.city }}{% if hotel.city and hotel.country %}, {% endif %}{{ hotel.country }}</p>
+                            <p class="text-muted mb-0">{{ hotel.phone|default:"-" }}</p>
+                            <div class="mt-3">
+                                <h6 class="mb-2">{% trans "Public Hotel Image" %}</h6>
+                                {% if hotel.image %}
+                                    <img src="{{ hotel.image.url }}" alt="{{ hotel.name }}" class="img-fluid mb-2" style="border-radius: 12px;">
+                                {% endif %}
+                                <form method="post" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <div class="form-group mb-2">
+                                        <input type="file" name="image" class="form-control-file" accept="image/*" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-sm">{% trans "Update Image" %}</button>
+                                </form>
+                            </div>
+                        {% else %}
+                            <p class="mb-0">{% trans "Your hotel profile will appear here after approval." %}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-8">
+                <div class="card owner-card h-100">
+                    <div class="card-header">{% trans "Recent Bookings" %}</div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover bg-white mb-0">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Booking ID</th>
+                                        <th>{% trans "Room" %}</th>
+                                        <th>{% trans "Guest" %}</th>
+                                        <th>{% trans "Check-In" %}</th>
+                                        <th>{% trans "Check-Out" %}</th>
+                                        <th>{% trans "Status" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for booking in recent_bookings %}
+                                    <tr>
+                                        <td>#{{ booking.id }}</td>
+                                        <td>{{ booking.room.title }}</td>
+                                        <td>{{ booking.first_name }} {{ booking.last_name }}</td>
+                                        <td>{{ booking.check_in }}</td>
+                                        <td>{{ booking.check_out }}</td>
+                                        <td>{{ booking.status }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">{% trans "No bookings yet." %}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card owner-card">
+            <div class="card-header owner-section-title">
+                <span>{% trans "Your Rooms" %}</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover bg-white mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>{% trans "Room" %}</th>
+                                <th>{% trans "Hotel" %}</th>
+                                <th>{% trans "Category" %}</th>
+                                <th>{% trans "Price" %}</th>
+                                <th>{% trans "Approved" %}</th>
+                                <th>{% trans "Available" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for room in rooms %}
+                            <tr>
+                                <td>{{ room.title }}</td>
+                                <td>{{ room.hotel.name|default:"-" }}</td>
+                                <td>{{ room.get_category_display }}</td>
+                                <td>{{ room.price }}</td>
+                                <td>{% if room.is_approved %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                                <td>{% if room.available %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">{% trans "No rooms submitted yet." %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

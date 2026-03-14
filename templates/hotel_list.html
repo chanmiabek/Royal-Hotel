@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+{% block extra_css %}
+<link href="{% static 'css/hotel-cards.css' %}" rel="stylesheet">
+{% endblock %}
+{% block content %}
+<section id="hotels" class="hotel-collection">
+    <div class="container">
+        <div class="section-header">
+            <h2>{% trans "Our Hotels" %}</h2>
+            <p>{% trans "Browse all hotels registered under Royal Booking System." %}</p>
+        </div>
+
+        <div class="hotel-grid">
+            {% for hotel in hotels %}
+            <a href="{% url 'hotel_detail' hotel.id %}" class="hotel-card">
+                <div class="hotel-card__media">
+                    {% if hotel.image %}
+                        <img src="{{ hotel.image.url }}" alt="{{ hotel.name }}">
+                    {% endif %}
+                    <span class="hotel-card__fav">
+                        <i class="fa fa-heart-o"></i>
+                    </span>
+                </div>
+                <div class="hotel-card__body">
+                    <h5 class="hotel-card__title">{{ hotel.name }}</h5>
+                    {% if hotel.city or hotel.country %}
+                    <p class="hotel-card__location">
+                        {{ hotel.city }}{% if hotel.city and hotel.country %}, {% endif %}{{ hotel.country }}
+                    </p>
+                    {% endif %}
+                    {% if hotel.star_rating %}
+                    <div class="hotel-card__rating">
+                        <span class="hotel-card__score">{{ hotel.star_rating }}</span>
+                        <span class="hotel-card__rating-label">{% trans "Rating" %}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </a>
+            {% empty %}
+            <p class="text-center">{% trans "No hotels available right now." %}</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+</section>
+{% endblock %}

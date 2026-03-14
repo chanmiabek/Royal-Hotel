@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% block content %}
 <div id="login">
     <div class="container">
         <div class="section-header">
-            <h2>Login</h2>
-            <p>Sign in to manage your bookings and complete payments faster.</p>
+            <h2>{% trans "Login" %}</h2>
+            <p>{% trans "Sign in to manage your bookings and complete payments faster." %}</p>
         </div>
         <div class="row">
             <div class="col-md-8 mx-auto">
@@ -13,18 +14,18 @@
                         {% csrf_token %}
                         <div class="form-row">
                             <div class="control-group col-sm-12">
-                                <label>Your Email</label>
+                                <label>{% trans "Your Email" %}</label>
                                 <input type="email" name="login_email" class="form-control" required="required" />
                             </div>
                             <div class="control-group col-sm-12">
-                                <label>Your Password</label>
+                                <label>{% trans "Your Password" %}</label>
                                 <input type="password" name="login_password" class="form-control" required="required" />
                             </div>
                         </div>
                         <div class="button">
-                            <button type="submit">Login</button>
+                            <button type="submit">{% trans "Login" %}</button>
                         </div>
-                        <p class="mt-3">No account yet? <a href="{% url 'register' %}">Create one</a>.</p>
+                        <p class="mt-3">{% trans "No account yet?" %} <a href="{% url 'register' %}">{% trans "Create one" %}</a>.</p>
                     </form>
                 </div>
             </div>

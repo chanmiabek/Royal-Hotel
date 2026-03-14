@@ -1,0 +1,1141 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Royal Hotel Booking\n"
+"Language: sw\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "A Legacy of Hospitality"
+msgstr "Urithi wa Ukarimu"
+
+msgid "A curated selection of chilled beverages and gourmet snacks at your fingertips."
+msgstr "Uchaguzi wa vinywaji baridi na vitafunwa bora unapatikana wakati wowote."
+
+msgid "About Royal Hotel"
+msgstr "Kuhusu Royal Hotel"
+
+msgid "About Us"
+msgstr "Kuhusu Sisi"
+
+msgid "Account"
+msgstr "Akaunti"
+
+msgid "Account Information"
+msgstr "Taarifa za Akaunti"
+
+msgid "Account Type"
+msgstr "Aina ya Akaunti"
+
+msgid "Action"
+msgstr "Kitendo"
+
+msgid "Actions"
+msgstr "Vitendo"
+
+msgid "Active"
+msgstr "Hai"
+
+msgid "Add Hotel"
+msgstr "Ongeza Hoteli"
+
+msgid "Add New Room"
+msgstr "Ongeza Chumba Kipya"
+
+msgid "Add Room"
+msgstr "Ongeza Chumba"
+
+msgid "Add a Hotel"
+msgstr "Ongeza Hoteli"
+
+msgid "Add a Room"
+msgstr "Ongeza Chumba"
+
+msgid "Address"
+msgstr "Anuani"
+
+msgid "Address:"
+msgstr "Anuani:"
+
+msgid "Admin view of all user accounts and booking details."
+msgstr "Mwonekano wa msimamizi wa akaunti zote za watumiaji na maelezo ya uhifadhi."
+
+msgid "Adult"
+msgstr "Mtu mzima"
+
+msgid "Air Conditioner"
+msgstr "Kiyoyozi"
+
+msgid "All"
+msgstr "Zote"
+
+msgid "All Rights Reserved."
+msgstr "Haki zote zimehifadhiwa."
+
+msgid "Already have an account?"
+msgstr "Tayari una akaunti?"
+
+msgid "Amenities"
+msgstr "Vifaa"
+
+msgid "Amenities & Services"
+msgstr "Vifaa na Huduma"
+
+msgid "Amount"
+msgstr "Kiasi"
+
+msgid "Apply"
+msgstr "Tumia"
+
+msgid "Approve"
+msgstr "Idhinisha"
+
+msgid "Approved"
+msgstr "Imeidhinishwa"
+
+msgid "At Royal Hotel, we provide a wide range of high-end amenities designed to make your stay as comfortable and productive as possible."
+msgstr "Katika Royal Hotel, tunatoa vifaa vya kiwango cha juu ili kufanya ukaaji wako uwe wa faraja na wenye tija."
+
+msgid "Available"
+msgstr "Inapatikana"
+
+msgid "Available Rooms"
+msgstr "Vyumba Vinavyopatikana"
+
+msgid "Bathtub"
+msgstr "Bafu"
+
+msgid "Beds"
+msgstr "Vitanda"
+
+msgid "Beds:"
+msgstr "Vitanda:"
+
+msgid "Book Now"
+msgstr "Hifadhi Sasa"
+
+msgid "Book This Room Now"
+msgstr "Hifadhi Chumba Hiki Sasa"
+
+msgid "Book a Treatment"
+msgstr "Weka Miadi ya Matibabu"
+
+msgid "Booked"
+msgstr "Imehifadhiwa"
+
+msgid "Booked By"
+msgstr "Imehifadhiwa Na"
+
+msgid "Booked Rooms"
+msgstr "Vyumba Vilivyohifadhiwa"
+
+msgid "Booking"
+msgstr "Kuhifadhi"
+
+msgid "Booking Confirmed"
+msgstr "Uhifadhi Umethibitishwa"
+
+msgid "Booking ID"
+msgstr "Namba ya Uhifadhi"
+
+msgid "Booking ID:"
+msgstr "Namba ya Uhifadhi:"
+
+msgid "Browse all hotels registered under Royal Booking System."
+msgstr "Vinjari hoteli zote zilizosajiliwa kwenye Mfumo wa Royal Booking."
+
+msgid "Capacity (guests)"
+msgstr "Uwezo (wageni)"
+
+msgid "Capacity:"
+msgstr "Uwezo:"
+
+msgid "Category"
+msgstr "Kategoria"
+
+msgid "Category:"
+msgstr "Kategoria:"
+
+msgid "Check Availability"
+msgstr "Angalia Upatikanaji"
+
+msgid "Check-In"
+msgstr "Kuingia"
+
+msgid "Check-In Date"
+msgstr "Tarehe ya Kuingia"
+
+msgid "Check-In:"
+msgstr "Kuingia:"
+
+msgid "Check-Out"
+msgstr "Kutoka"
+
+msgid "Check-Out Date"
+msgstr "Tarehe ya Kutoka"
+
+msgid "Check-Out:"
+msgstr "Kutoka:"
+
+msgid "Choose from our selection of luxurious rooms and suites."
+msgstr "Chagua kutoka kwenye uteuzi wetu wa vyumba vya kifahari na suites."
+
+msgid "City"
+msgstr "Mji"
+
+msgid "Click Below to Call Us"
+msgstr "Bonyeza Hapa Kutupigia"
+
+msgid "Comment"
+msgstr "Maoni"
+
+msgid "Complete Payment"
+msgstr "Kamilisha Malipo"
+
+msgid "Complimentary high-speed internet accessible throughout the entire hotel."
+msgstr "Intaneti ya kasi inapatikana bure katika hoteli nzima."
+
+msgid "Confirm Booking"
+msgstr "Thibitisha Uhifadhi"
+
+msgid "Confirmed Bookings"
+msgstr "Hifadhi Zilizothibitishwa"
+
+msgid "Contact"
+msgstr "Mawasiliano"
+
+msgid "Contact Info"
+msgstr "Taarifa za Mawasiliano"
+
+msgid "Contact Us"
+msgstr "Wasiliana Nasi"
+
+msgid "Country"
+msgstr "Nchi"
+
+msgid "Create Account"
+msgstr "Fungua Akaunti"
+
+msgid "Create Hotel"
+msgstr "Tengeneza Hoteli"
+
+msgid "Create a new hotel listing for your property."
+msgstr "Unda orodha mpya ya hoteli kwa mali yako."
+
+msgid "Create one"
+msgstr "Tengeneza moja"
+
+msgid "Currently Booked"
+msgstr "Imehifadhiwa kwa sasa"
+
+msgid "Dashboard"
+msgstr "Dashibodi"
+
+msgid "Date"
+msgstr "Tarehe"
+
+msgid "Date Joined"
+msgstr "Tarehe ya Kujiunga"
+
+msgid "Description"
+msgstr "Maelezo"
+
+msgid "Designed By"
+msgstr "Imetengenezwa na"
+
+msgid "Details"
+msgstr "Maelezo"
+
+msgid "Direct-dial phones with 24/7 access to our concierge and room service."
+msgstr "Simu za moja kwa moja zenye huduma ya masaa 24/7 kwa mapokezi na huduma ya chumba."
+
+msgid "Download Invoice (PDF)"
+msgstr "Pakua Ankara (PDF)"
+
+msgid "Email"
+msgstr "Barua pepe"
+
+msgid "Email Address"
+msgstr "Anwani ya Barua Pepe"
+
+msgid "Email:"
+msgstr "Barua pepe:"
+
+msgid "Escape the hustle and bustle of the city in our full-service spa and wellness center. We offer a range of treatments, including Swedish massages, rejuvenating facials, and a heated indoor swimming pool."
+msgstr "Kimbia msongamano wa jiji katika spa na kituo cha afya chenye huduma kamili. Tunatoa matibabu mbalimbali ikiwemo masaji ya Kiswidi, facial za kuhuisha, na bwawa la ndani lenye joto."
+
+msgid "Established in 1995, Royal Hotel has been the premier destination for travelers seeking a perfect blend of luxury, comfort, and heritage."
+msgstr "Kuanzishwa mwaka 1995, Royal Hotel imekuwa kituo bora kwa wasafiri wanaotafuta mchanganyiko wa anasa, faraja, na urithi."
+
+msgid "Every brick in our building tells a story of elegance. We pride ourselves on maintaining a classic atmosphere while integrating the latest in smart-hotel technology."
+msgstr "Kila tofali katika jengo letu lina hadithi ya ustaarabu. Tunajivunia kudumisha mandhari ya jadi huku tukijumuisha teknolojia za kisasa za hoteli."
+
+msgid "Excellent"
+msgstr "Bora Sana"
+
+msgid "Experience luxury and comfort at its finest. We provide world-class amenities and exceptional service for an unforgettable stay."
+msgstr "Furahia anasa na faraja kwa kiwango cha juu. Tunatoa huduma bora na utunzaji wa kipekee kwa ukaaji usiosahaulika."
+
+msgid "Experience luxury and comfort in our hand-picked accommodations."
+msgstr "Furahia anasa na faraja katika malazi yetu tuliyochagua kwa makini."
+
+msgid "Experience rejuvenation under our high-pressure rainfall showerheads."
+msgstr "Furahia msisimko wa kuoga kwenye shower zetu zenye shinikizo la juu."
+
+msgid "Explore Menu"
+msgstr "Tazama Menyu"
+
+msgid "Explore hotels recently added to Royal Hotel Booking."
+msgstr "Chunguza hoteli zilizoongezwa hivi karibuni kwenye Royal Hotel Booking."
+
+msgid "Explore rooms at %(hotel_name)s."
+msgstr "Chunguza vyumba katika %(hotel_name)s."
+
+msgid "Explore rooms at"
+msgstr "Chunguza vyumba katika"
+
+msgid "Fair"
+msgstr "Wastani"
+
+msgid "Filter Status"
+msgstr "Chuja Hali"
+
+msgid "Find Royal Hotel on the map."
+msgstr "Tafuta Royal Hotel kwenye ramani."
+
+msgid "Find Us"
+msgstr "Tupate"
+
+msgid "Fine Dining & Culinary Art"
+msgstr "Chakula Bora na Sanaa ya Upishi"
+
+msgid "First Name"
+msgstr "Jina la Kwanza"
+
+msgid "Flat-screen Smart TVs with a premium selection of international channels."
+msgstr "Televisheni za kisasa zenye chaguzi za vituo vya kimataifa."
+
+msgid "For over nearly three decades, we have defined the standard for luxury lodging. What started as a small boutique inn has grown into a world-renowned landmark, known for its iconic architecture and unwavering commitment to guest satisfaction."
+msgstr "Kwa karibu miaka thelathini, tumefafanua kiwango cha malazi ya kifahari. Kilichoanza kama hoteli ndogo kimekua kuwa alama inayotambulika duniani, yenye usanifu wa kipekee na dhamira thabiti kwa kuridhisha wageni."
+
+msgid "From"
+msgstr "Kuanzia"
+
+msgid "From our signature breakfast buffet to intimate candlelit dinners, we provide a gastronomic journey that satisfies the most discerning palates."
+msgstr "Kuanzia kifungua kinywa chetu maalum hadi chakula cha jioni cha kimapenzi, tunatoa safari ya ladha inayoridhisha vinywa vyenye kuchagua."
+
+msgid "Full Name"
+msgstr "Jina Kamili"
+
+msgid "Fully adjustable climate control to keep your room perfectly cool or cozy."
+msgstr "Udhibiti wa hali ya hewa unaoweza kurekebishwa ili kuweka chumba chako katika hali bora."
+
+msgid "Get In Touch"
+msgstr "Wasiliana Nasi"
+
+msgid "Good"
+msgstr "Nzuri"
+
+msgid "Guest"
+msgstr "Mgeni"
+
+msgid "Guest (No account)"
+msgstr "Mgeni (Hakuna akaunti)"
+
+msgid "Guest Reviews"
+msgstr "Maoni ya Wageni"
+
+msgid "Guests"
+msgstr "Wageni"
+
+msgid "Guests:"
+msgstr "Wageni:"
+
+msgid "Have questions about our services or need help with a reservation? Our team is available 24/7 to assist you with any inquiries."
+msgstr "Una maswali kuhusu huduma zetu au unahitaji msaada wa uhifadhi? Timu yetu inapatikana masaa 24/7 kukusaidia."
+
+msgid "Have questions? Our team is available 24/7 to assist you."
+msgstr "Una maswali? Timu yetu inapatikana masaa 24/7 kukusaidia."
+
+msgid "High-Speed WiFi"
+msgstr "WiFi ya Kasi"
+
+msgid "Home"
+msgstr "Mwanzo"
+
+msgid "Hongkong Road Eastside, Kakuma, Kenya"
+msgstr "Hongkong Road Eastside, Kakuma, Kenya"
+
+msgid "Hotel"
+msgstr "Hoteli"
+
+msgid "Hotel Image"
+msgstr "Picha ya Hoteli"
+
+msgid "Hotel Name"
+msgstr "Jina la Hoteli"
+
+msgid "Hotel:"
+msgstr "Hoteli:"
+
+msgid "Hotels"
+msgstr "Hoteli"
+
+msgid "Kid"
+msgstr "Mtoto"
+
+msgid "Kitchen"
+msgstr "Jiko"
+
+msgid "Last Login"
+msgstr "Kuingia Mwisho"
+
+msgid "Last Name"
+msgstr "Jina la Mwisho"
+
+msgid "Leave Review"
+msgstr "Acha Tathmini"
+
+msgid "Leave a Review"
+msgstr "Acha Tathmini"
+
+msgid "Locate Royal Hotel on the map before you book."
+msgstr "Tafuta Royal Hotel kwenye ramani kabla ya kuhifadhi."
+
+msgid "Location"
+msgstr "Eneo"
+
+msgid "Location:"
+msgstr "Eneo:"
+
+msgid "Login"
+msgstr "Ingia"
+
+msgid "Logout"
+msgstr "Toka"
+
+msgid "Luxury & Comfort"
+msgstr "Anasa na Faraja"
+
+msgid "M-Pesa STK Push"
+msgstr "M-Pesa STK Push"
+
+msgid "M-Pesa is not configured."
+msgstr "M-Pesa haijawekwa."
+
+msgid "Manage"
+msgstr "Dhibiti"
+
+msgid "Manage Payments"
+msgstr "Dhibiti Malipo"
+
+msgid "Manage Rooms"
+msgstr "Dhibiti Vyumba"
+
+msgid "Manage Users"
+msgstr "Dhibiti Watumiaji"
+
+msgid "Manage pending and approved room listings."
+msgstr "Dhibiti orodha za vyumba vinavyosubiri na vilivyoidhinishwa."
+
+msgid "Max Price"
+msgstr "Bei ya Juu"
+
+msgid "Member Since:"
+msgstr "Mwanachama Tangu:"
+
+msgid "Message"
+msgstr "Ujumbe"
+
+msgid "Min Price"
+msgstr "Bei ya Chini"
+
+msgid "Mini Bar"
+msgstr "Baa Ndogo"
+
+msgid "Mobile Number"
+msgstr "Namba ya Simu"
+
+msgid "Modern kitchenette facilities available in our executive and family suites."
+msgstr "Vifaa vya kisasa vya jiko vinapatikana katika vyumba vya executive na vya familia."
+
+msgid "My Bookings"
+msgstr "Hifadhi Zangu"
+
+msgid "My Profile"
+msgstr "Wasifu Wangu"
+
+msgid "Name:"
+msgstr "Jina:"
+
+msgid "Never"
+msgstr "Kamwe"
+
+msgid "Next"
+msgstr "Inayofuata"
+
+msgid "No"
+msgstr "Hapana"
+
+msgid "No account yet?"
+msgstr "Bado huna akaunti?"
+
+msgid "No booked rooms at the moment."
+msgstr "Hakuna vyumba vilivyohifadhiwa kwa sasa."
+
+msgid "No bookings yet."
+msgstr "Bado hakuna hifadhi."
+
+msgid "No hotels added yet."
+msgstr "Bado hakuna hoteli zilizoongezwa."
+
+msgid "No hotels available right now."
+msgstr "Hakuna hoteli zinazopatikana kwa sasa."
+
+msgid "No payment records found."
+msgstr "Hakuna rekodi za malipo."
+
+msgid "No reviews yet. Be the first to review after your stay."
+msgstr "Bado hakuna tathmini. Kuwa wa kwanza kutathmini baada ya ukaaji wako."
+
+msgid "No rooms available at the moment."
+msgstr "Hakuna vyumba vinavyopatikana kwa sasa."
+
+msgid "No rooms available at the moment. Please check back later."
+msgstr "Hakuna vyumba vinavyopatikana kwa sasa. Tafadhali rudi tena baadaye."
+
+msgid "No rooms available for this hotel yet."
+msgstr "Hakuna vyumba vinavyopatikana kwa hoteli hii bado."
+
+msgid "No rooms found for this filter."
+msgstr "Hakuna vyumba vilivyopatikana kwa kichujio hiki."
+
+msgid "No rooms submitted yet."
+msgstr "Bado hakuna vyumba vilivyowasilishwa."
+
+msgid "No user accounts found."
+msgstr "Hakuna akaunti za watumiaji."
+
+msgid "Our Hotels"
+msgstr "Hoteli Zetu"
+
+msgid "Our Location"
+msgstr "Eneo Letu"
+
+msgid "Our Rooms"
+msgstr "Vyumba Vyetu"
+
+msgid "Our award-winning restaurant, *The Royal Palate*, offers an exquisite menu crafted by Michelin-starred chefs. We source all our ingredients from local organic farms to ensure every bite is fresh and flavorful."
+msgstr "Mgahawa wetu ulioshinda tuzo, *The Royal Palate*, hutoa menyu bora iliyoundwa na wapishi wa kiwango cha juu. Tunapata viungo vyetu kutoka mashamba ya kikaboni ya ndani ili kila tonge liwe safi na lenye ladha."
+
+msgid "Our state-of-the-art fitness center is open 24/7, allowing you to maintain your routine while enjoying panoramic views of the city skyline."
+msgstr "Kituo chetu cha mazoezi cha kisasa kiko wazi masaa 24/7 ili uendelee na ratiba yako huku ukifurahia mandhari ya jiji."
+
+msgid "Overview of your rooms and bookings."
+msgstr "Muhtasari wa vyumba na hifadhi zako."
+
+msgid "Owner"
+msgstr "Mmiliki"
+
+msgid "Owner Dashboard"
+msgstr "Dashibodi ya Mmiliki"
+
+msgid "Password"
+msgstr "Nenosiri"
+
+msgid "Pay"
+msgstr "Lipa"
+
+msgid "Pay Now"
+msgstr "Lipa Sasa"
+
+msgid "Pay by Card (Stripe)"
+msgstr "Lipa kwa Kadi (Stripe)"
+
+msgid "Pay with Card"
+msgstr "Lipa kwa Kadi"
+
+msgid "Pay with PayPal"
+msgstr "Lipa kwa PayPal"
+
+msgid "PayPal is not configured."
+msgstr "PayPal haijawekwa."
+
+msgid "Payment Failed"
+msgstr "Malipo Yameshindikana"
+
+msgid "Payment Management"
+msgstr "Usimamizi wa Malipo"
+
+msgid "Payment Successful"
+msgstr "Malipo Yamefanikiwa"
+
+msgid "Pending"
+msgstr "Inasubiri"
+
+msgid "Pending Bookings"
+msgstr "Hifadhi Zinazosubiri"
+
+msgid "Phone"
+msgstr "Simu"
+
+msgid "Phone Number"
+msgstr "Namba ya Simu"
+
+msgid "Phone:"
+msgstr "Simu:"
+
+msgid "Poor"
+msgstr "Mbaya"
+
+msgid "Previous"
+msgstr "Iliyotangulia"
+
+msgid "Price"
+msgstr "Bei"
+
+msgid "Price per Night"
+msgstr "Bei kwa Usiku"
+
+msgid "Price:"
+msgstr "Bei:"
+
+msgid "Price: High to Low"
+msgstr "Bei: Kubwa hadi Ndogo"
+
+msgid "Price: Low to High"
+msgstr "Bei: Ndogo hadi Kubwa"
+
+msgid "Provider"
+msgstr "Mtoa Huduma"
+
+msgid "Query STK"
+msgstr "Uliza STK"
+
+msgid "Quick Links"
+msgstr "Viungo vya Haraka"
+
+msgid "Rating"
+msgstr "Kiwango"
+
+msgid "Recent Bookings"
+msgstr "Hifadhi za Hivi Karibuni"
+
+msgid "Recommended"
+msgstr "Inapendekezwa"
+
+msgid "Reference"
+msgstr "Marejeo"
+
+msgid "Register"
+msgstr "Sajili"
+
+msgid "Register to save your details and manage your reservations."
+msgstr "Sajili ili kuhifadhi maelezo yako na kudhibiti hifadhi zako."
+
+msgid "Registered Users"
+msgstr "Watumiaji Waliyosajiliwa"
+
+msgid "Reject"
+msgstr "Kataa"
+
+msgid "Relax and unwind in our deep-soaking tubs with premium bath salts."
+msgstr "Pumzika kwenye mabafu yetu ya kina yenye chumvi bora za bafu."
+
+msgid "Repeat Password"
+msgstr "Rudia Nenosiri"
+
+msgid "Reservation Details"
+msgstr "Maelezo ya Uhifadhi"
+
+msgid "Reserve Your Stay"
+msgstr "Hifadhi Makazi Yako"
+
+msgid "Review user payments and update status for refunds or other actions."
+msgstr "Kagua malipo ya watumiaji na sasisha hali kwa marejesho au hatua nyingine."
+
+msgid "Reviewed by"
+msgstr "Imetathminiwa na"
+
+msgid "Role"
+msgstr "Wadhifa"
+
+msgid "Room"
+msgstr "Chumba"
+
+msgid "Room Approvals"
+msgstr "Uidhinishaji wa Vyumba"
+
+msgid "Room Features:"
+msgstr "Vipengele vya Chumba:"
+
+msgid "Room Image"
+msgstr "Picha ya Chumba"
+
+msgid "Room Title"
+msgstr "Jina la Chumba"
+
+msgid "Room:"
+msgstr "Chumba:"
+
+msgid "Rooms"
+msgstr "Vyumba"
+
+msgid "Royal Hotel"
+msgstr "Royal Hotel"
+
+msgid "Search"
+msgstr "Tafuta"
+
+msgid "Search Rooms"
+msgstr "Tafuta Vyumba"
+
+msgid "Secure your room at Royal Hotel today. Fill out the form below, and our team will confirm your reservation within 24 hours."
+msgstr "Hakikisha chumba chako Royal Hotel leo. Jaza fomu hapa chini, na timu yetu itathibitisha uhifadhi wako ndani ya masaa 24."
+
+msgid "Select a room"
+msgstr "Chagua chumba"
+
+msgid "Select category"
+msgstr "Chagua kategoria"
+
+msgid "Select hotel"
+msgstr "Chagua hoteli"
+
+msgid "Select rating"
+msgstr "Chagua kiwango"
+
+msgid "Send Message"
+msgstr "Tuma Ujumbe"
+
+msgid "Send STK Push"
+msgstr "Tuma STK Push"
+
+msgid "Shower"
+msgstr "Bafu la kuoga"
+
+msgid "Sign in to manage your bookings and complete payments faster."
+msgstr "Ingia ili kudhibiti hifadhi zako na kukamilisha malipo kwa haraka."
+
+msgid "Size (sq ft)"
+msgstr "Ukubwa (futi mraba)"
+
+msgid "Size:"
+msgstr "Ukubwa:"
+
+msgid "Size: Largest First"
+msgstr "Ukubwa: Kubwa Kwanza"
+
+msgid "Sort"
+msgstr "Panga"
+
+msgid "Special Request:"
+msgstr "Ombi Maalum:"
+
+msgid "Special Requests or Dietary Requirements"
+msgstr "Maombi Maalum au Mahitaji ya Lishe"
+
+msgid "Staff"
+msgstr "Mfanyakazi"
+
+msgid "Status"
+msgstr "Hali"
+
+msgid "Status:"
+msgstr "Hali:"
+
+msgid "Stripe is not configured."
+msgstr "Stripe haijawekwa."
+
+msgid "Subject"
+msgstr "Mada"
+
+msgid "Submit Review"
+msgstr "Wasilisha Tathmini"
+
+msgid "Submit a new room listing for approval."
+msgstr "Wasilisha orodha mpya ya chumba kwa idhini."
+
+msgid "Submit for Approval"
+msgstr "Wasilisha kwa Idhini"
+
+msgid "Subscribe"
+msgstr "Jiandikishe"
+
+msgid "Subscribe for Special Offers"
+msgstr "Jiandikishe kwa Ofa Maalum"
+
+msgid "Subscribe to our newsletter and receive exclusive offers and updates."
+msgstr "Jiandikishe kwenye jarida letu na upate ofa na taarifa."
+
+msgid "Superuser"
+msgstr "Msimamizi Mkuu"
+
+msgid "Telephone"
+msgstr "Simu"
+
+msgid "Television"
+msgstr "Televisheni"
+
+msgid "Thank you for choosing Royal Hotel. Your reservation has been received."
+msgstr "Asante kwa kuchagua Royal Hotel. Uhifadhi wako umepokelewa."
+
+msgid "Title"
+msgstr "Kichwa"
+
+msgid "Total"
+msgstr "Jumla"
+
+msgid "Total Bookings"
+msgstr "Jumla ya Hifadhi"
+
+msgid "Total Hotels"
+msgstr "Jumla ya Hoteli"
+
+msgid "Total Price:"
+msgstr "Jumla ya Bei:"
+
+msgid "Total Revenue"
+msgstr "Mapato Jumla"
+
+msgid "Total Rooms"
+msgstr "Jumla ya Vyumba"
+
+msgid "Track the rooms you have booked and manage payment status."
+msgstr "Fuata vyumba ulivyohifadhi na udhibiti hali ya malipo."
+
+msgid "Try Again"
+msgstr "Jaribu Tena"
+
+msgid "Type"
+msgstr "Aina"
+
+msgid "Update"
+msgstr "Sasisha"
+
+msgid "User"
+msgstr "Mtumiaji"
+
+msgid "Username"
+msgstr "Jina la Mtumiaji"
+
+msgid "Username:"
+msgstr "Jina la Mtumiaji:"
+
+msgid "Very Good"
+msgstr "Nzuri Sana"
+
+msgid "View All Hotels"
+msgstr "Tazama Hoteli Zote"
+
+msgid "View Booking"
+msgstr "Tazama Uhifadhi"
+
+msgid "View Details"
+msgstr "Tazama Maelezo"
+
+msgid "View Hotel"
+msgstr "Tazama Hoteli"
+
+msgid "View My Bookings"
+msgstr "Tazama Hifadhi Zangu"
+
+msgid "View Our History"
+msgstr "Tazama Historia Yetu"
+
+msgid "View Room Details"
+msgstr "Tazama Maelezo ya Chumba"
+
+msgid "View all currently booked rooms and the users who booked them."
+msgstr "Tazama vyumba vyote vilivyohifadhiwa na watumiaji waliovihifadhi."
+
+msgid "View your account details and reservation contact information."
+msgstr "Tazama maelezo ya akaunti yako na taarifa za mawasiliano ya uhifadhi."
+
+msgid "Welcome to Royal Hotel"
+msgstr "Karibu Royal Hotel"
+
+msgid "Wellness & Serenity"
+msgstr "Afya na Utulivu"
+
+msgid "Yes"
+msgstr "Ndiyo"
+
+msgid "You have no bookings yet."
+msgstr "Bado huna hifadhi."
+
+msgid "Your Email"
+msgstr "Barua Pepe Yako"
+
+msgid "Your Hotels"
+msgstr "Hoteli Zako"
+
+msgid "Your Name"
+msgstr "Jina Lako"
+
+msgid "Your Password"
+msgstr "Nenosiri Lako"
+
+msgid "Your Perfect Stay"
+msgstr "Ukaaji Wako Kamili"
+
+msgid "Your Rooms"
+msgstr "Vyumba Vyako"
+
+msgid "Your payment did not complete. Please try again."
+msgstr "Malipo yako hayajakamilika. Tafadhali jaribu tena."
+
+msgid "Your payment was successful."
+msgstr "Malipo yako yamefanikiwa."
+
+msgid "guests"
+msgstr "wageni"
+
+msgid "night"
+msgstr "usiku"
+
+msgid "per night"
+msgstr "kwa usiku"
+
+msgid "sq ft"
+msgstr "futi mraba"
+
+msgid "Hotel Partner Application"
+msgstr "Maombi ya Ushirika wa Hoteli"
+
+msgid "Apply to list your hotel on our platform. Provide details for review and approval."
+msgstr "Omba kuorodhesha hoteli yako kwenye jukwaa letu. Toa maelezo kwa ukaguzi na idhini."
+
+msgid "You already submitted an application."
+msgstr "Tayari umewasilisha ombi."
+
+msgid "View status"
+msgstr "Tazama hali"
+
+msgid "Hotel Details"
+msgstr "Maelezo ya Hoteli"
+
+msgid "Select rating"
+msgstr "Chagua ukadiriaji"
+
+msgid "Contact & Rooms"
+msgstr "Mawasiliano na Vyumba"
+
+msgid "Contact Person"
+msgstr "Mtu wa Mawasiliano"
+
+msgid "Contact Phone"
+msgstr "Simu ya Mawasiliano"
+
+msgid "Room Types"
+msgstr "Aina za Vyumba"
+
+msgid "Room Pricing"
+msgstr "Bei za Vyumba"
+
+msgid "Availability Details"
+msgstr "Maelezo ya Upatikanaji"
+
+msgid "e.g., Deluxe, Standard, Family Suite"
+msgstr "mfano, Deluxe, Standard, Family Suite"
+
+msgid "Include price ranges or nightly rates."
+msgstr "Jumuisha viwango vya bei au bei kwa usiku."
+
+msgid "Typical availability, seasonal notes, or blackout dates."
+msgstr "Upatikanaji wa kawaida, maelezo ya msimu, au tarehe zisizopatikana."
+
+msgid "Commission & Payout"
+msgstr "Kamisheni na Malipo"
+
+msgid "Requested Commission Rate"
+msgstr "Kiwango cha Kamisheni kinachoombwa"
+
+msgid "Payout Schedule"
+msgstr "Ratiba ya Malipo"
+
+msgid "Bank / Mobile Money / PayPal Details"
+msgstr "Maelezo ya Benki / Pesa za Simu / PayPal"
+
+msgid "Bank Branch"
+msgstr "Tawi la Benki"
+
+msgid "SWIFT Code"
+msgstr "Msimbo wa SWIFT"
+
+msgid "Mobile Money Provider"
+msgstr "Mtoa huduma wa Pesa ya Simu"
+
+msgid "Mobile Money Number"
+msgstr "Namba ya Pesa ya Simu"
+
+msgid "Verification Documents"
+msgstr "Nyaraka za Uthibitisho"
+
+msgid "Business License"
+msgstr "Leseni ya Biashara"
+
+msgid "Property Photos"
+msgstr "Picha za Mali"
+
+msgid "Amenities Proof"
+msgstr "Uthibitisho wa Vifaa"
+
+msgid "Signed Agreement"
+msgstr "Mkataba Uliotiwa Saini"
+
+msgid "Other Documents"
+msgstr "Nyaraka Nyingine"
+
+msgid "I agree to the partnership terms and commission policy."
+msgstr "Nakubali masharti ya ushirika na sera ya kamisheni."
+
+msgid "Submit Application"
+msgstr "Wasilisha Ombi"
+
+msgid "What Happens Next"
+msgstr "Hatua Inayofuata"
+
+msgid "We review your documents and verify your property."
+msgstr "Tunapitia nyaraka zako na kuthibitisha mali yako."
+
+msgid "If approved, you will receive access to your hotel dashboard."
+msgstr "Ukiidhinishwa, utapata ufikiaji wa dashibodi ya hoteli yako."
+
+msgid "You can manage rooms, pricing, and availability in real time."
+msgstr "Unaweza kusimamia vyumba, bei, na upatikanaji kwa wakati halisi."
+
+msgid "Need help?"
+msgstr "Unahitaji msaada?"
+
+msgid "Contact our partnership team for assistance."
+msgstr "Wasiliana na timu yetu ya ushirika kwa msaada."
+
+msgid "Application Status"
+msgstr "Hali ya Ombi"
+
+msgid "Track the progress of your hotel partner application."
+msgstr "Fuata maendeleo ya ombi lako la ushirika wa hoteli."
+
+msgid "Hotel Application"
+msgstr "Ombi la Hoteli"
+
+msgid "Submitted On"
+msgstr "Iliwasilishwa"
+
+msgid "Admin Notes"
+msgstr "Maelezo ya Msimamizi"
+
+msgid "Your application is under review. We will notify you once it is updated."
+msgstr "Ombi lako linachunguzwa. Tutakujulisha litakaposasishwa."
+
+msgid "You have not submitted any hotel application yet."
+msgstr "Bado hujawasilisha ombi la hoteli."
+
+msgid "Start Application"
+msgstr "Anza Ombi"
+
+msgid "Hotel Applications"
+msgstr "Maombi ya Hoteli"
+
+msgid "Review pending hotel partner applications."
+msgstr "Kagua maombi yanayosubiri ya washirika wa hoteli."
+
+msgid "Application ID"
+msgstr "Kitambulisho cha Ombi"
+
+msgid "Actions"
+msgstr "Vitendo"
+
+msgid "View"
+msgstr "Tazama"
+
+msgid "No applications found."
+msgstr "Hakuna maombi yaliyopatikana."
+
+msgid "Application Details"
+msgstr "Maelezo ya Ombi"
+
+msgid "Review the hotel partner submission and approve or reject."
+msgstr "Kagua ombi la mshirika wa hoteli na uidhi au ukatae."
+
+msgid "Back to Applications"
+msgstr "Rudi kwenye Maombi"
+
+msgid "Application Summary"
+msgstr "Muhtasari wa Ombi"
+
+msgid "Contact Details"
+msgstr "Maelezo ya Mawasiliano"
+
+msgid "Payout Details"
+msgstr "Maelezo ya Malipo"
+
+msgid "Documents"
+msgstr "Nyaraka"
+
+msgid "View File"
+msgstr "Tazama Faili"
+
+msgid "No documents uploaded."
+msgstr "Hakuna nyaraka zilizopakiwa."
+
+msgid "Review Decision"
+msgstr "Uamuzi wa Ukaguzi"
+
+msgid "This application has already been processed."
+msgstr "Ombi hili tayari limeshughulikiwa."
+
+msgid "Commission Rate"
+msgstr "Kiwango cha Kamisheni"
+
+msgid "Cancellation Policy"
+msgstr "Sera ya Kughairi"
+
+msgid "Refund Policy"
+msgstr "Sera ya Kurudisha Pesa"
+
+msgid "Approve Application"
+msgstr "Idhinisha Ombi"
+
+msgid "Reject Application"
+msgstr "Kataa Ombi"
+
+msgid "Apply to List Hotel"
+msgstr "Omba Kuorodhesha Hoteli"
+
+msgid "Admin Dashboard"
+msgstr "Dashibodi ya Msimamizi"
+
+msgid "Search and manage all content in one place."
+msgstr "Tafuta na simamia maudhui yote mahali pamoja."
+
+msgid "Search users, hotels, rooms, bookings, payments, applications"
+msgstr "Tafuta watumiaji, hoteli, vyumba, hifadhi, malipo, maombi"
+
+msgid "An account with this email already exists."
+msgstr "Akaunti yenye barua pepe hii tayari ipo."
+
+msgid "We have pre-filled your profile details to make booking faster."
+msgstr "Tumejaza taarifa zako za profaili ili kurahisisha uhifadhi."
+
+msgid "Partner With Us"
+msgstr "Shirikiana Nasi"
+
+msgid "Partner Dashboard"
+msgstr "Dashibodi ya Ushirika"
+
+msgid "Manage your hotel listing, rooms, and bookings in one place."
+msgstr "Simamia orodha ya hoteli yako, vyumba, na hifadhi zako mahali pamoja."
+
+msgid "Hotel not linked yet."
+msgstr "Hoteli haijaunganishwa bado."
+
+msgid "View Public Listing"
+msgstr "Tazama Orodha ya Umma"
+
+msgid "Hotel Profile"
+msgstr "Wasifu wa Hoteli"
+
+msgid "Your hotel profile will appear here after approval."
+msgstr "Wasifu wa hoteli yako utaonekana hapa baada ya idhini."

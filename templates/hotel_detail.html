@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+{% block extra_css %}
+<link href="{% static 'css/hotel-cards.css' %}" rel="stylesheet">
+{% endblock %}
+{% block content %}
+<section class="hotel-collection">
+    <div class="container">
+        <div class="section-header">
+            <h2>{% trans "Hotel" %}</h2>
+            <p>{% trans "Explore rooms at" %} {{ hotel.name }}.</p>
+        </div>
+
+        <div class="hotel-card hotel-card--detail">
+            <div class="hotel-card__media">
+                {% if hotel.image %}
+                    <img src="{{ hotel.image.url }}" alt="{{ hotel.name }}">
+                {% endif %}
+                <span class="hotel-card__fav">
+                    <i class="fa fa-heart-o"></i>
+                </span>
+            </div>
+            <div class="hotel-card__body">
+                <h3 class="hotel-card__title">{{ hotel.name }}</h3>
+                {% if hotel.city or hotel.country %}
+                <p class="hotel-card__location">
+                    {{ hotel.city }}{% if hotel.city and hotel.country %}, {% endif %}{{ hotel.country }}
+                </p>
+                {% endif %}
+                {% if hotel.star_rating %}
+                <div class="hotel-card__rating">
+                    <span class="hotel-card__score">{{ hotel.star_rating }}</span>
+                    <span>{% trans "Rating" %}</span>
+                </div>
+                {% endif %}
+                {% if hotel.description %}
+                <p class="mb-2">{{ hotel.description }}</p>
+                {% endif %}
+                <div class="hotel-card__meta">
+                    {% if hotel.address %}
+                        <div><strong>{% trans "Address:" %}</strong> {{ hotel.address }}</div>
+                    {% endif %}
+                    {% if hotel.phone %}
+                        <div><strong>{% trans "Phone:" %}</strong> {{ hotel.phone }}</div>
+                    {% endif %}
+                    {% if hotel.email %}
+                        <div><strong>{% trans "Email:" %}</strong> {{ hotel.email }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="section-header">
+            <h2>{% trans "Available Rooms" %}</h2>
+            <p>{% blocktrans with hotel_name=hotel.name %}Explore rooms at {{ hotel_name }}.{% endblocktrans %}</p>
+        </div>
+
+        <div class="hotel-grid">
+            {% for room in rooms %}
+            <div class="hotel-card">
+                <div class="hotel-card__media">
+                    {% if room.image %}
+                        <img src="{{ room.image.url }}" alt="{{ room.title }}">
+                    {% endif %}
+                </div>
+                <div class="hotel-card__body">
+                    <h4 class="hotel-card__title">{{ room.title }}</h4>
+                    <p class="hotel-card__location">{{ room.description|truncatewords:18 }}</p>
+                    <p>
+                        <strong>{% trans "Status:" %}</strong>
+                        {% if room.is_booked %}
+                            <span class="badge badge-danger">{% trans "Currently Booked" %}</span>
+                        {% else %}
+                            <span class="badge badge-success">{% trans "Available" %}</span>
+                        {% endif %}
+                    </p>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="room-card__price">KES {{ room.price|floatformat:0 }} / {% trans "night" %}</span>
+                        <a class="btn btn-outline-primary btn-sm" href="{% url 'room_detail' room.id %}">
+                            {% trans "View Details" %}
+                        </a>
+                    </div>
+                    <div class="room-card__actions mt-2">
+                        <a class="btn btn-primary btn-block" href="{% url 'booking' %}?room={{ room.id }}">{% trans "Book Now" %}</a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-center">{% trans "No rooms available for this hotel yet." %}</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

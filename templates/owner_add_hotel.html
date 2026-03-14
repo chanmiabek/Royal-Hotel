@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block content %}
+<div class="container py-5">
+    <div class="section-header">
+        <h2>{% trans "Add a Hotel" %}</h2>
+        <p>{% trans "Create a new hotel listing for your property." %}</p>
+    </div>
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>{% trans "Hotel Name" %}</label>
+                    <input type="text" name="name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>{% trans "Description" %}</label>
+                    <textarea name="description" class="form-control" rows="4"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>{% trans "Address" %}</label>
+                    <input type="text" name="address" class="form-control">
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>{% trans "City" %}</label>
+                        <input type="text" name="city" class="form-control">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>{% trans "Country" %}</label>
+                        <input type="text" name="country" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>{% trans "Phone" %}</label>
+                        <input type="text" name="phone" class="form-control">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>{% trans "Email" %}</label>
+                        <input type="email" name="email" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>{% trans "Hotel Image" %}</label>
+                    <input type="file" name="image" class="form-control-file">
+                </div>
+                <button type="submit" class="btn btn-primary">{% trans "Create Hotel" %}</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

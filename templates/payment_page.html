@@ -1,46 +1,55 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% block content %}
 <div class="container">
     <div class="section-header">
-        <h2>Complete Payment</h2>
+        <h2>{% trans "Complete Payment" %}</h2>
         <p>Booking #{{ booking.id }} - {{ amount }} {{ currency }}</p>
     </div>
 
     <div class="row">
         <div class="col-md-6">
-            <h4>Pay by Card (Stripe)</h4>
+            <h4>{% trans "Pay by Card" %}</h4>
             {% if stripe_publishable_key %}
                 <form id="stripe-form">
                     <div id="card-element" class="form-control" style="padding: 12px;"></div>
                     <input type="hidden" id="booking_id" value="{{ booking.id }}">
-                    <button type="submit" class="btn btn-primary mt-3">Pay with Card</button>
+                    <button type="submit" class="btn btn-primary mt-3">{% trans "Pay with Card" %}</button>
                 </form>
                 <div id="stripe-result" class="mt-2"></div>
             {% else %}
-                <p>Stripe is not configured.</p>
+                <p>{% trans "Stripe is not configured." %}</p>
             {% endif %}
         </div>
 
         <div class="col-md-6">
             <h4>PayPal</h4>
-            <form method="post" action="{% url 'paypal_create_order' %}">
-                {% csrf_token %}
-                <input type="hidden" name="booking_id" value="{{ booking.id }}">
-                <button type="submit" class="btn btn-dark">Pay with PayPal</button>
-            </form>
+            {% if paypal_configured %}
+                <form method="post" action="{% url 'paypal_create_order' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                    <button type="submit" class="btn btn-dark">{% trans "Pay with PayPal" %}</button>
+                </form>
+            {% else %}
+                <p>{% trans "PayPal is not configured." %}</p>
+            {% endif %}
 
             <hr>
 
-            <h4>M-Pesa STK Push</h4>
-            <form method="post" action="{% url 'mpesa_stk_push' %}">
-                {% csrf_token %}
-                <input type="hidden" name="booking_id" value="{{ booking.id }}">
-                <div class="form-group">
-                    <label>Phone Number</label>
-                    <input type="text" name="phone" class="form-control" placeholder="2547XXXXXXXX" required>
-                </div>
-                <button type="submit" class="btn btn-success">Send STK Push</button>
-            </form>
+            <h4>{% trans "M-Pesa" %}</h4>
+            {% if mpesa_configured %}
+                <form method="post" action="{% url 'mpesa_stk_push' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                    <div class="form-group">
+                        <label>{% trans "Phone Number" %}</label>
+                        <input type="text" name="phone" class="form-control" placeholder="{% trans '2547XXXXXXXX' %}" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">{% trans "Pay with M-Pesa" %}</button>
+                </form>
+            {% else %}
+                <p>{% trans "M-Pesa is not configured." %}</p>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -71,9 +80,14 @@
     var stripeForm = document.getElementById('stripe-form');
     var resultEl = document.getElementById('stripe-result');
 
+    var processingText = "{% trans 'Processing...' %}";
+    var paymentSuccessText = "{% trans 'Payment successful.' %}";
+    var paymentStatusText = "{% trans 'Payment status:' %}";
+    var paymentErrorText = "{% trans 'Payment error. Please try again.' %}";
+
     stripeForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        resultEl.textContent = 'Processing...';
+        resultEl.textContent = processingText;
 
         var data = new FormData();
         data.append('booking_id', document.getElementById('booking_id').value);
@@ -116,14 +130,14 @@
                         return;
                     }
                     if (finalize.status === 'SUCCEEDED') {
-                        resultEl.textContent = 'Payment successful.';
+                        resultEl.textContent = paymentSuccessText;
                     } else {
-                        resultEl.textContent = 'Payment status: ' + finalize.status;
+                        resultEl.textContent = paymentStatusText + ' ' + finalize.status;
                     }
                 });
             });
         }).catch(function() {
-            resultEl.textContent = 'Payment error. Please try again.';
+            resultEl.textContent = paymentErrorText;
         });
     });
 </script>

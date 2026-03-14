@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static i18n %}
 
 {% block content %}
         
         <div id="booking">
             <div class="container">
                 <div class="section-header">
-                    <h2>Reserve Your Stay</h2>
+                    <h2>{% trans "Reserve Your Stay" %}</h2>
                     <p>
-                        Secure your room at Royal Hotel today. Fill out the form below, and our team will confirm your reservation within 24 hours.
+                        {% blocktrans %}Secure your room at Royal Hotel today. Fill out the form below, and our team will confirm your reservation within 24 hours.{% endblocktrans %}
                     </p>
                 </div>
                 <div class="row">
@@ -17,65 +17,85 @@
                             <div id="success"></div>
                             <form name="sentMessage" id="bookingForm" method="post" action="{% url 'booking' %}" novalidate="novalidate">
                                 {% csrf_token %}
+                                {% if user.is_authenticated %}
+                                <div class="alert alert-info">
+                                    {% trans "We have pre-filled your profile details to make booking faster." %}
+                                </div>
+                                {% endif %}
                                 <div class="form-row">
                                     <div class="control-group col-md-6">
-                                        <label>First Name</label>
-                                        <input type="text" class="form-control" id="fname" name="fname" placeholder="e.g. John" required="required" data-validation-required-message="Please enter your first name" />
+                                        {% if not user.is_authenticated %}
+                                        <label>{% trans "First Name" %}</label>
+                                        <input type="text" class="form-control" id="fname" name="fname" value="{{ prefill_fname }}" placeholder="{% trans 'e.g. John' %}" required="required" data-validation-required-message="{% trans 'Please enter your first name' %}" />
+                                        {% if user.is_authenticated %}
+                                        <input type="hidden" name="fname" value="{{ prefill_fname }}">
+                                        {% endif %}
                                         <p class="help-block text-danger"></p>
+                                        {% endif %}
                                     </div>
                                     <div class="control-group col-md-6">
-                                        <label>Last Name</label>
-                                        <input type="text" class="form-control" id="lname" name="lname" placeholder="e.g. Smith" required="required" data-validation-required-message="Please enter your last name" />
+                                        {% if not user.is_authenticated %}
+                                        <label>{% trans "Last Name" %}</label>
+                                        <input type="text" class="form-control" id="lname" name="lname" value="{{ prefill_lname }}" placeholder="{% trans 'e.g. Smith' %}" required="required" data-validation-required-message="{% trans 'Please enter your last name' %}" />
+                                        {% if user.is_authenticated %}
+                                        <input type="hidden" name="lname" value="{{ prefill_lname }}">
+                                        {% endif %}
                                         <p class="help-block text-danger"></p>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 <div class="form-row">
                                     <div class="control-group col-md-6">
-                                        <label>Mobile Number</label>
-                                        <input type="text" class="form-control" id="mobile" name="mobile" placeholder="e.g. +1 234 567 8900" required="required" data-validation-required-message="Please enter your mobile number" />
+                                        <label>{% trans "Mobile Number" %}</label>
+                                        <input type="text" class="form-control" id="mobile" name="mobile" value="{{ prefill_mobile }}" placeholder="{% trans 'e.g. +1 234 567 8900' %}" required="required" data-validation-required-message="{% trans 'Please enter your mobile number' %}" />
                                         <p class="help-block text-danger"></p>
                                     </div>
                                     <div class="control-group col-md-6">
-                                        <label>Email Address</label>
-                                        <input type="email" class="form-control" id="email" name="email" placeholder="e.g. john.smith@example.com" required="required" data-validation-required-message="Please enter your email" />
+                                        {% if not user.is_authenticated %}
+                                        <label>{% trans "Email Address" %}</label>
+                                        <input type="email" class="form-control" id="email" name="email" value="{{ prefill_email }}" placeholder="{% trans 'e.g. john.smith@example.com' %}" required="required" data-validation-required-message="{% trans 'Please enter your email' %}" {% if user.is_authenticated %}readonly{% endif %} />
+                                        {% if user.is_authenticated %}
+                                        <input type="hidden" name="email" value="{{ prefill_email }}">
+                                        {% endif %}
                                         <p class="help-block text-danger"></p>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 <div class="form-row">
                                     <div class="control-group col-md-6">
-                                        <label>Room</label>
-                                        <select class="form-control" id="room_id" name="room_id" required="required" data-validation-required-message="Please select a room">
-                                            <option value="">Select a room</option>
+                                        <label>{% trans "Room" %}</label>
+                                        <select class="form-control" id="room_id" name="room_id" required="required" data-validation-required-message="{% trans 'Please select a room' %}">
+                                            <option value="">{% trans "Select a room" %}</option>
                                             {% for room in rooms %}
-                                                <option value="{{ room.id }}" {% if selected_room_id == room.id|stringformat:"s" %}selected{% endif %}>{{ room.title }} - ${{ room.price|floatformat:0 }}/night</option>
+                                                <option value="{{ room.id }}" {% if selected_room_id == room.id|stringformat:"s" %}selected{% endif %}>{{ room.title }} - KES {{ room.price|floatformat:0 }}/night</option>
                                             {% endfor %}
                                         </select>
                                         <p class="help-block text-danger"></p>
                                     </div>
                                     <div class="control-group col-md-6">
-                                        <label>Guests</label>
-                                        <input type="number" class="form-control" id="guests" name="guests" min="1" value="1" required="required" data-validation-required-message="Please enter number of guests" />
+                                        <label>{% trans "Guests" %}</label>
+                                        <input type="number" class="form-control" id="guests" name="guests" min="1" value="{{ prefill_guests|default:'1' }}" required="required" data-validation-required-message="{% trans 'Please enter number of guests' %}" />
                                         <p class="help-block text-danger"></p>
                                     </div>
                                 </div>
                                 <div class="form-row">
                                     <div class="control-group col-md-6">
-                                        <label>Check-In Date</label>
-                                        <input type="text" class="form-control datetimepicker-input" id="date-1" name="date-1" data-toggle="datetimepicker" data-target="#date-1" placeholder="Select Date" required="required" data-validation-required-message="Please select a check-in date"/>
+                                        <label>{% trans "Check-In Date" %}</label>
+                                        <input type="text" class="form-control datetimepicker-input" id="date-1" name="date-1" value="{{ prefill_check_in }}" data-toggle="datetimepicker" data-target="#date-1" placeholder="{% trans 'Select Date' %}" required="required" data-validation-required-message="{% trans 'Please select a check-in date' %}"/>
                                         <p class="help-block text-danger"></p>
                                     </div>
                                     <div class="control-group col-md-6">
-                                        <label>Check-Out Date</label>
-                                        <input type="text" class="form-control datetimepicker-input" id="date-2" name="date-2" data-toggle="datetimepicker" data-target="#date-2" placeholder="Select Date" required="required" data-validation-required-message="Please select a check-out date"/>
+                                        <label>{% trans "Check-Out Date" %}</label>
+                                        <input type="text" class="form-control datetimepicker-input" id="date-2" name="date-2" value="{{ prefill_check_out }}" data-toggle="datetimepicker" data-target="#date-2" placeholder="{% trans 'Select Date' %}" required="required" data-validation-required-message="{% trans 'Please select a check-out date' %}"/>
                                         <p class="help-block text-danger"></p>
                                     </div>
                                 </div>
                                 <div class="control-group">
-                                    <label>Special Requests or Dietary Requirements</label>
-                                    <textarea class="form-control" id="request" name="request" placeholder="e.g. Quiet room, high floor, or airport pickup"></textarea>
+                                    <label>{% trans "Special Requests or Dietary Requirements" %}</label>
+                                    <textarea class="form-control" id="request" name="request" placeholder="{% trans 'e.g. Quiet room, high floor, or airport pickup' %}"></textarea>
                                     <p class="help-block text-danger"></p>
                                 </div>
-                                <div class="button"><button type="submit" id="bookingButton" class="btn btn-primary">Confirm Booking</button></div>
+                                <div class="button"><button type="submit" id="bookingButton" class="btn btn-primary">{% trans "Confirm Booking" %}</button></div>
                             </form>
                         </div>
                     </div>

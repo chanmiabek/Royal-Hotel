@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block content %}
+<div class="container py-5">
+    <div class="section-header">
+        <h2>{% trans "Hotel Applications" %}</h2>
+        <p>{% trans "Review pending hotel partner applications." %}</p>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <form method="get" class="form-inline">
+                <label class="mr-2" for="statusFilter">{% trans "Filter Status" %}</label>
+                <select id="statusFilter" name="status" class="form-control mr-2">
+                    <option value="">{% trans "All" %}</option>
+                    {% for code, label in statuses %}
+                    <option value="{{ code }}" {% if selected_status == code %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary">{% trans "Apply" %}</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover bg-white">
+            <thead class="thead-light">
+                <tr>
+                    <th>{% trans "Application ID" %}</th>
+                    <th>{% trans "Hotel" %}</th>
+                    <th>{% trans "Owner" %}</th>
+                    <th>{% trans "Contact" %}</th>
+                    <th>{% trans "Status" %}</th>
+                    <th>{% trans "Submitted On" %}</th>
+                    <th>{% trans "Actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for application in applications %}
+                <tr>
+                    <td>#{{ application.id }}</td>
+                    <td>{{ application.hotel_name }}</td>
+                    <td>{{ application.user.username|default:"-" }}</td>
+                    <td>{{ application.contact_email }}</td>
+                    <td>{{ application.get_status_display }}</td>
+                    <td>{{ application.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        <a href="{% url 'admin_hotel_application_detail' application.id %}" class="btn btn-sm btn-outline-primary">
+                            {% trans "View" %}
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-4">{% trans "No applications found." %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

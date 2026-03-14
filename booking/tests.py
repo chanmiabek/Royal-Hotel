@@ -3,11 +3,18 @@ from datetime import date, timedelta
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import Booking, Room
+from .models import Booking, Hotel, Room
 
 
 class PublicPagesTests(TestCase):
     def setUp(self):
+        self.hotel = Hotel.objects.create(
+            name="Royal Test Hotel",
+            city="Nairobi",
+            country="Kenya",
+            is_active=True,
+            is_approved=True,
+        )
         self.room = Room.objects.create(
             title="Deluxe Suite",
             category="DLX",
@@ -17,6 +24,7 @@ class PublicPagesTests(TestCase):
             beds="1 King Bed",
             capacity=2,
             available=True,
+            hotel=self.hotel,
         )
 
     def test_home_page_loads(self):

@@ -1,10 +1,26 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% block content %}
 <div class="container py-5">
     <div class="section-header">
-        <h2>My Bookings</h2>
-        <p>Track the rooms you have booked and manage payment status.</p>
+        <h2>{% trans "My Bookings" %}</h2>
+        <p>{% trans "Track the rooms you have booked and manage payment status." %}</p>
     </div>
+
+    {% if figures %}
+    <div class="row mb-4">
+        {% for figure in figures %}
+        <div class="col-6 col-md-3">
+            <div class="card text-center mb-3">
+                <div class="card-body">
+                    <h6>{{ figure.label }}</h6>
+                    <h3>{{ figure.value }}</h3>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 
     <div class="row">
         <div class="col-12">
@@ -13,13 +29,13 @@
                     <thead class="thead-light">
                         <tr>
                             <th>Booking ID</th>
-                            <th>Room</th>
-                            <th>Check-In</th>
-                            <th>Check-Out</th>
-                            <th>Guests</th>
-                            <th>Status</th>
-                            <th>Total</th>
-                            <th>Action</th>
+                            <th>{% trans "Room" %}</th>
+                            <th>{% trans "Check-In" %}</th>
+                            <th>{% trans "Check-Out" %}</th>
+                            <th>{% trans "Guests" %}</th>
+                            <th>{% trans "Status" %}</th>
+                            <th>{% trans "Total" %}</th>
+                            <th>{% trans "Action" %}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -39,15 +55,18 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <a class="btn btn-sm btn-outline-primary" href="{% url 'booking_confirmation' booking.id %}">Details</a>
+                                <a class="btn btn-sm btn-outline-primary" href="{% url 'booking_confirmation' booking.id %}">{% trans "Details" %}</a>
                                 {% if booking.status == 'PENDING' %}
-                                <a class="btn btn-sm btn-primary" href="{% url 'payment_page' booking.id %}">Pay</a>
+                                <a class="btn btn-sm btn-primary" href="{% url 'payment_page' booking.id %}">{% trans "Pay" %}</a>
+                                {% endif %}
+                                {% if booking.status == 'COMPLETED' and not booking.review %}
+                                <a class="btn btn-sm btn-success" href="{% url 'submit_review' booking.id %}">{% trans "Leave Review" %}</a>
                                 {% endif %}
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="8" class="text-center py-4">You have no bookings yet.</td>
+                            <td colspan="8" class="text-center py-4">{% trans "You have no bookings yet." %}</td>
                         </tr>
                         {% endfor %}
                     </tbody>

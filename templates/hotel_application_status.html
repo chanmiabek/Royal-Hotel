@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block content %}
+<div class="container py-5">
+    <div class="section-header">
+        <h2>{% trans "Application Status" %}</h2>
+        <p>{% trans "Track the progress of your hotel partner application." %}</p>
+    </div>
+
+    {% if application %}
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">{% trans "Hotel Application" %}</h4>
+                <span class="badge badge-pill badge-info">{{ application.get_status_display }}</span>
+            </div>
+            <p><strong>{% trans "Hotel Name" %}:</strong> {{ application.hotel_name }}</p>
+            <p><strong>{% trans "Contact Person" %}:</strong> {{ application.contact_name }}</p>
+            <p><strong>{% trans "Contact Email" %}:</strong> {{ application.contact_email }}</p>
+            <p><strong>{% trans "Contact Phone" %}:</strong> {{ application.contact_phone }}</p>
+            <p><strong>{% trans "Submitted On" %}:</strong> {{ application.created_at|date:"Y-m-d H:i" }}</p>
+            {% if application.admin_notes %}
+            <p><strong>{% trans "Admin Notes" %}:</strong> {{ application.admin_notes }}</p>
+            {% endif %}
+            {% if application.status == 'PENDING' %}
+            <div class="alert alert-warning mt-3 mb-0">
+                {% trans "Your application is under review. We will notify you once it is updated." %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        {% trans "You have not submitted any hotel application yet." %}
+        <a href="{% url 'hotel_partner_apply' %}" class="ml-2">{% trans "Start Application" %}</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

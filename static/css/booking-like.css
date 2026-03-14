@@ -1,0 +1,226 @@
+/* ================================================= */
+/* ------------ Booking-like UI Overrides ---------- */
+/* ================================================= */
+
+:root {
+    --brand-primary: #222222;
+    --brand-accent: #FFD700;
+    --brand-text: #1f2933;
+    --brand-muted: #f5f6f8;
+    --brand-border: #e1e5ea;
+}
+
+body {
+    color: var(--brand-text);
+    background: #ffffff;
+}
+
+main {
+    background: #ffffff;
+}
+
+main > * {
+    background: transparent;
+}
+
+.container {
+    max-width: 1200px;
+}
+
+.section-header {
+    text-align: left;
+    margin-bottom: 24px;
+}
+
+.section-header h2 {
+    color: var(--brand-primary);
+    font-size: 28px;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.section-header p {
+    color: #555555;
+    font-size: 14px;
+}
+
+.card {
+    border: 1px solid var(--brand-border);
+    border-radius: 10px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+}
+
+.card .card-img-top {
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.card .card-footer,
+.card .card-body {
+    background: #ffffff;
+}
+
+.table {
+    background: #ffffff;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
+}
+
+.table thead th {
+    background: #f2f4f7;
+    color: var(--brand-primary);
+    border-bottom: 1px solid var(--brand-border);
+    font-weight: 700;
+}
+
+.table td,
+.table th {
+    vertical-align: middle;
+}
+
+.form-control,
+.custom-select {
+    border-radius: 6px;
+    border: 1px solid #cfd6de;
+    box-shadow: none;
+    height: 44px;
+}
+
+.form-control:focus,
+.custom-select:focus {
+    border-color: var(--brand-accent);
+    box-shadow: 0 0 0 0.2rem rgba(255, 215, 0, 0.2);
+}
+
+.btn {
+    border-radius: 6px;
+    font-weight: 600;
+    padding: 8px 16px;
+}
+
+.btn-primary {
+    background: var(--brand-primary);
+    border-color: var(--brand-primary);
+    color: var(--brand-accent);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background: var(--brand-accent);
+    border-color: var(--brand-accent);
+    color: var(--brand-primary);
+}
+
+.btn-outline-primary {
+    color: var(--brand-primary);
+    border-color: var(--brand-primary);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+    background: var(--brand-primary);
+    border-color: var(--brand-primary);
+    color: var(--brand-accent);
+}
+
+.alert {
+    border-radius: 8px;
+}
+
+#header {
+    height: 70px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+}
+
+#header .logo {
+    line-height: 70px;
+}
+
+.main-menu ul li a {
+    line-height: 70px;
+    padding: 0 14px;
+    border-radius: 999px;
+    text-transform: none;
+    font-weight: 600;
+}
+
+.main-menu ul li.active a,
+.main-menu ul li:hover a {
+    background: var(--brand-accent);
+    color: var(--brand-primary);
+}
+
+.top-menu .dropdown .dropdown-toggle {
+    line-height: 70px;
+    border-radius: 999px;
+    padding: 0 14px;
+}
+
+#welcome,
+#amenities,
+#rooms,
+#home-hotels,
+#apartments,
+#subscribe,
+#call-us,
+#hotels,
+#login,
+#register,
+#about,
+#contact,
+#profile,
+#rooms .container,
+#hotels .container {
+    background: transparent;
+}
+
+#welcome {
+    text-align: left;
+    padding: 40px 0 30px 0;
+}
+
+#welcome h3 {
+    font-size: 32px;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--brand-primary);
+}
+
+#welcome p {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 26px;
+}
+
+.room-des,
+.room-rate {
+    background: #ffffff;
+    border: 1px solid var(--brand-border);
+    border-radius: 10px;
+    padding: 16px;
+}
+
+.room-rate {
+    text-align: left;
+}
+
+.room-rate h1 {
+    color: var(--brand-primary);
+}
+
+.room-rate a,
+.room-rate .btn {
+    display: inline-block;
+    margin-top: 8px;
+}
+
+@media (max-width: 1199.98px) {
+    .main-menu ul li a,
+    .top-menu .dropdown .dropdown-toggle {
+        line-height: 60px;
+    }
+}

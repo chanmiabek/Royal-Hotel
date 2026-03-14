@@ -1,22 +1,23 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% block content %}
 <div class="container py-5">
     <div class="section-header">
-        <h2>Payment Management</h2>
-        <p>Review user payments and update status for refunds or other actions.</p>
+        <h2>{% trans "Payment Management" %}</h2>
+        <p>{% trans "Review user payments and update status for refunds or other actions." %}</p>
     </div>
 
     <div class="row mb-3">
         <div class="col-md-4">
             <form method="get" class="form-inline">
-                <label class="mr-2" for="statusFilter">Filter Status</label>
+                <label class="mr-2" for="statusFilter">{% trans "Filter Status" %}</label>
                 <select id="statusFilter" name="status" class="form-control mr-2">
-                    <option value="">All</option>
+                    <option value="">{% trans "All" %}</option>
                     {% for code, label in statuses %}
                     <option value="{{ code }}" {% if selected_status == code %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
-                <button type="submit" class="btn btn-primary">Apply</button>
+                <button type="submit" class="btn btn-primary">{% trans "Apply" %}</button>
             </form>
         </div>
     </div>
@@ -28,16 +29,16 @@
                     <thead class="thead-light">
                         <tr>
                             <th>Payment ID</th>
-                            <th>Booking ID</th>
-                            <th>User</th>
-                            <th>Email</th>
-                            <th>Room</th>
-                            <th>Provider</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Reference</th>
-                            <th>Date</th>
-                            <th>Manage</th>
+                            <th>{% trans "Booking ID" %}</th>
+                            <th>{% trans "User" %}</th>
+                            <th>{% trans "Email" %}</th>
+                            <th>{% trans "Room" %}</th>
+                            <th>{% trans "Provider" %}</th>
+                            <th>{% trans "Amount" %}</th>
+                            <th>{% trans "Status" %}</th>
+                            <th>{% trans "Reference" %}</th>
+                            <th>{% trans "Date" %}</th>
+                            <th>{% trans "Manage" %}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -63,21 +64,21 @@
                                         <option value="{{ code }}" {% if payment.status == code %}selected{% endif %}>{{ label }}</option>
                                         {% endfor %}
                                     </select>
-                                    <button type="submit" class="btn btn-sm btn-outline-primary">Update</button>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">{% trans "Update" %}</button>
                                 </form>
                                 {% if payment.provider == 'MPESA' and payment.status == 'PENDING' %}
                                 <form method="post" class="mt-2">
                                     {% csrf_token %}
                                     <input type="hidden" name="payment_id" value="{{ payment.id }}">
                                     <input type="hidden" name="action" value="query_mpesa">
-                                    <button type="submit" class="btn btn-sm btn-success">Query STK</button>
+                                    <button type="submit" class="btn btn-sm btn-success">{% trans "Query STK" %}</button>
                                 </form>
                                 {% endif %}
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="11" class="text-center py-4">No payment records found.</td>
+                            <td colspan="11" class="text-center py-4">{% trans "No payment records found." %}</td>
                         </tr>
                         {% endfor %}
                     </tbody>

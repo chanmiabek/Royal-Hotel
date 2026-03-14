@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block content %}
+<div class="container py-5">
+    <div class="section-header">
+        <h2>{% trans "Add a Room" %}</h2>
+        <p>{% trans "Submit a new room listing for approval." %}</p>
+    </div>
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>{% trans "Room Title" %}</label>
+                    <input type="text" name="title" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>{% trans "Category" %}</label>
+                    <select name="category" class="form-control" required>
+                        <option value="">{% trans "Select category" %}</option>
+                        {% for code, label in categories %}
+                            <option value="{{ code }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>{% trans "Hotel" %}</label>
+                    {% if single_hotel %}
+                        <input type="text" class="form-control" value="{{ single_hotel.name }}" readonly>
+                        <input type="hidden" name="hotel_id" value="{{ single_hotel.id }}">
+                    {% else %}
+                        <select name="hotel_id" class="form-control" required>
+                            <option value="">{% trans "Select hotel" %}</option>
+                            {% for hotel in hotels %}
+                                <option value="{{ hotel.id }}">{{ hotel.name }}</option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label>{% trans "Description" %}</label>
+                    <textarea name="description" class="form-control" rows="4" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>{% trans "Amenities" %}</label>
+                    <div class="row">
+                        {% for amenity in amenities %}
+                        <div class="col-md-4 col-sm-6">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="amenities" value="{{ amenity }}" id="amenity-{{ forloop.counter }}">
+                                <label class="form-check-label" for="amenity-{{ forloop.counter }}">
+                                    {{ amenity }}
+                                </label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label>{% trans "Price per Night" %}</label>
+                        <input type="text" name="price" class="form-control" required>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>{% trans "Size (sq ft)" %}</label>
+                        <input type="number" name="size" class="form-control" required>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>{% trans "Capacity (guests)" %}</label>
+                        <input type="number" name="capacity" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>{% trans "Beds" %}</label>
+                    <input type="text" name="beds" class="form-control" placeholder="{% trans 'e.g. 2 Single(s)' %}" required>
+                </div>
+                <div class="form-group">
+                    <label>{% trans "Room Image" %}</label>
+                    <input type="file" name="image" class="form-control-file">
+                </div>
+                <button type="submit" class="btn btn-primary">{% trans "Submit for Approval" %}</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,32 +1,32 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static i18n %}
 
 {% block content %}
         <div id="about">
             <div class="container">
                 <div class="section-header">
-                    <h2>About Royal Hotel</h2>
+                    <h2>{% trans "About Royal Hotel" %}</h2>
                     <p>
-                        Established in 1995, Royal Hotel has been the premier destination for travelers seeking a perfect blend of luxury, comfort, and heritage.
+                        {% blocktrans %}Established in 1995, Royal Hotel has been the premier destination for travelers seeking a perfect blend of luxury, comfort, and heritage.{% endblocktrans %}
                     </p>
                 </div>
 
                 <div class="row">
                     <div class="col-md-6 img-cols">
                         <div class="img-col">
-                            <img class="img-fluid" src="{% static 'img/about/about-1.jpg' %}" alt="Hotel Exterior">
+                            <img class="img-fluid" src="{% static 'img/about/about-1.jpg' %}" alt="{% trans 'Hotel Exterior' %}">
                         </div>
                     </div>
                     <div class="col-md-6 content-cols">
                         <div class="content-col">
-                            <h3>A Legacy of Hospitality</h3>
+                            <h3>{% trans "A Legacy of Hospitality" %}</h3>
                             <p>
-                                For over nearly three decades, we have defined the standard for luxury lodging. What started as a small boutique inn has grown into a world-renowned landmark, known for its iconic architecture and unwavering commitment to guest satisfaction.
+                                {% blocktrans %}For over nearly three decades, we have defined the standard for luxury lodging. What started as a small boutique inn has grown into a world-renowned landmark, known for its iconic architecture and unwavering commitment to guest satisfaction.{% endblocktrans %}
                             </p>
                             <p>
-                                Every brick in our building tells a story of elegance. We pride ourselves on maintaining a classic atmosphere while integrating the latest in smart-hotel technology.
+                                {% blocktrans %}Every brick in our building tells a story of elegance. We pride ourselves on maintaining a classic atmosphere while integrating the latest in smart-hotel technology.{% endblocktrans %}
                             </p>
-                            <a href="#">View Our History</a>
+                            <a href="#">{% trans "View Our History" %}</a>
                         </div>
                     </div>
                 </div>
@@ -36,24 +36,24 @@
                 <div class="row">
                     <div class="col-md-6 img-cols d-block d-md-none">
                         <div class="img-col">
-                            <img class="img-fluid" src="{% static 'img/about/about-2.jpg' %}" alt="Restaurant">
+                            <img class="img-fluid" src="{% static 'img/about/about-2.jpg' %}" alt="{% trans 'Restaurant' %}">
                         </div>
                     </div>
                     <div class="col-md-6 content-cols">
                         <div class="content-col">
-                            <h3>Fine Dining & Culinary Art</h3>
+                            <h3>{% trans "Fine Dining & Culinary Art" %}</h3>
                             <p>
-                                Our award-winning restaurant, *The Royal Palate*, offers an exquisite menu crafted by Michelin-starred chefs. We source all our ingredients from local organic farms to ensure every bite is fresh and flavorful.
+                                {% blocktrans %}Our award-winning restaurant, *The Royal Palate*, offers an exquisite menu crafted by Michelin-starred chefs. We source all our ingredients from local organic farms to ensure every bite is fresh and flavorful.{% endblocktrans %}
                             </p>
                             <p>
-                                From our signature breakfast buffet to intimate candlelit dinners, we provide a gastronomic journey that satisfies the most discerning palates.
+                                {% blocktrans %}From our signature breakfast buffet to intimate candlelit dinners, we provide a gastronomic journey that satisfies the most discerning palates.{% endblocktrans %}
                             </p>
-                            <a href="#">Explore Menu</a>
+                            <a href="#">{% trans "Explore Menu" %}</a>
                         </div>
                     </div>
                     <div class="col-md-6 img-cols d-none d-md-block">
                         <div class="img-col">
-                            <img class="img-fluid" src="{% static 'img/about/about-2.jpg' %}" alt="Restaurant">
+                            <img class="img-fluid" src="{% static 'img/about/about-2.jpg' %}" alt="{% trans 'Restaurant' %}">
                         </div>
                     </div>
                 </div>
@@ -63,19 +63,19 @@
                 <div class="row">
                     <div class="col-md-6 img-cols">
                         <div class="img-col">
-                            <img class="img-fluid" src="{% static 'img/about/about-3.jpg' %}" alt="Spa and Wellness">
+                            <img class="img-fluid" src="{% static 'img/about/about-3.jpg' %}" alt="{% trans 'Spa and Wellness' %}">
                         </div>
                     </div>
                     <div class="col-md-6 content-cols">
                         <div class="content-col">
-                            <h3>Wellness & Serenity</h3>
+                            <h3>{% trans "Wellness & Serenity" %}</h3>
                             <p>
-                                Escape the hustle and bustle of the city in our full-service spa and wellness center. We offer a range of treatments, including Swedish massages, rejuvenating facials, and a heated indoor swimming pool.
+                                {% blocktrans %}Escape the hustle and bustle of the city in our full-service spa and wellness center. We offer a range of treatments, including Swedish massages, rejuvenating facials, and a heated indoor swimming pool.{% endblocktrans %}
                             </p>
                             <p>
-                                Our state-of-the-art fitness center is open 24/7, allowing you to maintain your routine while enjoying panoramic views of the city skyline.
+                                {% blocktrans %}Our state-of-the-art fitness center is open 24/7, allowing you to maintain your routine while enjoying panoramic views of the city skyline.{% endblocktrans %}
                             </p>
-                            <a href="#">Book a Treatment</a>
+                            <a href="#">{% trans "Book a Treatment" %}</a>
                         </div>
                     </div>
                 </div>

@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% block content %}
 <div class="container py-5">
     <div class="section-header">
-        <h2>Booked Rooms</h2>
-        <p>View all currently booked rooms and the users who booked them.</p>
+        <h2>{% trans "Booked Rooms" %}</h2>
+        <p>{% trans "View all currently booked rooms and the users who booked them." %}</p>
     </div>
 
     <div class="row">
@@ -13,14 +14,14 @@
                     <thead class="thead-light">
                         <tr>
                             <th>Booking ID</th>
-                            <th>Room</th>
-                            <th>Booked By</th>
-                            <th>Account</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Check-In</th>
-                            <th>Check-Out</th>
-                            <th>Status</th>
+                            <th>{% trans "Room" %}</th>
+                            <th>{% trans "Booked By" %}</th>
+                            <th>{% trans "Account" %}</th>
+                            <th>{% trans "Email" %}</th>
+                            <th>{% trans "Phone" %}</th>
+                            <th>{% trans "Check-In" %}</th>
+                            <th>{% trans "Check-Out" %}</th>
+                            <th>{% trans "Status" %}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -29,7 +30,13 @@
                             <td>#{{ booking.id }}</td>
                             <td>{{ booking.room.title|default:"-" }}</td>
                             <td>{{ booking.first_name }} {{ booking.last_name }}</td>
-                            <td>{{ booking.user.username|default:"Guest (No account)" }}</td>
+                            <td>
+                                {% if booking.user %}
+                                    {{ booking.user.username }}
+                                {% else %}
+                                    {% trans "Guest (No account)" %}
+                                {% endif %}
+                            </td>
                             <td>{{ booking.email }}</td>
                             <td>{{ booking.mobile }}</td>
                             <td>{{ booking.check_in }}</td>
@@ -38,7 +45,7 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="9" class="text-center py-4">No booked rooms at the moment.</td>
+                            <td colspan="9" class="text-center py-4">{% trans "No booked rooms at the moment." %}</td>
                         </tr>
                         {% endfor %}
                     </tbody>

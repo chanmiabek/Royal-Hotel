@@ -1,20 +1,21 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% block content %}
 <div class="container">
     <div class="section-header">
-        <h2>Payment Successful</h2>
-        <p>Your payment was successful.</p>
+        <h2>{% trans "Payment Successful" %}</h2>
+        <p>{% trans "Your payment was successful." %}</p>
     </div>
 
     <div class="row">
         <div class="col-12">
-            <p><strong>Booking ID:</strong> {{ booking.id }}</p>
-            <p><strong>Name:</strong> {{ booking.first_name }} {{ booking.last_name }}</p>
-            <p><strong>Room:</strong> {{ booking.room.title }}</p>
-            <p><strong>Check-In:</strong> {{ booking.check_in }}</p>
-            <p><strong>Check-Out:</strong> {{ booking.check_out }}</p>
-            <a class="btn btn-primary" href="{% url 'booking_confirmation' booking.id %}">View Booking</a>
-            <a class="btn btn-outline-primary" href="{% url 'invoice_pdf' booking.id %}">Download Invoice (PDF)</a>
+            <p><strong>{% trans "Booking ID:" %}</strong> {{ booking.id }}</p>
+            <p><strong>{% trans "Name:" %}</strong> {{ booking.first_name }} {{ booking.last_name }}</p>
+            <p><strong>{% trans "Room:" %}</strong> {{ booking.room.title }}</p>
+            <p><strong>{% trans "Check-In:" %}</strong> {{ booking.check_in }}</p>
+            <p><strong>{% trans "Check-Out:" %}</strong> {{ booking.check_out }}</p>
+            <a class="btn btn-primary" href="{% url 'booking_confirmation' booking.id %}">{% trans "View Booking" %}</a>
+            <a class="btn btn-outline-primary" href="{% url 'invoice_pdf' booking.id %}">{% trans "Download Invoice (PDF)" %}</a>
         </div>
     </div>
 </div>

@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block content %}
+<div class="container py-5">
+    <div class="section-header">
+        <h2>{% trans "Admin Dashboard" %}</h2>
+        <p>{% trans "Search and manage all content in one place." %}</p>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="form-row">
+                <div class="col-md-9 mb-2 mb-md-0">
+                    <input type="text" name="q" class="form-control" value="{{ query }}" placeholder="{% trans 'Search users, hotels, rooms, bookings, payments, applications' %}">
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary btn-block">{% trans "Search" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6>{% trans "Users" %}</h6>
+                    <h3>{{ stats.users }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6>{% trans "Bookings" %}</h6>
+                    <h3>{{ stats.bookings }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6>{% trans "Rooms" %}</h6>
+                    <h3>{{ stats.rooms }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6>{% trans "Hotels" %}</h6>
+                    <h3>{{ stats.hotels }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6>{% trans "Payments" %}</h6>
+                    <h3>{{ stats.payments }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6>{% trans "Applications" %}</h6>
+                    <h3>{{ stats.applications }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="mb-3">{% trans "Users" %}</h3>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover bg-white">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>{% trans "Username" %}</th>
+                            <th>{% trans "Email" %}</th>
+                            <th>{% trans "Date Joined" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user_item in users %}
+                        <tr>
+                            <td>{{ user_item.username }}</td>
+                            <td>{{ user_item.email }}</td>
+                            <td>{{ user_item.date_joined|date:"Y-m-d" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center py-3">{% trans "No user accounts found." %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="mb-3">{% trans "Hotels" %}</h3>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover bg-white">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>{% trans "Hotel" %}</th>
+                            <th>{% trans "Location" %}</th>
+                            <th>{% trans "Owner" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for hotel in hotels %}
+                        <tr>
+                            <td>{{ hotel.name }}</td>
+                            <td>{{ hotel.city }}{% if hotel.city and hotel.country %}, {% endif %}{{ hotel.country }}</td>
+                            <td>
+                                {% if hotel.owner %}
+                                    {{ hotel.owner.email|default:hotel.owner.username|default:"-" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center py-3">{% trans "No hotels available right now." %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="mb-3">{% trans "Rooms" %}</h3>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover bg-white">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>{% trans "Room" %}</th>
+                            <th>{% trans "Hotel" %}</th>
+                            <th>{% trans "Owner" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for room in rooms %}
+                        <tr>
+                            <td>{{ room.title }}</td>
+                            <td>{{ room.hotel.name }}</td>
+                            <td>
+                                {% if room.owner %}
+                                    {{ room.owner.email|default:room.owner.username|default:"-" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center py-3">{% trans "No rooms available at the moment." %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="mb-3">{% trans "Bookings" %}</h3>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover bg-white">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>{% trans "Booking ID" %}</th>
+                            <th>{% trans "Guest" %}</th>
+                            <th>{% trans "Room" %}</th>
+                            <th>{% trans "Status" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in bookings %}
+                        <tr>
+                            <td>#{{ booking.id }}</td>
+                            <td>{{ booking.first_name }} {{ booking.last_name }}</td>
+                            <td>{{ booking.room.title|default:"-" }}</td>
+                            <td>{{ booking.status }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-3">{% trans "No bookings yet." %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="mb-3">{% trans "Payments" %}</h3>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover bg-white">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>{% trans "Reference" %}</th>
+                            <th>{% trans "Provider" %}</th>
+                            <th>{% trans "Amount" %}</th>
+                            <th>{% trans "Status" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr>
+                            <td>{{ payment.reference|default:"-" }}</td>
+                            <td>{{ payment.provider }}</td>
+                            <td>{{ payment.amount }}</td>
+                            <td>{{ payment.status }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-3">{% trans "No payment records found." %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h3 class="mb-0">{% trans "Hotel Applications" %}</h3>
+                <a href="{% url 'admin_hotel_applications' %}" class="btn btn-outline-primary btn-sm">{% trans "Manage" %}</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover bg-white">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>{% trans "Application ID" %}</th>
+                            <th>{% trans "Hotel" %}</th>
+                            <th>{% trans "Owner" %}</th>
+                            <th>{% trans "Status" %}</th>
+                            <th>{% trans "Action" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for application in applications %}
+                        <tr>
+                            <td>#{{ application.id }}</td>
+                            <td>{{ application.hotel_name }}</td>
+                            <td>{{ application.contact_email }}</td>
+                            <td>{{ application.get_status_display }}</td>
+                            <td class="d-flex flex-wrap gap-2">
+                                <a href="{% url 'admin_hotel_application_detail' application.id %}" class="btn btn-sm btn-outline-primary">
+                                    {% trans "View" %}
+                                </a>
+                                {% if application.status == 'PENDING' %}
+                                <form method="post" action="{% url 'admin_hotel_application_detail' application.id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="approve">
+                                    <button type="submit" class="btn btn-sm btn-success">{% trans "Approve" %}</button>
+                                </form>
+                                <form method="post" action="{% url 'admin_hotel_application_detail' application.id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="reject">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">{% trans "Reject" %}</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-3">{% trans "No applications found." %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% block content %}
 <div class="container py-5">
     <div class="section-header">
-        <h2>Registered Users</h2>
-        <p>Admin view of all user accounts and booking details.</p>
+        <h2>{% trans "Registered Users" %}</h2>
+        <p>{% trans "Admin view of all user accounts and booking details." %}</p>
     </div>
 
     <div class="row">
@@ -13,15 +14,15 @@
                     <thead class="thead-light">
                         <tr>
                             <th>ID</th>
-                            <th>Full Name</th>
-                            <th>Username</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Active</th>
-                            <th>Date Joined</th>
-                            <th>Last Login</th>
-                            <th>Total Bookings</th>
-                            <th>Confirmed Bookings</th>
+                            <th>{% trans "Full Name" %}</th>
+                            <th>{% trans "Username" %}</th>
+                            <th>{% trans "Email" %}</th>
+                            <th>{% trans "Role" %}</th>
+                            <th>{% trans "Active" %}</th>
+                            <th>{% trans "Date Joined" %}</th>
+                            <th>{% trans "Last Login" %}</th>
+                            <th>{% trans "Total Bookings" %}</th>
+                            <th>{% trans "Confirmed Bookings" %}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -33,28 +34,34 @@
                             <td>{{ account.email|default:"-" }}</td>
                             <td>
                                 {% if account.is_superuser %}
-                                    Superuser
+                                    {% trans "Superuser" %}
                                 {% elif account.is_staff %}
-                                    Staff
+                                    {% trans "Staff" %}
                                 {% else %}
-                                    User
+                                    {% trans "User" %}
                                 {% endif %}
                             </td>
                             <td>
                                 {% if account.is_active %}
-                                    Yes
+                                    {% trans "Yes" %}
                                 {% else %}
-                                    No
+                                    {% trans "No" %}
                                 {% endif %}
                             </td>
                             <td>{{ account.date_joined|date:"Y-m-d H:i" }}</td>
-                            <td>{{ account.last_login|date:"Y-m-d H:i"|default:"Never" }}</td>
+                            <td>
+                                {% if account.last_login %}
+                                    {{ account.last_login|date:"Y-m-d H:i" }}
+                                {% else %}
+                                    {% trans "Never" %}
+                                {% endif %}
+                            </td>
                             <td>{{ account.total_bookings }}</td>
                             <td>{{ account.confirmed_bookings }}</td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="10" class="text-center py-4">No user accounts found.</td>
+                            <td colspan="10" class="text-center py-4">{% trans "No user accounts found." %}</td>
                         </tr>
                         {% endfor %}
                     </tbody>

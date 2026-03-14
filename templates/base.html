@@ -1,6 +1,7 @@
-{% load static %}
+{% load static i18n %}
+{% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE|default:'en' }}">
 <head>
     <meta charset="utf-8">
     <title>ROYAL HOTEL</title>
@@ -26,7 +27,120 @@
     <!-- Main Stylesheet File -->
     <link href="{% static 'css/hover-style.css' %}" rel="stylesheet">
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    <link href="{% static 'css/booking-like.css' %}" rel="stylesheet">
     <style>
+        #header.booking-navbar {
+            height: 72px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 0 24px;
+        }
+        #header.booking-navbar .logo {
+            position: static;
+            padding-left: 0;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+        }
+        #header.booking-navbar .logo img {
+            max-height: 34px;
+        }
+        #header.booking-navbar .main-menu {
+            padding: 0 12px;
+            width: auto;
+            flex: 1;
+        }
+        #header.booking-navbar .main-menu ul {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 10px;
+        }
+        #header.booking-navbar .main-menu ul li {
+            display: flex;
+            align-items: center;
+        }
+        #header.booking-navbar .main-menu ul li a {
+            color: #FFD700;
+            text-transform: none;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            line-height: 1.2;
+        }
+        #header.booking-navbar .main-menu ul li:hover a,
+        #header.booking-navbar .main-menu ul li.active a {
+            color: #ffffff;
+            background: rgba(255, 215, 0, 0.2);
+        }
+        #header.booking-navbar .main-menu ul li.nav-meta-first {
+            margin-left: auto;
+        }
+        #header.booking-navbar .main-menu ul li.nav-meta span,
+        #header.booking-navbar .main-menu ul li.nav-meta .dropdown-toggle {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border: 1px solid rgba(255, 215, 0, 0.6);
+            border-radius: 999px;
+            color: #FFD700;
+            font-weight: 600;
+            font-size: 13px;
+            letter-spacing: 0.02em;
+            line-height: 1.2;
+        }
+        #header.booking-navbar .main-menu ul li.nav-meta .dropdown-toggle::after {
+            margin-left: 6px;
+        }
+        #header.booking-navbar .main-menu ul li.nav-meta .dropdown-toggle:hover {
+            color: #ffffff;
+            background: rgba(255, 215, 0, 0.2);
+        }
+        #header.booking-navbar .phone {
+            position: static;
+            padding: 0;
+            margin-left: 6px;
+            color: #FFD700;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        #header.booking-navbar .phone i {
+            color: #FFD700;
+            font-size: 16px;
+            padding-right: 6px;
+        }
+        #header.booking-navbar .mobile-menu-btn {
+            color: #FFD700;
+            line-height: 1;
+            margin-left: 6px;
+        }
+        #header.booking-navbar .top-menu .dropdown .dropdown-toggle {
+            color: #FFD700;
+            padding: 8px 14px;
+            line-height: 1.2;
+        }
+        #header.booking-navbar .top-menu .dropdown-menu {
+            background: #222222;
+            border-color: #3a3a3a;
+        }
+        #header.booking-navbar .top-menu .dropdown-menu form {
+            margin: 0;
+        }
+        #header.booking-navbar .top-menu .dropdown-menu .dropdown-item {
+            width: 100%;
+            text-align: left;
+            background: transparent;
+            border: none;
+        }
+        #header.booking-navbar .top-menu .dropdown-item {
+            color: #FFD700;
+        }
+        #header.booking-navbar .top-menu .dropdown-item:hover {
+            background: #FFD700;
+            color: #222222;
+        }
         .top-menu .dropdown .dropdown-toggle {
             display: inline-flex;
             align-items: center;
@@ -104,7 +218,7 @@
 
 <body>
     <!-- Header Section Start -->
-    <header id="header">
+    <header id="header" class="booking-navbar">
         <a href="{% url 'index' %}" class="logo">
             <img src="{% static 'img/logo.jpg' %}" alt="Royal Hotel Logo">
         </a>
@@ -113,65 +227,111 @@
         <nav class="main-menu top-menu">
             <ul>
                 <li class="{% if request.resolver_match.url_name == 'index' %} active{% endif %}">
-                    <a href="{% url 'index' %}">Home</a>
+                    <a href="{% url 'index' %}">{% trans "Home" %}</a>
                 </li>
                 <li class="{% if request.resolver_match.url_name == 'about' %} active{% endif %}">
-                    <a href="{% url 'about' %}">About Us</a>
+                    <a href="{% url 'about' %}">{% trans "About Us" %}</a>
                 </li>
-                <li class="{% if request.resolver_match.url_name == 'room_list' or request.resolver_match.url_name == 'room_detail' %}active{% endif %}">
-                    <a href="{% url 'room_list' %}">Rooms</a>
+                <li class="{% if request.resolver_match.url_name == 'hotel_list' or request.resolver_match.url_name == 'hotel_detail' %}active{% endif %}">
+                    <a href="{% url 'hotel_list' %}">{% trans "Hotels" %}</a>
                 </li>
-                <li class="{% if request.resolver_match.url_name == 'amenities' %}active{% endif %}">
-                    <a href="{% url 'amenities' %}">Amenities</a>
+                {% if not user.is_authenticated %}
+                <li class="{% if request.resolver_match.url_name == 'hotel_partner_apply' %}active{% endif %}">
+                    <a href="{% url 'hotel_partner_apply' %}">{% trans "Partner With Us" %}</a>
                 </li>
+                {% elif not user.is_staff and not user.is_superuser and user.profile.user_type != 'OWNER' %}
+                <li class="{% if request.resolver_match.url_name == 'hotel_partner_apply' %}active{% endif %}">
+                    <a href="{% url 'hotel_partner_apply' %}">{% trans "Partner With Us" %}</a>
+                </li>
+                {% endif %}
                 <li class="{% if request.resolver_match.url_name == 'booking' or request.resolver_match.url_name == 'booking_confirmation' %}active{% endif %}">
-                    <a href="{% url 'booking' %}">Booking</a>
+                    <a href="{% url 'booking' %}">{% trans "Booking" %}</a>
+                </li>
+                {% if user.is_authenticated and user.profile.user_type == 'OWNER' %}
+                <li class="{% if request.resolver_match.url_name == 'owner_dashboard' %}active{% endif %}">
+                    <a href="{% url 'owner_dashboard' %}">{% trans "Dashboard" %}</a>
+                </li>
+                {% endif %}
+                <li class="{% if request.resolver_match.url_name == 'contact' %}active{% endif %}">
+                    <a href="{% url 'contact' %}">{% trans "Contact Us" %}</a>
+                </li>
+                <li class="nav-meta nav-meta-first">
+                    <span>KE</span>
+                </li>
+                <li class="nav-meta dropdown">
+                    <a class="dropdown-toggle" href="#" id="langDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {% if LANGUAGE_CODE|slice:":2" == "sw" %}KIS{% else %}ENG{% endif %}
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="langDropdown">
+                        <form method="post" action="{% url 'set_language' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit" name="language" value="en" class="dropdown-item">English</button>
+                        </form>
+                        <form method="post" action="{% url 'set_language' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit" name="language" value="sw" class="dropdown-item">Kiswahili</button>
+                        </form>
+                    </div>
                 </li>
                 {% if user.is_authenticated %}
-                <li class="nav-item dropdown {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'my_bookings' or request.resolver_match.url_name == 'admin_users' or request.resolver_match.url_name == 'admin_payments' or request.resolver_match.url_name == 'admin_booked_rooms' %}active{% endif %}">
+                <li class="nav-item dropdown {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'my_bookings' or request.resolver_match.url_name == 'admin_dashboard' or request.resolver_match.url_name == 'admin_users' or request.resolver_match.url_name == 'admin_payments' or request.resolver_match.url_name == 'admin_booked_rooms' or request.resolver_match.url_name == 'admin_rooms' or request.resolver_match.url_name == 'owner_dashboard' %}active{% endif %}">
                     <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <i class="fa fa-user"></i> {{ user.first_name|default:user.username }}
                     </a>
                     <div class="dropdown-menu" aria-labelledby="userDropdown">
                         <a class="dropdown-item" href="{% url 'profile' %}">
-                            <i class="fa fa-user-circle"></i> My Profile
+                            <i class="fa fa-user-circle"></i> {% trans "My Profile" %}
                         </a>
                         {% if user.is_staff or user.is_superuser %}
+                        <a class="dropdown-item" href="{% url 'admin_dashboard' %}">
+                            <i class="fa fa-dashboard"></i> {% trans "Admin Dashboard" %}
+                        </a>
+                        <a class="dropdown-item" href="{% url 'admin_rooms' %}">
+                            <i class="fa fa-building"></i> {% trans "Manage Rooms" %}
+                        </a>
                         <a class="dropdown-item" href="{% url 'admin_booked_rooms' %}">
-                            <i class="fa fa-bed"></i> Booked Rooms
+                            <i class="fa fa-bed"></i> {% trans "Booked Rooms" %}
                         </a>
                         <a class="dropdown-item" href="{% url 'admin_users' %}">
-                            <i class="fa fa-users"></i> Manage Users
+                            <i class="fa fa-users"></i> {% trans "Manage Users" %}
                         </a>
                         <a class="dropdown-item" href="{% url 'admin_payments' %}">
-                            <i class="fa fa-money"></i> Manage Payments
+                            <i class="fa fa-money"></i> {% trans "Manage Payments" %}
+                        </a>
+                        {% else %}
+                        {% if user.profile.user_type == 'OWNER' %}
+                        <a class="dropdown-item" href="{% url 'owner_dashboard' %}">
+                            <i class="fa fa-line-chart"></i> {% trans "Owner Dashboard" %}
+                        </a>
+                        <a class="dropdown-item" href="{% url 'owner_add_room' %}">
+                            <i class="fa fa-plus-square"></i> {% trans "Add Room" %}
                         </a>
                         {% else %}
                         <a class="dropdown-item" href="{% url 'my_bookings' %}">
-                            <i class="fa fa-calendar-check-o"></i> My Bookings
+                            <i class="fa fa-calendar-check-o"></i> {% trans "My Bookings" %}
                         </a>
+                        {% endif %}
                         {% endif %}
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="{% url 'logout' %}">
-                            <i class="fa fa-sign-out"></i> Logout
+                            <i class="fa fa-sign-out"></i> {% trans "Logout" %}
                         </a>
                     </div>
                 </li>
                 {% else %}
-                <li class="{% if request.resolver_match.url_name == 'login' %}active{% endif %}">
-                    <a href="{% url 'login' %}">
-                        <i class="fa fa-sign-in"></i> Login
-                    </a>
-                </li>
                 <li class="{% if request.resolver_match.url_name == 'register' %}active{% endif %}">
                     <a href="{% url 'register' %}">
-                        <i class="fa fa-user-plus"></i> Register
+                        <i class="fa fa-user-plus"></i> {% trans "Register" %}
+                    </a>
+                </li>
+                <li class="{% if request.resolver_match.url_name == 'login' %}active{% endif %}">
+                    <a href="{% url 'login' %}">
+                        <i class="fa fa-sign-in"></i> {% trans "Login" %}
                     </a>
                 </li>
                 {% endif %}
-                <li class="{% if request.resolver_match.url_name == 'contact' %}active{% endif %}">
-                    <a href="{% url 'contact' %}">Contact Us</a>
-                </li>
             </ul>
         </nav>
     </header>
@@ -197,52 +357,40 @@
         {% endblock %}
     </main>
 
+    {% with url_name=request.resolver_match.url_name %}
+    {% if url_name != 'owner_dashboard' and url_name != 'my_bookings' and url_name != 'profile' and url_name != 'admin_users' and url_name != 'admin_payments' and url_name != 'admin_booked_rooms' and url_name != 'admin_rooms' and url_name != 'admin_hotel_applications' and url_name != 'admin_hotel_application_detail' and url_name != 'admin_dashboard' and url_name != 'hotel_application_status' and url_name != 'owner_add_room' and url_name != 'owner_add_hotel' %}
     <!-- Footer Section Start -->
     <div id="footer">
         <div class="container">
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="footer-widget">
-                        <h3>About Royal Hotel</h3>
-                        <p>Experience luxury and comfort at its finest. We provide world-class amenities and exceptional service for an unforgettable stay.</p>
-                    </div>
+            <div class="footer-compact">
+                <div class="footer-block footer-about">
+                    <h3>{% trans "About Royal Hotel" %}</h3>
+                    <p>{% trans "Luxury stays, trusted hosts, effortless bookings." %}</p>
                 </div>
-                <div class="col-md-4">
-                    <div class="footer-widget">
-                        <h3>Quick Links</h3>
-                        <ul>
-                            <li><a href="{% url 'about' %}">About Us</a></li>
-                            <li><a href="{% url 'room_list' %}">Our Rooms</a></li>
-                            <li><a href="{% url 'amenities' %}">Amenities</a></li>
-                            <li><a href="{% url 'contact' %}">Contact</a></li>
-                        </ul>
-                    </div>
+                <div class="footer-block footer-links">
+                    <h3>{% trans "Quick Links" %}</h3>
+                    <ul class="footer-inline-links">
+                        <li><a href="{% url 'about' %}">{% trans "About Us" %}</a></li>
+                        <li><a href="{% url 'hotel_list' %}">{% trans "Our Hotels" %}</a></li>
+                        <li><a href="{% url 'contact' %}">{% trans "Contact" %}</a></li>
+                    </ul>
                 </div>
-                <div class="col-md-4">
-                    <div class="footer-widget">
-                        <h3>Contact Info</h3>
-                        <p><i class="fa fa-map-marker"></i> Hongkong Road Eastside, Kakuma, Kenya</p>
-                        <p><i class="fa fa-phone"></i> +254799091016</p>
-                        <p><i class="fa fa-envelope"></i> info@royalhotel.com</p>
-                    </div>
+                <div class="footer-block footer-contact">
+                    <h3>{% trans "Contact" %}</h3>
+                    <p><i class="fa fa-map-marker"></i> {% trans "Hongkong Road Eastside, Kakuma, Kenya" %}</p>
+                    <p><i class="fa fa-phone"></i> +254799091016</p>
+                    <p><i class="fa fa-envelope"></i> info@royalhotel.com</p>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-12">
-                    <div class="social">
-                        <a href="#" class="social-icon"><i class="fa fa-instagram"></i></a>
-                        <a href="#" class="social-icon"><i class="fa fa-twitter"></i></a>
-                        <a href="#" class="social-icon"><i class="fa fa-facebook-f"></i></a>
-                    </div>
-                </div>
-                <div class="col-12">
-                    <p class="copyright">Copyright &#169; {% now "Y" %} <a href="{% url 'index' %}">Royal Hotel</a> All Rights Reserved.</p>
-                    <p class="credit">Designed By <a href="https://chanmiabek.netify.app" target="_blank">Maggiso</a></p>
+                <div class="footer-block footer-legal">
+                    <p class="copyright">Copyright &#169; {% now "Y" %} <a href="{% url 'index' %}">Royal Hotel</a> {% trans "All Rights Reserved." %}</p>
+                    <p class="credit">{% trans "Designed By" %} <a href="https://chanmiabek.netify.app" target="_blank">Maggiso</a></p>
                 </div>
             </div>
         </div>
     </div>
     <!-- Footer Section End -->
+    {% endif %}
+    {% endwith %}
 
     <!-- Back to Top Button -->
     <a href="#" class="back-to-top"><i class="fa fa-chevron-up"></i></a>

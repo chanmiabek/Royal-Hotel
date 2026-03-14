@@ -5,5 +5,6 @@
         "onrender",
         "sourcery",
         "stylesheet"
-    ]
+    ],
+    "claudeCodeChat.permissions.yoloMode": true
 }
