@@ -54,3 +54,7 @@ class PublicPagesTests(TestCase):
         )
         response = self.client.get(reverse("payment_page", args=[booking.id]))
         self.assertEqual(response.status_code, 200)
+
+    def test_jwt_me_requires_bearer_token(self):
+        response = self.client.get(reverse("jwt_me"))
+        self.assertEqual(response.status_code, 401)

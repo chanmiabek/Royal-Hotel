@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block extra_css %}
+<style>
+    .admin-shell {
+        background: transparent;
+    }
+    .admin-sidebar {
+        position: sticky;
+        top: 24px;
+        border-radius: 18px;
+        box-shadow: 0 14px 35px rgba(0, 0, 0, 0.08);
+    }
+    .admin-profile {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-bottom: 14px;
+        margin-bottom: 14px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .admin-profile__meta {
+        min-width: 0;
+    }
+    .admin-profile__name {
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .admin-profile__email {
+        margin: 0;
+        color: #64748b;
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .admin-profile__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .admin-profile__actions .btn {
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-weight: 600;
+    }
+    .admin-sidebar .list-group-item {
+        border: 0;
+        border-radius: 12px;
+        margin-bottom: 6px;
+        font-weight: 600;
+        padding: 10px 12px;
+    }
+    .admin-sidebar .list-group-item.active {
+        background: #111827;
+        color: #ffffff;
+    }
+    .admin-sidebar .list-group-item i {
+        width: 18px;
+        text-align: center;
+        margin-right: 8px;
+    }
+    .admin-card {
+        border-radius: 18px;
+        box-shadow: 0 14px 35px rgba(0, 0, 0, 0.08);
+        border: 0;
+    }
+    .admin-section {
+        scroll-margin-top: 110px;
+    }
+    .admin-thumb {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: #f1f5f9;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+    .admin-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+</style>
+{% block admin_extra_css %}{% endblock %}
+{% endblock %}
+
+{% block content %}
+{% with url_name=request.resolver_match.url_name|default:'' %}
+<div class="container-fluid py-4 admin-shell">
+    <div class="row">
+        <div class="col-lg-3 col-md-4 mb-4">
+            <div class="card admin-sidebar">
+                <div class="card-body">
+                    <div class="admin-profile">
+                        <span class="admin-thumb" aria-hidden="true"><i class="fa fa-user" aria-hidden="true"></i></span>
+                        <div class="admin-profile__meta flex-grow-1">
+                            <p class="admin-profile__name">{{ request.user.first_name|default:request.user.username }}</p>
+                            <p class="admin-profile__email">{{ request.user.email|default:"-" }}</p>
+                            <div class="admin-profile__actions mt-2">
+                                <a href="{% url 'admin_user_detail' request.user.id %}" class="btn btn-sm btn-outline-primary">
+                                    {% trans "My Profile" %}
+                                </a>
+                                <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-danger">
+                                    {% trans "Logout" %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h5 class="mb-3">{% trans "Admin Menu" %}</h5>
+                    <div class="list-group mb-3">
+                        <a href="{% url 'admin_dashboard' %}" class="list-group-item list-group-item-action {% if url_name == 'admin_dashboard' %}active{% endif %}">
+                            <i class="fa fa-dashboard" aria-hidden="true"></i>{% trans "Dashboard" %}
+                        </a>
+                        <a href="{% url 'admin_users' %}" class="list-group-item list-group-item-action {% if url_name == 'admin_users' or url_name == 'admin_user_detail' or url_name == 'admin_user_edit' %}active{% endif %}">
+                            <i class="fa fa-users" aria-hidden="true"></i>{% trans "Users" %}
+                        </a>
+                        <a href="{% url 'admin_hotels' %}" class="list-group-item list-group-item-action {% if url_name == 'admin_hotels' or url_name == 'admin_hotel_detail' or url_name == 'admin_hotel_edit' %}active{% endif %}">
+                            <i class="fa fa-building" aria-hidden="true"></i>{% trans "Hotels" %}
+                        </a>
+                        <a href="{% url 'admin_rooms' %}" class="list-group-item list-group-item-action {% if url_name == 'admin_rooms' or url_name == 'admin_room_detail' or url_name == 'admin_room_edit' %}active{% endif %}">
+                            <i class="fa fa-bed" aria-hidden="true"></i>{% trans "Rooms" %}
+                        </a>
+                        <a href="{% url 'admin_booked_rooms' %}" class="list-group-item list-group-item-action {% if url_name == 'admin_booked_rooms' %}active{% endif %}">
+                            <i class="fa fa-calendar-check-o" aria-hidden="true"></i>{% trans "Booked Rooms" %}
+                        </a>
+                        <a href="{% url 'admin_payments' %}" class="list-group-item list-group-item-action {% if url_name == 'admin_payments' %}active{% endif %}">
+                            <i class="fa fa-credit-card" aria-hidden="true"></i>{% trans "Payments" %}
+                        </a>
+                        <a href="{% url 'admin_hotel_applications' %}" class="list-group-item list-group-item-action {% if url_name == 'admin_hotel_applications' or url_name == 'admin_hotel_application_detail' %}active{% endif %}">
+                            <i class="fa fa-file-text-o" aria-hidden="true"></i>{% trans "Applications" %}
+                        </a>
+                    </div>
+
+                    {% block admin_sidebar_extra %}{% endblock %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9 col-md-8">
+            {% block admin_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endwith %}
+{% endblock %}

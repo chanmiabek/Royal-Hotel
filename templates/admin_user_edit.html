@@ -1,0 +1,70 @@
+{% extends 'admin_base.html' %}
+{% load i18n %}
+
+{% block admin_content %}
+<div class="container py-5 px-0">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <h2 class="mb-1">{% trans "Edit User Profile" %}</h2>
+            <div class="text-muted">{{ account.username }}</div>
+        </div>
+        <a href="{% url 'admin_user_detail' account.id %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
+    </div>
+
+    <div class="card admin-card">
+        <div class="card-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="first_name">{% trans "First Name" %}</label>
+                        <input id="first_name" type="text" name="first_name" class="form-control" value="{{ account.first_name }}">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="last_name">{% trans "Last Name" %}</label>
+                        <input id="last_name" type="text" name="last_name" class="form-control" value="{{ account.last_name }}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="email">{% trans "Email" %}</label>
+                        <input id="email" type="email" name="email" class="form-control" value="{{ account.email }}">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="mobile">{% trans "Mobile" %}</label>
+                        <input id="mobile" type="text" name="mobile" class="form-control" value="{% if profile %}{{ profile.mobile }}{% endif %}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="user_type">{% trans "User Type" %}</label>
+                        <select id="user_type" name="user_type" class="form-control">
+                            {% for code, label in user_types %}
+                                <option value="{{ code }}" {% if profile and profile.user_type == code %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group col-md-6 d-flex align-items-end">
+                        <div class="custom-control custom-checkbox">
+                            <input id="is_active" type="checkbox" name="is_active" class="custom-control-input" {% if account.is_active %}checked{% endif %}>
+                            <label class="custom-control-label" for="is_active">{% trans "Active" %}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    {% trans "Password changes are not available here." %}
+                </div>
+
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary">{% trans "Save Changes" %}</button>
+                    <a href="{% url 'admin_user_detail' account.id %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

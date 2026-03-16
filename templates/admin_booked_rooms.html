@@ -1,7 +1,7 @@
-{% extends 'base.html' %}
+{% extends 'admin_base.html' %}
 {% load i18n %}
-{% block content %}
-<div class="container py-5">
+{% block admin_content %}
+<div class="container py-5 px-0">
     <div class="section-header">
         <h2>{% trans "Booked Rooms" %}</h2>
         <p>{% trans "View all currently booked rooms and the users who booked them." %}</p>
@@ -28,11 +28,17 @@
                         {% for booking in bookings %}
                         <tr>
                             <td>#{{ booking.id }}</td>
-                            <td>{{ booking.room.title|default:"-" }}</td>
+                            <td>
+                                {% if booking.room %}
+                                    <a href="{% url 'admin_room_detail' booking.room.id %}">{{ booking.room.title }}</a>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
                             <td>{{ booking.first_name }} {{ booking.last_name }}</td>
                             <td>
                                 {% if booking.user %}
-                                    {{ booking.user.username }}
+                                    <a href="{% url 'admin_user_detail' booking.user.id %}">{{ booking.user.username }}</a>
                                 {% else %}
                                     {% trans "Guest (No account)" %}
                                 {% endif %}

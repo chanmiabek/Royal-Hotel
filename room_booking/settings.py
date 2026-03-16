@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import os
+import sys
 import importlib.util
 from urllib.parse import urlparse, parse_qs, unquote
 from django.utils.translation import gettext_lazy as _
@@ -26,7 +27,9 @@ def _load_dotenv(dotenv_path, override=True):
                 os.environ[key] = value
 
 
-_load_dotenv(BASE_DIR / ".env", override=True)
+RUNNING_TESTS = "test" in sys.argv
+if not RUNNING_TESTS:
+    _load_dotenv(BASE_DIR / ".env", override=True)
 
 def _env_bool(name, default=False):
     value = os.getenv(name)
@@ -61,6 +64,8 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'dev-only-change-this-to-a-long-random-secr
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = _env_bool("DEBUG", default=True)
+if RUNNING_TESTS:
+    DEBUG = True
 
 ALLOWED_HOSTS = _normalize_allowed_hosts(
     _env_csv("ALLOWED_HOSTS", default="royal-hotel-mwb5.onrender.com,localhost,127.0.0.1")
@@ -104,6 +109,9 @@ TEMPLATES = [
         'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
+            'builtins': [
+                'booking.templatetags.booking_extras',
+            ],
             'context_processors': [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
@@ -230,21 +238,97 @@ if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-if WHITENOISE_AVAILABLE:
-    STORAGES = {
-        "default": {
-            "BACKEND": "django.core.files.storage.FileSystemStorage",
-        },
-        "staticfiles": {
-            "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
-        },
-    }
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": (
+            "whitenoise.storage.CompressedStaticFilesStorage"
+            if WHITENOISE_AVAILABLE
+            else "django.contrib.staticfiles.storage.StaticFilesStorage"
+        ),
+    },
+}
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Email (console backend for development)
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'royal-hotel@example.com')
+def _cloudinary_storage_config():
+    cloudinary_url = os.getenv("CLOUDINARY_URL", "").strip()
+    if cloudinary_url:
+        parsed = urlparse(cloudinary_url)
+        if parsed.scheme == "cloudinary":
+            cloud_name = (parsed.hostname or "").strip()
+            api_key = unquote(parsed.username or "").strip()
+            api_secret = unquote(parsed.password or "").strip()
+            if cloud_name and api_key and api_secret:
+                return {
+                    "CLOUD_NAME": cloud_name,
+                    "API_KEY": api_key,
+                    "API_SECRET": api_secret,
+                    "SECURE": True,
+                    "RESOURCE_TYPE": "auto",
+                }
+
+    cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME", "").strip()
+    api_key = os.getenv("CLOUDINARY_API_KEY", "").strip()
+    api_secret = os.getenv("CLOUDINARY_API_SECRET", "").strip()
+    if cloud_name and api_key and api_secret:
+        return {
+            "CLOUD_NAME": cloud_name,
+            "API_KEY": api_key,
+            "API_SECRET": api_secret,
+            "SECURE": True,
+            "RESOURCE_TYPE": "auto",
+        }
+
+    return None
+
+
+CLOUDINARY_AVAILABLE = (
+    importlib.util.find_spec("cloudinary_storage") is not None
+    and importlib.util.find_spec("cloudinary") is not None
+)
+_cloudinary_config = _cloudinary_storage_config()
+USE_CLOUDINARY = _env_bool("USE_CLOUDINARY", default=bool(_cloudinary_config and not DEBUG))
+
+if USE_CLOUDINARY and CLOUDINARY_AVAILABLE and _cloudinary_config:
+    CLOUDINARY_STORAGE = _cloudinary_config
+
+    # Ensure template tags + storage backend are available.
+    insert_at = INSTALLED_APPS.index("booking") if "booking" in INSTALLED_APPS else len(INSTALLED_APPS)
+    for app in ("cloudinary_storage", "cloudinary"):
+        if app not in INSTALLED_APPS:
+            INSTALLED_APPS.insert(insert_at, app)
+            insert_at += 1
+
+    STORAGES["default"]["BACKEND"] = "cloudinary_storage.storage.MediaCloudinaryStorage"
+
+# Email
+EMAIL_HOST = os.getenv("EMAIL_HOST", "localhost")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "25"))
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = _env_bool("EMAIL_USE_TLS", default=False)
+EMAIL_USE_SSL = _env_bool("EMAIL_USE_SSL", default=False)
+if EMAIL_USE_SSL:
+    EMAIL_USE_TLS = False
+EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "20"))
+
+_email_backend = (os.getenv("EMAIL_BACKEND") or "").strip()
+if _email_backend:
+    EMAIL_BACKEND = _email_backend
+elif EMAIL_HOST_USER and EMAIL_HOST != "localhost":
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+DEFAULT_FROM_EMAIL = (
+    (os.getenv("DEFAULT_FROM_EMAIL") or "").strip()
+    or (EMAIL_HOST_USER or "royal-hotel@example.com")
+)
 
 # Payments (use environment variables for real credentials)
 DEFAULT_CURRENCY = os.getenv('DEFAULT_CURRENCY', 'KES')
@@ -279,3 +363,15 @@ MPESA_TRANSACTION_DESC = os.getenv('MPESA_TRANSACTION_DESC', 'Hotel Booking Paym
 
 # Google Maps
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', '')
+
+# Google OAuth (Login with Google / Gmail)
+GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "").strip()
+GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "").strip()
+
+# JWT / OIDC (optional)
+# Used by booking.jwt_auth to validate Bearer tokens against a JWKS endpoint.
+JWT_ISSUER = os.getenv("JWT_ISSUER", "").strip()
+JWT_JWKS_URL = os.getenv("JWT_JWKS_URL", "").strip()
+JWT_AUDIENCE = os.getenv("JWT_AUDIENCE", "").strip()
+JWT_ALGORITHMS = _env_csv("JWT_ALGORITHMS", default="RS256") or ["RS256"]
+JWT_LEEWAY_SECONDS = int(os.getenv("JWT_LEEWAY_SECONDS", "60"))

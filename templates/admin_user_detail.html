@@ -1,0 +1,196 @@
+{% extends 'admin_base.html' %}
+{% load i18n %}
+
+{% block admin_content %}
+<div class="container py-5 px-0">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <h2 class="mb-1">{% trans "User Profile" %}</h2>
+            <div class="text-muted">{{ account.username }}</div>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'admin_user_edit' account.id %}" class="btn btn-outline-primary">{% trans "Edit Profile" %}</a>
+            <form method="post" action="{% url 'admin_user_toggle_active' account.id %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger">
+                    {% if account.is_active %}{% trans "Deactivate" %}{% else %}{% trans "Activate" %}{% endif %}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card admin-card mb-4">
+        <div class="card-body">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <span class="admin-thumb" aria-hidden="true"><i class="fa fa-user" aria-hidden="true"></i></span>
+                <div class="flex-grow-1">
+                    <h4 class="mb-1">{{ account.first_name|default:account.username }} {{ account.last_name|default:"" }}</h4>
+                    <div class="text-muted">{{ account.email|default:"-" }}</div>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    {% if account.is_superuser %}
+                        <span class="badge badge-dark">{% trans "Superuser" %}</span>
+                    {% elif account.is_staff %}
+                        <span class="badge badge-secondary">{% trans "Staff" %}</span>
+                    {% else %}
+                        <span class="badge badge-light">{% trans "User" %}</span>
+                    {% endif %}
+                    {% if account.is_active %}
+                        <span class="badge badge-success">{% trans "Active" %}</span>
+                    {% else %}
+                        <span class="badge badge-danger">{% trans "Inactive" %}</span>
+                    {% endif %}
+                    {% if profile %}
+                        <span class="badge badge-info">{{ profile.get_user_type_display }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-uppercase text-muted mb-2">{% trans "Account" %}</h6>
+                    <p class="mb-1"><strong>{% trans "Username" %}:</strong> {{ account.username }}</p>
+                    <p class="mb-1"><strong>{% trans "Email" %}:</strong> {{ account.email|default:"-" }}</p>
+                    <p class="mb-1"><strong>{% trans "Date Joined" %}:</strong> {{ account.date_joined|date:"Y-m-d H:i" }}</p>
+                    <p class="mb-0"><strong>{% trans "Last Login" %}:</strong>
+                        {% if account.last_login %}
+                            {{ account.last_login|date:"Y-m-d H:i" }}
+                        {% else %}
+                            {% trans "Never" %}
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-uppercase text-muted mb-2">{% trans "Profile" %}</h6>
+                    <p class="mb-1"><strong>{% trans "Type" %}:</strong> {% if profile %}{{ profile.get_user_type_display }}{% else %}-{% endif %}</p>
+                    <p class="mb-0"><strong>{% trans "Mobile" %}:</strong> {% if profile and profile.mobile %}{{ profile.mobile }}{% else %}-{% endif %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 mb-4">
+            <h4 class="mb-3">{% trans "Owned Hotels" %}</h4>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover bg-white">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>{% trans "Image" %}</th>
+                            <th>{% trans "Hotel" %}</th>
+                            <th>{% trans "Location" %}</th>
+                            <th>{% trans "Approved" %}</th>
+                            <th>{% trans "Active" %}</th>
+                            <th>{% trans "Action" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for hotel in owned_hotels %}
+                        <tr>
+                            <td>
+                                <span class="admin-thumb" aria-hidden="true">
+                                    {% if hotel.image %}
+                                        <img src="{{ hotel.image.url }}" alt="">
+                                    {% else %}
+                                        <i class="fa fa-building" aria-hidden="true"></i>
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td><a href="{% url 'admin_hotel_detail' hotel.id %}">{{ hotel.name }}</a></td>
+                            <td>{{ hotel.city }}{% if hotel.city and hotel.country %}, {% endif %}{{ hotel.country }}</td>
+                            <td>{% if hotel.is_approved %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                            <td>{% if hotel.is_active %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                            <td>
+                                <a href="{% url 'admin_hotel_detail' hotel.id %}" class="btn btn-sm btn-outline-primary">{% trans "View" %}</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-3">{% trans "No hotels found." %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="col-12 mb-4">
+            <h4 class="mb-3">{% trans "Owned Rooms" %}</h4>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover bg-white">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>{% trans "Image" %}</th>
+                            <th>{% trans "Room" %}</th>
+                            <th>{% trans "Hotel" %}</th>
+                            <th>{% trans "Approved" %}</th>
+                            <th>{% trans "Available" %}</th>
+                            <th>{% trans "Action" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for room in owned_rooms %}
+                        <tr>
+                            <td>
+                                <span class="admin-thumb" aria-hidden="true">
+                                    {% if room.image %}
+                                        <img src="{{ room.image.url }}" alt="">
+                                    {% else %}
+                                        <i class="fa fa-bed" aria-hidden="true"></i>
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td><a href="{% url 'admin_room_detail' room.id %}">{{ room.title }}</a></td>
+                            <td><a href="{% url 'admin_hotel_detail' room.hotel.id %}">{{ room.hotel.name }}</a></td>
+                            <td>{% if room.is_approved %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                            <td>{% if room.available %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                            <td>
+                                <a href="{% url 'admin_room_detail' room.id %}" class="btn btn-sm btn-outline-primary">{% trans "View" %}</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-3">{% trans "No rooms found." %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <h4 class="mb-3">{% trans "Recent Bookings" %}</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover bg-white">
+                <thead class="thead-light">
+                    <tr>
+                        <th>{% trans "Booking ID" %}</th>
+                        <th>{% trans "Room" %}</th>
+                        <th>{% trans "Hotel" %}</th>
+                        <th>{% trans "Status" %}</th>
+                        <th>{% trans "Created" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr>
+                        <td>#{{ booking.id }}</td>
+                        <td>{% if booking.room %}<a href="{% url 'admin_room_detail' booking.room.id %}">{{ booking.room.title }}</a>{% else %}-{% endif %}</td>
+                        <td>{% if booking.room and booking.room.hotel %}<a href="{% url 'admin_hotel_detail' booking.room.hotel.id %}">{{ booking.room.hotel.name }}</a>{% else %}-{% endif %}</td>
+                        <td>{{ booking.status }}</td>
+                        <td>{{ booking.created_at|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-3">{% trans "No bookings found." %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

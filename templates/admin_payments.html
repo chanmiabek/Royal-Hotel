@@ -1,7 +1,7 @@
-{% extends 'base.html' %}
+{% extends 'admin_base.html' %}
 {% load i18n %}
-{% block content %}
-<div class="container py-5">
+{% block admin_content %}
+<div class="container py-5 px-0">
     <div class="section-header">
         <h2>{% trans "Payment Management" %}</h2>
         <p>{% trans "Review user payments and update status for refunds or other actions." %}</p>
@@ -48,7 +48,13 @@
                             <td>#{{ payment.booking.id }}</td>
                             <td>{{ payment.booking.first_name }} {{ payment.booking.last_name }}</td>
                             <td>{{ payment.booking.email }}</td>
-                            <td>{{ payment.booking.room.title|default:"-" }}</td>
+                            <td>
+                                {% if payment.booking.room %}
+                                    <a href="{% url 'admin_room_detail' payment.booking.room.id %}">{{ payment.booking.room.title }}</a>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
                             <td>{{ payment.get_provider_display }}</td>
                             <td>{{ payment.amount }} {{ payment.currency }}</td>
                             <td>{{ payment.get_status_display }}</td>

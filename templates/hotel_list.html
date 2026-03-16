@@ -1,62 +1,284 @@
 {% extends 'base.html' %}
-{% load static i18n %}
+{% load static i18n booking_extras %}
 {% block extra_css %}
 <link href="{% static 'css/hotel-cards.css' %}" rel="stylesheet">
 {% endblock %}
 {% block content %}
 <section class="premium-shell">
-<section id="hotels" class="hotel-collection">
-    <div class="container">
-        <div class="section-header">
-            <h2>{% trans "Our Hotels" %}</h2>
-            <p>{% trans "Browse all hotels registered under Royal Booking System." %}</p>
-        </div>
+<section id="hotels" class="hotel-collection hotel-search">
+    <div class="container-fluid">
+        <div class="hotel-search-layout">
+            <aside class="hotel-search-sidebar">
+                <div class="search-panel search-panel--map">
+                    <div class="search-map">
+                        <iframe
+                            title="{% trans 'Hotels map' %}"
+                            src="https://www.google.com/maps?q={{ map_query|urlencode }}&output=embed"
+                            loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade"
+                        ></iframe>
+                        <a
+                            class="search-map__btn btn btn-primary btn-sm"
+                            href="https://www.google.com/maps/search/?api=1&query={{ map_query|urlencode }}"
+                            target="_blank"
+                            rel="noopener"
+                        >
+                            <i class="fa fa-map-marker" aria-hidden="true"></i> {% trans "Show on map" %}
+                        </a>
+                    </div>
+                </div>
 
-        <div class="hotel-grid">
-            {% for hotel in hotels %}
-            <a href="{% url 'hotel_detail' hotel.id %}" class="hotel-card">
-                <div class="hotel-card__media">
-                    {% if hotel.image %}
-                        <img src="{{ hotel.image.url }}" alt="{{ hotel.name }}">
-                    {% endif %}
-                    <span class="hotel-card__fav">
-                        <i class="fa fa-heart-o"></i>
-                    </span>
-                </div>
-                <div class="hotel-card__body">
-                    <h5 class="hotel-card__title">{{ hotel.name }}</h5>
-                    {% if hotel.city or hotel.country %}
-                    <p class="hotel-card__location">
-                        {{ hotel.city }}{% if hotel.city and hotel.country %}, {% endif %}{{ hotel.country }}
-                    </p>
-                    {% endif %}
-                    {% if hotel.address %}
-                    <p class="hotel-card__address">
-                        <i class="fa fa-map-marker"></i> {{ hotel.address }}
-                    </p>
-                    {% endif %}
-                    {% if hotel.star_rating %}
-                    <div class="hotel-card__rating">
-                        <span class="hotel-card__score">{{ hotel.star_rating }}</span>
-                        <span class="hotel-card__rating-label">{% trans "Rating" %}</span>
+                <div class="search-panel mt-3">
+                    <div class="search-panel__body">
+                        <h5 class="mb-2">{% trans "Find your perfect stay" %}</h5>
+                        <form method="get">
+                            <div class="form-group">
+                                <label for="q">{% trans "Location" %}</label>
+                                <input id="q" type="text" name="q" class="form-control" value="{{ query }}" placeholder="{% trans 'City, country, or hotel name' %}">
+                            </div>
+
+                            <div class="form-group">
+                                <label>{% trans "Your budget (per night)" %}</label>
+                                <div class="form-row">
+                                    <div class="col-6">
+                                        <input type="number" name="min_price" class="form-control" value="{{ min_price }}" placeholder="{% trans 'Min' %}">
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="number" name="max_price" class="form-control" value="{{ max_price }}" placeholder="{% trans 'Max' %}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="d-block">{% trans "Property rating" %}</label>
+                                {% for option in star_filter_options %}
+                                <div class="custom-control custom-checkbox mb-1">
+                                    <input
+                                        type="checkbox"
+                                        class="custom-control-input"
+                                        id="stars{{ option.stars }}"
+                                        name="stars"
+                                        value="{{ option.stars }}"
+                                        {% if option.stars in selected_stars %}checked{% endif %}
+                                    >
+                                    <label class="custom-control-label" for="stars{{ option.stars }}">
+                                        {{ option.stars }} {% trans "stars" %}
+                                        <span class="text-muted ml-2">{{ option.count }}</span>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <input type="hidden" name="sort" value="{{ sort }}">
+                            <input type="hidden" name="view" value="{{ view_mode }}">
+
+                            <button type="submit" class="btn btn-primary btn-block">{% trans "Search" %}</button>
+                        </form>
                     </div>
-                    {% endif %}
-                    <div class="hotel-card__meta-row">
-                        {% if hotel.phone %}
-                        <span><i class="fa fa-phone"></i> {{ hotel.phone }}</span>
-                        {% endif %}
-                        {% if hotel.email %}
-                        <span><i class="fa fa-envelope"></i> {{ hotel.email }}</span>
-                        {% endif %}
+                </div>
+            </aside>
+
+            <main class="hotel-search-results">
+                <div class="results-head">
+                    <div>
+                        <h2 class="results-title">
+                            {% if query %}{{ query }}{% else %}{% trans "All locations" %}{% endif %}: {{ hotels_count }} {% trans "properties found" %}
+                        </h2>
+                        <div class="results-subtitle">{% trans "Browse all hotels registered under Royal Booking System." %}</div>
+                    </div>
+
+                    <div class="results-controls">
+                        <form method="get" class="form-inline">
+                            <input type="hidden" name="q" value="{{ query }}">
+                            <input type="hidden" name="min_price" value="{{ min_price }}">
+                            <input type="hidden" name="max_price" value="{{ max_price }}">
+                            <input type="hidden" name="view" value="{{ view_mode }}">
+                            {% for star in selected_stars %}
+                            <input type="hidden" name="stars" value="{{ star }}">
+                            {% endfor %}
+                            <label class="mr-2" for="sort">{% trans "Sort by" %}:</label>
+                            <select id="sort" name="sort" class="form-control" onchange="this.form.submit()">
+                                <option value="top" {% if sort == 'top' %}selected{% endif %}>{% trans "Our top picks" %}</option>
+                                <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>{% trans "Price: Low to High" %}</option>
+                                <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>{% trans "Price: High to Low" %}</option>
+                                <option value="stars_desc" {% if sort == 'stars_desc' %}selected{% endif %}>{% trans "Stars: High to Low" %}</option>
+                                <option value="newest" {% if sort == 'newest' %}selected{% endif %}>{% trans "Newest" %}</option>
+                            </select>
+                        </form>
+
+                        <div class="btn-group results-view-toggle" role="group" aria-label="{% trans 'View mode' %}">
+                            <a
+                                href="?q={{ query|urlencode }}&min_price={{ min_price|urlencode }}&max_price={{ max_price|urlencode }}&sort={{ sort|urlencode }}&view=list{% for star in selected_stars %}&stars={{ star }}{% endfor %}"
+                                class="btn btn-outline-secondary {% if view_mode == 'list' %}active{% endif %}"
+                            >
+                                {% trans "List" %}
+                            </a>
+                            <a
+                                href="?q={{ query|urlencode }}&min_price={{ min_price|urlencode }}&max_price={{ max_price|urlencode }}&sort={{ sort|urlencode }}&view=grid{% for star in selected_stars %}&stars={{ star }}{% endfor %}"
+                                class="btn btn-outline-secondary {% if view_mode == 'grid' %}active{% endif %}"
+                            >
+                                {% trans "Grid" %}
+                            </a>
+                        </div>
                     </div>
                 </div>
-            </a>
-            {% empty %}
-            <p class="text-center">{% trans "No hotels available right now." %}</p>
-            {% endfor %}
+
+                {% if view_mode == 'grid' %}
+                <div class="hotel-grid">
+                    {% for hotel in hotels %}
+                    <a href="{% url 'hotel_detail' hotel.id %}" class="hotel-card">
+                        <div class="hotel-card__media">
+                            {% if hotel.image %}
+                                <img src="{{ hotel.image.url }}" alt="{{ hotel.name }}">
+                            {% endif %}
+                            <span class="hotel-card__fav">
+                                <i class="fa fa-heart-o"></i>
+                            </span>
+                        </div>
+                        <div class="hotel-card__body">
+                            <h5 class="hotel-card__title">{{ hotel.name }}</h5>
+                            {% if hotel.city or hotel.country %}
+                            <p class="hotel-card__location">
+                                {{ hotel.city }}{% if hotel.city and hotel.country %}, {% endif %}{{ hotel.country }}
+                            </p>
+                            {% endif %}
+                            {% if hotel.address %}
+                            <p class="hotel-card__address">
+                                <i class="fa fa-map-marker"></i> {{ hotel.address }}
+                            </p>
+                            {% endif %}
+                            {% if hotel.star_rating %}
+                            <div class="hotel-card__rating">
+                                <span class="hotel-card__score">{{ hotel.star_rating }}</span>
+                                <span class="hotel-card__rating-label">{% trans "Rating" %}</span>
+                            </div>
+                            {% endif %}
+                            <div class="hotel-card__meta-row">
+                                {% if hotel.phone %}
+                                <span><i class="fa fa-phone"></i> {{ hotel.phone }}</span>
+                                {% endif %}
+                                {% if hotel.email %}
+                                <span><i class="fa fa-envelope"></i> {{ hotel.email }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                    {% empty %}
+                    <p class="text-center">{% trans "No hotels available right now." %}</p>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="results-list">
+                    {% for hotel in hotels %}
+                    <div class="result-card">
+                        <a href="{% url 'hotel_detail' hotel.id %}" class="result-card__image">
+                            {% if hotel.image %}
+                                <img src="{{ hotel.image.url }}" alt="{{ hotel.name }}">
+                            {% else %}
+                                <div class="result-card__image-fallback">
+                                    <i class="fa fa-building" aria-hidden="true"></i>
+                                </div>
+                            {% endif %}
+                            <span class="result-card__fav" aria-hidden="true">
+                                <i class="fa fa-heart-o" aria-hidden="true"></i>
+                            </span>
+                        </a>
+
+                        <div class="result-card__body">
+                            <div class="result-card__title-row">
+                                <a href="{% url 'hotel_detail' hotel.id %}" class="result-card__title">{{ hotel.name }}</a>
+                                {% if hotel.star_rating %}
+                                <span class="result-card__stars" aria-label="{{ hotel.star_rating }} {% trans 'stars' %}">
+                                    {% for i in "12345"|make_list %}
+                                        {% if forloop.counter <= hotel.star_rating %}
+                                            <i class="fa fa-star" aria-hidden="true"></i>
+                                        {% else %}
+                                            <i class="fa fa-star-o" aria-hidden="true"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div class="result-card__meta">
+                                {% if hotel.city %}
+                                    <a class="result-card__city" href="{% url 'hotel_list' %}?q={{ hotel.city|trim|urlencode }}&view=list&sort=top{% for s in selected_stars %}&stars={{ s }}{% endfor %}">{{ hotel.city|trim }}</a>{% if hotel.country %}<span class="text-muted">, {{ hotel.country|trim }}</span>{% endif %}
+                                {% elif hotel.country %}
+                                    <span class="text-muted">{{ hotel.country|trim }}</span>
+                                {% endif %}
+                                {% if hotel.address or hotel.city or hotel.country %}
+                                <span class="result-card__dot" aria-hidden="true">&bull;</span>
+                                {% with addr=hotel.address|default:''|trim city=hotel.city|default:''|trim country=hotel.country|default:''|trim %}
+                                {% with hotel_map_query=addr|add:' '|add:city|add:' '|add:country %}
+                                <a href="https://www.google.com/maps/search/?api=1&query={{ hotel_map_query|urlencode }}" target="_blank" rel="noopener">
+                                    {% trans "Show on map" %}
+                                </a>
+                                {% endwith %}
+                                {% endwith %}
+                                {% endif %}
+                            </div>
+
+                            {% if hotel.description %}
+                                <div class="result-card__desc">{{ hotel.description|truncatewords:26 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="result-card__aside">
+                            <div class="result-card__rating">
+                                {% if hotel.review_count %}
+                                    <div class="result-card__rating-text">
+                                        <div class="result-card__rating-label">
+                                            {% if hotel.review_score >= 9 %}
+                                                {% trans "Exceptional" %}
+                                            {% elif hotel.review_score >= 8 %}
+                                                {% trans "Excellent" %}
+                                            {% elif hotel.review_score >= 7 %}
+                                                {% trans "Very Good" %}
+                                            {% elif hotel.review_score >= 6 %}
+                                                {% trans "Good" %}
+                                            {% else %}
+                                                {% trans "Pleasant" %}
+                                            {% endif %}
+                                        </div>
+                                        <div class="result-card__rating-sub">{{ hotel.review_count }} {% trans "reviews" %}</div>
+                                    </div>
+                                    <div class="result-card__rating-score">{{ hotel.review_score|floatformat:1 }}</div>
+                                {% elif hotel.star_rating %}
+                                    <div class="result-card__rating-text">
+                                        <div class="result-card__rating-label">
+                                            {% if hotel.star_rating >= 5 %}
+                                                {% trans "Excellent" %}
+                                            {% elif hotel.star_rating >= 4 %}
+                                                {% trans "Very Good" %}
+                                            {% elif hotel.star_rating >= 3 %}
+                                                {% trans "Good" %}
+                                            {% else %}
+                                                {% trans "Rating" %}
+                                            {% endif %}
+                                        </div>
+                                        <div class="result-card__rating-sub">{{ hotel.star_rating }}/5 {% trans "stars" %}</div>
+                                    </div>
+                                    <div class="result-card__rating-score">{{ hotel.star_rating|floatformat:1 }}</div>
+                                {% else %}
+                                    <div class="result-card__rating-text">
+                                        <div class="result-card__rating-label">{% trans "New" %}</div>
+                                        <div class="result-card__rating-sub">{% trans "No reviews yet" %}</div>
+                                    </div>
+                                    <div class="result-card__rating-score">--</div>
+                                {% endif %}
+                            </div>
+                            <a href="{% url 'hotel_detail' hotel.id %}" class="btn btn-primary result-card__cta">
+                                {% trans "See availability" %} <i class="fa fa-chevron-right" aria-hidden="true"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-center">{% trans "No hotels available right now." %}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </main>
         </div>
     </div>
-    
 </section>
 </section>
 {% endblock %}

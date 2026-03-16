@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block extra_css %}
+<style>
+    .invoice-shell {
+        background: transparent;
+        padding: 60px 0;
+    }
+    .invoice-card {
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+        padding: 28px;
+    }
+    .invoice-title {
+        font-size: 26px;
+        font-weight: 800;
+        margin-bottom: 6px;
+        color: #111827;
+    }
+    .invoice-subtitle {
+        color: #64748b;
+        margin-bottom: 18px;
+    }
+    .invoice-card .btn {
+        border-radius: 999px;
+        font-weight: 700;
+        padding: 8px 18px;
+    }
+    .invoice-table td {
+        border-top: 1px solid rgba(15, 23, 42, 0.08);
+        padding: 10px 12px;
+        vertical-align: top;
+    }
+    .invoice-table tr:first-child td {
+        border-top: 0;
+    }
+    .invoice-k {
+        color: #64748b;
+        font-weight: 700;
+        width: 34%;
+        white-space: nowrap;
+    }
+    .invoice-v {
+        color: #111827;
+        font-weight: 600;
+    }
+    @media print {
+        header, footer, .invoice-actions {
+            display: none !important;
+        }
+        .invoice-shell {
+            padding: 0;
+        }
+        .invoice-card {
+            box-shadow: none;
+            border-radius: 0;
+            padding: 0;
+        }
+    }
+</style>
+{% endblock %}
+{% block content %}
+<section class="invoice-shell">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="invoice-card">
+                    <h2 class="invoice-title">{% trans "Invoice" %}</h2>
+                    <p class="invoice-subtitle">{% trans "Booking receipt summary." %}</p>
+
+                    {% if pdf_available is False %}
+                    <div class="alert alert-warning" role="alert">
+                        {% trans "PDF download is currently unavailable on this server." %}
+                        <br>
+                        {% trans "Tip:" %} <code>pip install reportlab</code>
+                    </div>
+                    {% endif %}
+
+                    <table class="table invoice-table mb-4">
+                        <tr>
+                            <td class="invoice-k">{% trans "Booking ID" %}</td>
+                            <td class="invoice-v">#{{ booking.id }}</td>
+                        </tr>
+                        <tr>
+                            <td class="invoice-k">{% trans "Guest" %}</td>
+                            <td class="invoice-v">{{ booking.first_name }} {{ booking.last_name }}</td>
+                        </tr>
+                        <tr>
+                            <td class="invoice-k">{% trans "Email" %}</td>
+                            <td class="invoice-v">{{ booking.email }}</td>
+                        </tr>
+                        <tr>
+                            <td class="invoice-k">{% trans "Room" %}</td>
+                            <td class="invoice-v">{{ booking.room.title|default:"N/A" }}</td>
+                        </tr>
+                        <tr>
+                            <td class="invoice-k">{% trans "Check-in" %}</td>
+                            <td class="invoice-v">{{ booking.check_in }}</td>
+                        </tr>
+                        <tr>
+                            <td class="invoice-k">{% trans "Check-out" %}</td>
+                            <td class="invoice-v">{{ booking.check_out }}</td>
+                        </tr>
+                        <tr>
+                            <td class="invoice-k">{% trans "Guests" %}</td>
+                            <td class="invoice-v">{{ booking.guests }}</td>
+                        </tr>
+                        <tr>
+                            <td class="invoice-k">{% trans "Total" %}</td>
+                            <td class="invoice-v">{{ currency }} {{ amount }}</td>
+                        </tr>
+                    </table>
+
+                    <div class="invoice-actions d-flex justify-content-between flex-wrap">
+                        <a class="btn btn-outline-secondary" href="{% url 'booking_confirmation' booking.id %}">
+                            {% trans "Back" %}
+                        </a>
+                        <button type="button" class="btn btn-primary" onclick="window.print()">
+                            {% trans "Print / Save as PDF" %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

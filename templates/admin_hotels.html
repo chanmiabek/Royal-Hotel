@@ -1,0 +1,84 @@
+{% extends 'admin_base.html' %}
+{% load i18n %}
+
+{% block admin_content %}
+<div class="container py-5 px-0">
+    <div class="section-header">
+        <h2>{% trans "Hotels" %}</h2>
+        <p>{% trans "View hotel profiles, images, and approval status." %}</p>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <form method="get">
+                <label for="statusFilter">{% trans "Status" %}</label>
+                <select id="statusFilter" name="status" class="form-control" onchange="this.form.submit()">
+                    <option value="active" {% if status == 'active' %}selected{% endif %}>{% trans "Active" %}</option>
+                    <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>{% trans "Inactive" %}</option>
+                    <option value="unapproved" {% if status == 'unapproved' %}selected{% endif %}>{% trans "Unapproved" %}</option>
+                    <option value="all" {% if status == 'all' %}selected{% endif %}>{% trans "All" %}</option>
+                </select>
+            </form>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover bg-white">
+            <thead class="thead-light">
+                <tr>
+                    <th>{% trans "Image" %}</th>
+                    <th>{% trans "Hotel" %}</th>
+                    <th>{% trans "Location" %}</th>
+                    <th>{% trans "Owner" %}</th>
+                    <th>{% trans "Approved" %}</th>
+                    <th>{% trans "Active" %}</th>
+                    <th>{% trans "Created" %}</th>
+                    <th>{% trans "Actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for hotel in hotels %}
+                <tr>
+                    <td>
+                        <span class="admin-thumb" aria-hidden="true">
+                            {% if hotel.image %}
+                                <img src="{{ hotel.image.url }}" alt="">
+                            {% else %}
+                                <i class="fa fa-building" aria-hidden="true"></i>
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td><a href="{% url 'admin_hotel_detail' hotel.id %}">{{ hotel.name }}</a></td>
+                    <td>{{ hotel.city }}{% if hotel.city and hotel.country %}, {% endif %}{{ hotel.country }}</td>
+                    <td>
+                        {% if hotel.owner %}
+                            <a href="{% url 'admin_user_detail' hotel.owner.id %}">{{ hotel.owner.email|default:hotel.owner.username|default:"-" }}</a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{% if hotel.is_approved %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                    <td>{% if hotel.is_active %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                    <td>{{ hotel.created_at|date:"Y-m-d" }}</td>
+                    <td class="d-flex flex-wrap gap-2">
+                        <a href="{% url 'admin_hotel_detail' hotel.id %}" class="btn btn-sm btn-outline-primary">{% trans "View" %}</a>
+                        <a href="{% url 'admin_hotel_edit' hotel.id %}" class="btn btn-sm btn-outline-secondary">{% trans "Edit Profile" %}</a>
+                        <form method="post" action="{% url 'admin_disable_hotel' hotel.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger" {% if not hotel.is_active %}disabled{% endif %}>
+                                {% trans "Deactivate" %}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-4">{% trans "No hotels found." %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

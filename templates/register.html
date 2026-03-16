@@ -26,6 +26,16 @@
         border-color: #e2e8f0;
         box-shadow: none;
     }
+    .auth-card .input-group .form-control {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+    .auth-card .input-group-append .btn {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        border-top-right-radius: 12px;
+        border-bottom-right-radius: 12px;
+    }
     .auth-card .form-control:focus {
         border-color: #f5c542;
         box-shadow: 0 0 0 0.2rem rgba(245, 197, 66, 0.2);
@@ -55,24 +65,74 @@
             <div class="col-md-6">
                 <div class="auth-card">
                     <h2 class="auth-title">{% trans "Create Account" %}</h2>
-                    <p class="auth-subtitle">{% trans "Register to save your details and manage your reservations." %}</p>
+                    <p class="auth-subtitle">{% trans "Create your account with Google or a password." %}</p>
+                    {% if GOOGLE_OAUTH_ENABLED %}
+                    <a class="btn btn-outline-dark btn-block mb-3" href="{% url 'google_login' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}">
+                        {% trans "Continue with Google" %}
+                    </a>
+                    {% else %}
+                    <a
+                        class="btn btn-outline-dark btn-block mb-2 disabled"
+                        href="#"
+                        aria-disabled="true"
+                        tabindex="-1"
+                        title="Set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET in .env to enable"
+                    >
+                        {% trans "Continue with Google" %}
+                    </a>
+                    <small class="text-muted d-block mb-3">
+                        {% trans "Google login is not configured yet." %}
+                    </small>
+                    {% endif %}
+
+                    <div class="text-center text-muted mb-3">{% trans "or create an account with a password" %}</div>
                     <form method="POST">
                         {% csrf_token %}
                         <div class="form-group">
                             <label>{% trans "Your Name" %}</label>
-                            <input type="text" name="name" class="form-control" required>
+                            <input type="text" name="name" class="form-control" required autocomplete="name">
                         </div>
                         <div class="form-group">
                             <label>{% trans "Email" %}</label>
-                            <input type="email" name="email" class="form-control" required>
+                            <input type="email" name="email" class="form-control" required autocomplete="email">
                         </div>
                         <div class="form-group">
-                            <label>{% trans "Password" %}</label>
-                            <input type="password" name="password" class="form-control" required>
+                            <label for="password">{% trans "Password" %}</label>
+                            <div class="input-group">
+                                <input id="password" type="password" name="password" class="form-control" required autocomplete="new-password">
+                                <div class="input-group-append">
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-secondary"
+                                        data-toggle-password="password"
+                                        data-label-show="{% trans 'Show password' %}"
+                                        data-label-hide="{% trans 'Hide password' %}"
+                                        aria-label="{% trans 'Show password' %}"
+                                        aria-pressed="false"
+                                    >
+                                        <i class="fa fa-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                         <div class="form-group">
-                            <label>{% trans "Repeat Password" %}</label>
-                            <input type="password" name="repeat_password" class="form-control" required>
+                            <label for="repeat_password">{% trans "Repeat Password" %}</label>
+                            <div class="input-group">
+                                <input id="repeat_password" type="password" name="repeat_password" class="form-control" required autocomplete="new-password">
+                                <div class="input-group-append">
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-secondary"
+                                        data-toggle-password="repeat_password"
+                                        data-label-show="{% trans 'Show password' %}"
+                                        data-label-hide="{% trans 'Hide password' %}"
+                                        aria-label="{% trans 'Show password' %}"
+                                        aria-pressed="false"
+                                    >
+                                        <i class="fa fa-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                         <button type="submit" class="btn btn-primary btn-block">{% trans "Register" %}</button>
                         <div class="auth-links">

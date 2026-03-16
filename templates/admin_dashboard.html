@@ -1,13 +1,37 @@
-{% extends 'base.html' %}
+{% extends 'admin_base.html' %}
 {% load i18n %}
-{% block content %}
-<div class="container py-5">
+
+{% block admin_extra_css %}
+<style>
+    .admin-kpis .card {
+        border-radius: 18px;
+        box-shadow: 0 14px 35px rgba(0, 0, 0, 0.08);
+        border: 0;
+    }
+</style>
+{% endblock %}
+
+{% block admin_sidebar_extra %}
+<div class="text-muted small mb-2">{% trans "Quick jump" %}</div>
+<div class="list-group">
+    <a href="#section-search" class="list-group-item list-group-item-action">{% trans "Search" %}</a>
+    <a href="#section-users" class="list-group-item list-group-item-action">{% trans "Users" %}</a>
+    <a href="#section-hotels" class="list-group-item list-group-item-action">{% trans "Hotels" %}</a>
+    <a href="#section-rooms" class="list-group-item list-group-item-action">{% trans "Rooms" %}</a>
+    <a href="#section-bookings" class="list-group-item list-group-item-action">{% trans "Bookings" %}</a>
+    <a href="#section-payments" class="list-group-item list-group-item-action">{% trans "Payments" %}</a>
+    <a href="#section-applications" class="list-group-item list-group-item-action">{% trans "Applications" %}</a>
+</div>
+{% endblock %}
+
+{% block admin_content %}
+<div class="container py-5 px-0">
     <div class="section-header">
         <h2>{% trans "Admin Dashboard" %}</h2>
         <p>{% trans "Search and manage all content in one place." %}</p>
     </div>
 
-    <div class="card mb-4">
+    <div id="section-search" class="card mb-4 admin-section">
         <div class="card-body">
             <form method="get" class="form-row">
                 <div class="col-md-9 mb-2 mb-md-0">
@@ -20,7 +44,7 @@
         </div>
     </div>
 
-    <div class="row mb-4">
+    <div class="row mb-4 admin-kpis">
         <div class="col-md-2 col-6 mb-3">
             <div class="card text-center">
                 <div class="card-body">
@@ -71,9 +95,12 @@
         </div>
     </div>
 
-    <div class="row mb-4">
+    <div id="section-users" class="row mb-4 admin-section">
         <div class="col-12">
-            <h3 class="mb-3">{% trans "Users" %}</h3>
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h3 class="mb-0">{% trans "Users" %}</h3>
+                <a href="{% url 'admin_users' %}" class="btn btn-outline-primary btn-sm">{% trans "Manage" %}</a>
+            </div>
             <div class="table-responsive">
                 <table class="table table-bordered table-hover bg-white">
                     <thead class="thead-light">
@@ -86,7 +113,7 @@
                     <tbody>
                         {% for user_item in users %}
                         <tr>
-                            <td>{{ user_item.username }}</td>
+                            <td><a href="{% url 'admin_user_detail' user_item.id %}">{{ user_item.username }}</a></td>
                             <td>{{ user_item.email }}</td>
                             <td>{{ user_item.date_joined|date:"Y-m-d" }}</td>
                         </tr>
@@ -101,13 +128,17 @@
         </div>
     </div>
 
-    <div class="row mb-4">
+    <div id="section-hotels" class="row mb-4 admin-section">
         <div class="col-12">
-            <h3 class="mb-3">{% trans "Hotels" %}</h3>
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h3 class="mb-0">{% trans "Hotels" %}</h3>
+                <a href="{% url 'admin_hotels' %}" class="btn btn-outline-primary btn-sm">{% trans "Manage" %}</a>
+            </div>
             <div class="table-responsive">
                 <table class="table table-bordered table-hover bg-white">
                     <thead class="thead-light">
                         <tr>
+                            <th>{% trans "Image" %}</th>
                             <th>{% trans "Hotel" %}</th>
                             <th>{% trans "Location" %}</th>
                             <th>{% trans "Owner" %}</th>
@@ -116,11 +147,20 @@
                     <tbody>
                         {% for hotel in hotels %}
                         <tr>
-                            <td>{{ hotel.name }}</td>
+                            <td>
+                                <span class="admin-thumb" aria-hidden="true">
+                                    {% if hotel.image %}
+                                        <img src="{{ hotel.image.url }}" alt="">
+                                    {% else %}
+                                        <i class="fa fa-building" aria-hidden="true"></i>
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td><a href="{% url 'admin_hotel_detail' hotel.id %}">{{ hotel.name }}</a></td>
                             <td>{{ hotel.city }}{% if hotel.city and hotel.country %}, {% endif %}{{ hotel.country }}</td>
                             <td>
                                 {% if hotel.owner %}
-                                    {{ hotel.owner.email|default:hotel.owner.username|default:"-" }}
+                                    <a href="{% url 'admin_user_detail' hotel.owner.id %}">{{ hotel.owner.email|default:hotel.owner.username|default:"-" }}</a>
                                 {% else %}
                                     -
                                 {% endif %}
@@ -128,7 +168,7 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="3" class="text-center py-3">{% trans "No hotels available right now." %}</td>
+                            <td colspan="4" class="text-center py-3">{% trans "No hotels available right now." %}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -137,13 +177,17 @@
         </div>
     </div>
 
-    <div class="row mb-4">
+    <div id="section-rooms" class="row mb-4 admin-section">
         <div class="col-12">
-            <h3 class="mb-3">{% trans "Rooms" %}</h3>
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h3 class="mb-0">{% trans "Rooms" %}</h3>
+                <a href="{% url 'admin_rooms' %}" class="btn btn-outline-primary btn-sm">{% trans "Manage" %}</a>
+            </div>
             <div class="table-responsive">
                 <table class="table table-bordered table-hover bg-white">
                     <thead class="thead-light">
                         <tr>
+                            <th>{% trans "Image" %}</th>
                             <th>{% trans "Room" %}</th>
                             <th>{% trans "Hotel" %}</th>
                             <th>{% trans "Owner" %}</th>
@@ -152,11 +196,20 @@
                     <tbody>
                         {% for room in rooms %}
                         <tr>
-                            <td>{{ room.title }}</td>
-                            <td>{{ room.hotel.name }}</td>
+                            <td>
+                                <span class="admin-thumb" aria-hidden="true">
+                                    {% if room.image %}
+                                        <img src="{{ room.image.url }}" alt="">
+                                    {% else %}
+                                        <i class="fa fa-bed" aria-hidden="true"></i>
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td><a href="{% url 'admin_room_detail' room.id %}">{{ room.title }}</a></td>
+                            <td><a href="{% url 'admin_hotel_detail' room.hotel.id %}">{{ room.hotel.name }}</a></td>
                             <td>
                                 {% if room.owner %}
-                                    {{ room.owner.email|default:room.owner.username|default:"-" }}
+                                    <a href="{% url 'admin_user_detail' room.owner.id %}">{{ room.owner.email|default:room.owner.username|default:"-" }}</a>
                                 {% else %}
                                     -
                                 {% endif %}
@@ -164,7 +217,7 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="3" class="text-center py-3">{% trans "No rooms available at the moment." %}</td>
+                            <td colspan="4" class="text-center py-3">{% trans "No rooms available at the moment." %}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -173,7 +226,7 @@
         </div>
     </div>
 
-    <div class="row mb-4">
+    <div id="section-bookings" class="row mb-4 admin-section">
         <div class="col-12">
             <h3 class="mb-3">{% trans "Bookings" %}</h3>
             <div class="table-responsive">
@@ -205,7 +258,7 @@
         </div>
     </div>
 
-    <div class="row mb-4">
+    <div id="section-payments" class="row mb-4 admin-section">
         <div class="col-12">
             <h3 class="mb-3">{% trans "Payments" %}</h3>
             <div class="table-responsive">
@@ -237,7 +290,7 @@
         </div>
     </div>
 
-    <div class="row">
+    <div id="section-applications" class="row admin-section">
         <div class="col-12">
             <div class="d-flex align-items-center justify-content-between mb-3">
                 <h3 class="mb-0">{% trans "Hotel Applications" %}</h3>

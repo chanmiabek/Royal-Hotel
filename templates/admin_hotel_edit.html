@@ -1,0 +1,76 @@
+{% extends 'admin_base.html' %}
+{% load i18n %}
+
+{% block admin_content %}
+<div class="container py-5 px-0">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <h2 class="mb-1">{% trans "Edit Hotel Profile" %}</h2>
+            <div class="text-muted">{{ hotel.name }}</div>
+        </div>
+        <a href="{% url 'admin_hotel_detail' hotel.id %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
+    </div>
+
+    <div class="card admin-card">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="row">
+                    <div class="col-md-4 mb-3 mb-md-0">
+                        <div class="admin-thumb" style="width: 100%; height: 220px; border-radius: 18px;">
+                            {% if hotel.image %}
+                                <img src="{{ hotel.image.url }}" alt="{{ hotel.name }}">
+                            {% else %}
+                                <div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
+                                    <i class="fa fa-building fa-3x" aria-hidden="true"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <div class="custom-control custom-checkbox">
+                                    <input id="is_active" type="checkbox" name="is_active" class="custom-control-input" {% if hotel.is_active %}checked{% endif %}>
+                                    <label class="custom-control-label" for="is_active">{% trans "Active" %}</label>
+                                </div>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <div class="custom-control custom-checkbox">
+                                    <input id="is_approved" type="checkbox" name="is_approved" class="custom-control-input" {% if hotel.is_approved %}checked{% endif %}>
+                                    <label class="custom-control-label" for="is_approved">{% trans "Approved" %}</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="image">{% trans "Update Image" %}</label>
+                            <input id="image" type="file" name="image" class="form-control">
+                        </div>
+
+                        {% if hotel.image %}
+                        <div class="form-group">
+                            <div class="custom-control custom-checkbox">
+                                <input id="remove_image" type="checkbox" name="remove_image" class="custom-control-input">
+                                <label class="custom-control-label" for="remove_image">{% trans "Remove current image" %}</label>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="alert alert-info">
+                            {% trans "Hotel details are read-only here. This section is for profile approval, active status, and image only." %}
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="submit" class="btn btn-primary">{% trans "Save Changes" %}</button>
+                            <a href="{% url 'admin_hotel_detail' hotel.id %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

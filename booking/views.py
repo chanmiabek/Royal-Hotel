@@ -1,24 +1,46 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
+from django.core.validators import validate_email
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
-from django.db.models import Exists, OuterRef, Count, Q, Sum
+from django.db.models import (
+    Avg,
+    Count,
+    Exists,
+    ExpressionWrapper,
+    FloatField,
+    Min,
+    OuterRef,
+    Q,
+    Sum,
+    Value,
+)
 from django.db import connection
 from django.db.utils import ProgrammingError, OperationalError
 from django.utils.translation import gettext as _
+from django.utils.http import (
+    url_has_allowed_host_and_scheme,
+)
 from decimal import Decimal, InvalidOperation
 import json
 import io
 import base64
-from functools import wraps
+import secrets
+from functools import wraps, lru_cache
 from urllib.parse import urlencode
 from django.contrib.auth.models import User
 from datetime import datetime
+from datetime import timedelta
+
+from django.contrib.auth.hashers import check_password, make_password
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.utils import timezone
 from .models import (
     Room,
     Booking,
@@ -26,6 +48,7 @@ from .models import (
     Payment,
     Review,
     UserProfile,
+    PasswordResetCode,
     Hotel,
     HotelApplication,
     HotelDocument,
@@ -56,6 +79,13 @@ try:
     import stripe
 except Exception:
     stripe = None
+
+try:
+    import jwt  # type: ignore
+    from jwt import PyJWKClient  # type: ignore
+except Exception:
+    jwt = None
+    PyJWKClient = None
 
 
 def _booking_tables_ready():
@@ -103,6 +133,18 @@ def _get_admin_emails():
         return []
 
 
+def _get_notification_emails():
+    emails = _get_admin_emails()
+    if emails:
+        return emails
+
+    fallback = (getattr(settings, "EMAIL_HOST_USER", "") or "").strip()
+    if fallback:
+        return [fallback]
+
+    return []
+
+
 def owner_required(view_func):
     @wraps(view_func)
     def _wrapped(request, *args, **kwargs):
@@ -129,9 +171,62 @@ def _with_booking_status(queryset):
     return queryset.annotate(is_booked=Exists(confirmed_bookings))
 
 
+BOOKING_PAYMENT_WINDOW = timedelta(hours=24)
+
+
+def _expire_stale_pending_bookings():
+    cutoff = timezone.now() - BOOKING_PAYMENT_WINDOW
+    succeeded_payments = Payment.objects.filter(booking=OuterRef("pk"), status="SUCCEEDED")
+    try:
+        stale = (
+            Booking.objects.filter(status="PENDING", created_at__lte=cutoff)
+            .annotate(has_success=Exists(succeeded_payments))
+            .filter(has_success=False)
+        )
+        return stale.update(status="CANCELLED", updated_at=timezone.now())
+    except (ProgrammingError, OperationalError):
+        return 0
+
+
+def _booking_is_expired_for_payment(booking: Booking) -> bool:
+    if booking.status != "PENDING":
+        return False
+    if booking.created_at is None:
+        return False
+    if booking.created_at > timezone.now() - BOOKING_PAYMENT_WINDOW:
+        return False
+    return not booking.payments.filter(status="SUCCEEDED").exists()
+
+
+def _redirect_booking_expired(request, booking: Booking):
+    if booking.status == "PENDING":
+        booking.status = "CANCELLED"
+        booking.save(update_fields=["status", "updated_at"])
+
+    messages.error(
+        request,
+        "This booking expired because payment was not completed within 24 hours. Please book again.",
+    )
+
+    params = {}
+    if booking.room_id:
+        params["room"] = booking.room_id
+    if booking.check_in:
+        params["check_in"] = booking.check_in.isoformat()
+    if booking.check_out:
+        params["check_out"] = booking.check_out.isoformat()
+    if booking.guests:
+        params["guests"] = booking.guests
+
+    if params:
+        return redirect(f"{reverse('booking')}?{urlencode(params)}")
+    return redirect("booking")
+
+
 def _mark_completed_bookings():
     today = datetime.now().date()
     try:
+        _expire_stale_pending_bookings()
         Booking.objects.filter(
             status='CONFIRMED',
             check_out__lte=today,
@@ -144,39 +239,63 @@ def _mark_completed_bookings():
 def home(request):
     _mark_completed_bookings()
     if not _booking_tables_ready():
-        return render(request, 'home.html', {'featured_rooms': [], 'hotels': []})
+        return render(
+            request,
+            'home.html',
+            {
+                'hotels': [],
+                'home_hotels': [],
+                'hotels_count': 0,
+                'map_query': 'Kenya',
+                'star_filter_options': [],
+            },
+        )
 
-    featured_rooms = list(
-        _with_booking_status(
-            Room.objects.filter(
-                available=True,
-                is_approved=True,
-                hotel__is_approved=True,
-                hotel__is_active=True,
-            )
-        )[:3]
-    )
-    hotels = Hotel.objects.filter(is_active=True, is_approved=True).order_by('name')
-    home_hotels = hotels[:6]
-    apartments = list(
-        _with_booking_status(
-            Room.objects.filter(
-                available=True,
-                is_approved=True,
-                category='APT',
-                hotel__is_approved=True,
-                hotel__is_active=True,
-            )
-        )[:6]
-    )
+    base_hotels = Hotel.objects.filter(is_active=True, is_approved=True)
+    hotels = base_hotels.order_by('name')
+    home_hotels = (
+        base_hotels.annotate(
+            starting_price=Min(
+                'rooms__price',
+                filter=Q(rooms__available=True, rooms__is_approved=True),
+            ),
+            review_count=Count('rooms__reviews', distinct=True),
+            review_score=ExpressionWrapper(
+                Avg('rooms__reviews__rating') * Value(2.0),
+                output_field=FloatField(),
+            ),
+        )
+        .order_by('-created_at')
+        .select_related('owner')
+    )[:6]
+
+    hotels_count = base_hotels.count()
+    star_counts = {
+        row['star_rating']: row['count']
+        for row in (
+            base_hotels.exclude(star_rating__isnull=True)
+            .values('star_rating')
+            .annotate(count=Count('id'))
+        )
+    }
+    star_filter_options = [
+        {'stars': stars, 'count': star_counts.get(stars, 0)}
+        for stars in (2, 3, 4, 5)
+    ]
+
+    map_query = 'Kenya'
+    location_hotel = base_hotels.exclude(city='').exclude(country='').order_by('-created_at').first()
+    if location_hotel:
+        map_query = ", ".join([part for part in [location_hotel.city, location_hotel.country] if part]) or map_query
     return render(
         request,
         'home.html',
         {
-            'featured_rooms': featured_rooms,
             'hotels': hotels,
             'home_hotels': home_hotels,
-            'apartments': apartments,
+            'hotels_count': hotels_count,
+            'map_query': map_query,
+            'star_filter_options': star_filter_options,
         },
     )
 
@@ -185,22 +304,35 @@ def search(request):
     _mark_completed_bookings()
     search_type = (request.GET.get('search_type') or '').strip().lower()
     search_query = (request.GET.get('search') or '').strip()
+    selected_hotel_id = (request.GET.get('hotel') or '').strip()
 
     if not _booking_tables_ready():
         messages.error(request, "Database is initializing. Please try again shortly.")
         if search_type == 'hotel':
-            return render(request, 'hotel_list.html', {'hotels': []})
+            return redirect('hotel_list')
         return render(request, 'room.html', {'rooms': [], 'check_in': None, 'check_out': None})
 
     if search_type == 'hotel':
-        hotels = Hotel.objects.filter(is_active=True, is_approved=True)
+        if selected_hotel_id:
+            try:
+                hotel_id_int = int(selected_hotel_id)
+            except (TypeError, ValueError):
+                hotel_id_int = None
+            if hotel_id_int and Hotel.objects.filter(
+                id=hotel_id_int,
+                is_active=True,
+                is_approved=True,
+            ).exists():
+                return redirect('hotel_detail', hotel_id=hotel_id_int)
+
+        params = {}
         if search_query:
-            hotels = hotels.filter(
-                Q(name__icontains=search_query)
-                | Q(city__icontains=search_query)
-                | Q(country__icontains=search_query)
-            )
-        return render(request, 'hotel_list.html', {'hotels': hotels})
+            params['q'] = search_query
+        params['view'] = 'list'
+        params['sort'] = 'top'
+        if params:
+            return redirect(f"{reverse('hotel_list')}?{urlencode(params)}")
+        return redirect('hotel_list')
 
     return room_list(request)
 
@@ -383,9 +515,138 @@ def amenities(request):
 def hotel_list(request):
     if not _booking_tables_ready():
         messages.error(request, "Database is initializing. Please try again shortly.")
-        return render(request, 'hotel_list.html', {'hotels': []})
-    hotels = Hotel.objects.filter(is_active=True, is_approved=True).order_by('name')
-    return render(request, 'hotel_list.html', {'hotels': hotels})
+        return render(
+            request,
+            'hotel_list.html',
+            {
+                'hotels': [],
+                'hotels_count': 0,
+                'query': '',
+                'view_mode': 'list',
+                'sort': 'top',
+                'min_price': '',
+                'max_price': '',
+                'map_query': 'Kenya',
+                'star_filter_options': [],
+                'selected_stars': [],
+            },
+        )
+
+    query = (request.GET.get('q') or '').strip()
+    view_mode = (request.GET.get('view') or 'list').strip().lower()
+    sort = (request.GET.get('sort') or 'top').strip().lower()
+    min_price = (request.GET.get('min_price') or '').strip()
+    max_price = (request.GET.get('max_price') or '').strip()
+
+    selected_stars = []
+    for value in request.GET.getlist('stars'):
+        try:
+            stars = int(value)
+        except (TypeError, ValueError):
+            continue
+        if stars in {2, 3, 4, 5}:
+            selected_stars.append(stars)
+    selected_stars = sorted(set(selected_stars))
+
+    star_counts_base = Hotel.objects.filter(is_active=True, is_approved=True)
+    if query:
+        star_counts_base = star_counts_base.filter(
+            Q(name__icontains=query)
+            | Q(city__icontains=query)
+            | Q(country__icontains=query)
+            | Q(address__icontains=query)
+        )
+    star_counts = {
+        row['star_rating']: row['count']
+        for row in (
+            star_counts_base.exclude(star_rating__isnull=True)
+            .values('star_rating')
+            .annotate(count=Count('id'))
+        )
+    }
+    star_filter_options = [
+        {'stars': stars, 'count': star_counts.get(stars, 0)}
+        for stars in (2, 3, 4, 5)
+    ]
+
+    hotels = (
+        Hotel.objects.filter(is_active=True, is_approved=True)
+        .annotate(
+            starting_price=Min(
+                'rooms__price',
+                filter=Q(rooms__available=True, rooms__is_approved=True),
+            )
+        )
+        .annotate(
+            review_count=Count('rooms__reviews', distinct=True),
+            review_score=ExpressionWrapper(
+                Avg('rooms__reviews__rating') * Value(2.0),
+                output_field=FloatField(),
+            ),
+        )
+        .order_by('name')
+    )
+
+    if query:
+        hotels = hotels.filter(
+            Q(name__icontains=query)
+            | Q(city__icontains=query)
+            | Q(country__icontains=query)
+            | Q(address__icontains=query)
+        )
+
+    if selected_stars:
+        hotels = hotels.filter(star_rating__in=selected_stars)
+
+    min_price_value = None
+    max_price_value = None
+    if min_price:
+        try:
+            min_price_value = Decimal(min_price)
+        except (InvalidOperation, TypeError, ValueError):
+            min_price_value = None
+    if max_price:
+        try:
+            max_price_value = Decimal(max_price)
+        except (InvalidOperation, TypeError, ValueError):
+            max_price_value = None
+
+    if min_price_value is not None:
+        hotels = hotels.exclude(starting_price__isnull=True).filter(starting_price__gte=min_price_value)
+    if max_price_value is not None:
+        hotels = hotels.exclude(starting_price__isnull=True).filter(starting_price__lte=max_price_value)
+
+    if sort == 'price_asc':
+        hotels = hotels.order_by('starting_price', 'name')
+    elif sort == 'price_desc':
+        hotels = hotels.order_by('-starting_price', 'name')
+    elif sort == 'stars_desc':
+        hotels = hotels.order_by('-star_rating', 'name')
+    elif sort == 'newest':
+        hotels = hotels.order_by('-created_at', 'name')
+    else:
+        hotels = hotels.order_by('name')
+
+    if view_mode not in {'list', 'grid'}:
+        view_mode = 'list'
+
+    map_query = query or "Kenya"
+    return render(
+        request,
+        'hotel_list.html',
+        {
+            'hotels': hotels,
+            'hotels_count': hotels.count(),
+            'query': query,
+            'view_mode': view_mode,
+            'sort': sort,
+            'min_price': min_price,
+            'max_price': max_price,
+            'map_query': map_query,
+            'star_filter_options': star_filter_options,
+            'selected_stars': selected_stars,
+        },
+    )
 
 
 def hotel_detail(request, hotel_id):
@@ -396,12 +657,15 @@ def hotel_detail(request, hotel_id):
     rooms = _with_booking_status(
         Room.objects.filter(hotel=hotel, available=True, is_approved=True)
     )
+    location_parts = [hotel.address, hotel.city, hotel.country]
+    map_query = ", ".join([part for part in location_parts if part]) or (hotel.name or "")
     return render(
         request,
         'hotel_detail.html',
         {
             'hotel': hotel,
             'rooms': rooms,
+            'map_query': map_query,
         },
     )
 
@@ -420,6 +684,28 @@ def contact(request):
                 subject=subject,
                 message=message_text
             )
+
+            admin_emails = _get_notification_emails()
+            if admin_emails:
+                message = EmailMessage(
+                    subject=f"Contact Form: {subject}",
+                    body=(
+                        "New contact form message:\n\n"
+                        f"Name: {name}\n"
+                        f"Email: {email}\n"
+                        f"Subject: {subject}\n\n"
+                        f"Message:\n{message_text}\n"
+                    ),
+                    from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
+                    to=admin_emails,
+                    reply_to=[email],
+                )
+                try:
+                    message.send(fail_silently=False)
+                except Exception:
+                    messages.error(request, "Your message was saved, but we could not send it by email right now.")
+                    return redirect('contact')
+
             messages.success(request, "Thank you! Your message has been sent successfully.")
             return redirect('contact')
         else:
@@ -523,7 +809,7 @@ def _send_receipt_email(request, booking):
                 fail_silently=True,
             )
 
-    admin_emails = _get_admin_emails()
+    admin_emails = _get_notification_emails()
     if admin_emails:
         with contextlib.suppress(Exception):
             send_mail(
@@ -653,6 +939,31 @@ def booking_view(request):  # sourcery skip: low-code-quality
 
             new_booking.save()
 
+            admin_emails = _get_notification_emails()
+            if admin_emails:
+                import contextlib
+                payment_url = request.build_absolute_uri(reverse('payment_page', args=[new_booking.id]))
+                with contextlib.suppress(Exception):
+                    send_mail(
+                        subject=f"New Booking Created (Pending Payment) #{new_booking.id}",
+                        message=(
+                            "A new booking has been created and is pending payment.\n\n"
+                            f"Booking ID: {new_booking.id}\n"
+                            f"Guest: {new_booking.first_name} {new_booking.last_name}\n"
+                            f"Email: {new_booking.email}\n"
+                            f"Mobile: {new_booking.mobile}\n"
+                            f"Room: {new_booking.room.title if new_booking.room else 'N/A'}\n"
+                            f"Check-in: {new_booking.check_in}\n"
+                            f"Check-out: {new_booking.check_out}\n"
+                            f"Guests: {new_booking.guests}\n"
+                            f"Total: {getattr(settings, 'DEFAULT_CURRENCY', 'KES')} {new_booking.total_price}\n\n"
+                            f"Payment link: {payment_url}\n"
+                        ),
+                        from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
+                        recipient_list=admin_emails,
+                        fail_silently=True,
+                    )
+
             if new_booking.email:
                 import contextlib
                 with contextlib.suppress(Exception):
@@ -723,6 +1034,8 @@ def booking_view(request):  # sourcery skip: low-code-quality
 # Booking confirmation
 def booking_confirmation(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id)
+    if _booking_is_expired_for_payment(booking) or booking.status == "CANCELLED":
+        return _redirect_booking_expired(request, booking)
     return render(request, 'booking_confirmation.html', {'booking': booking})
 
 
@@ -755,6 +1068,8 @@ def payment_failed(request, booking_id):
 # Payment page
 def payment_page(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id)
+    if _booking_is_expired_for_payment(booking) or booking.status == "CANCELLED":
+        return _redirect_booking_expired(request, booking)
     amount = _ensure_booking_total(booking)
     return render(
         request,
@@ -779,10 +1094,15 @@ def stripe_create_intent(request):
         return JsonResponse({'error': 'Missing booking_id'}, status=400)
 
     booking = get_object_or_404(Booking, id=booking_id)
+    if _booking_is_expired_for_payment(booking) or booking.status == "CANCELLED":
+        if booking.status == "PENDING":
+            booking.status = "CANCELLED"
+            booking.save(update_fields=["status", "updated_at"])
+        return JsonResponse({'error': 'Booking expired. Please book again.'}, status=410)
     if not settings.STRIPE_SECRET_KEY:
         return JsonResponse({'error': 'Stripe not configured'}, status=400)
     if requests is None:
-        return JsonResponse({'error': 'Payment dependency not installed'}, status=500)
+        return JsonResponse({'error': 'Payment dependency not installed'}, status=503)
 
     amount = _ensure_booking_total(booking)
     try:
@@ -835,10 +1155,31 @@ def stripe_confirm(request):
         return JsonResponse({'error': 'Missing payment_id or payment_intent_id'}, status=400)
 
     payment = get_object_or_404(Payment, id=payment_id, provider='STRIPE')
+    if _booking_is_expired_for_payment(payment.booking) or payment.booking.status == "CANCELLED":
+        if payment.booking.status == "PENDING":
+            payment.booking.status = "CANCELLED"
+            payment.booking.save(update_fields=["status", "updated_at"])
+        payment.status = "CANCELLED"
+        payment.save(update_fields=["status", "updated_at"])
+
+        params = {}
+        if payment.booking.room_id:
+            params["room"] = payment.booking.room_id
+        if payment.booking.check_in:
+            params["check_in"] = payment.booking.check_in.isoformat()
+        if payment.booking.check_out:
+            params["check_out"] = payment.booking.check_out.isoformat()
+        if payment.booking.guests:
+            params["guests"] = payment.booking.guests
+        redirect_url = f"{reverse('booking')}?{urlencode(params)}" if params else reverse("booking")
+        return JsonResponse(
+            {"status": payment.status, "redirect_url": redirect_url, "error": "Booking expired. Please book again."},
+            status=410,
+        )
     if not settings.STRIPE_SECRET_KEY:
         return JsonResponse({'error': 'Stripe not configured'}, status=400)
     if requests is None:
-        return JsonResponse({'error': 'Payment dependency not installed'}, status=500)
+        return JsonResponse({'error': 'Payment dependency not installed'}, status=503)
 
     try:
         response = requests.get(
@@ -971,6 +1312,8 @@ def paypal_create_order(request):
         return HttpResponseBadRequest("Missing booking_id")
 
     booking = get_object_or_404(Booking, id=booking_id)
+    if _booking_is_expired_for_payment(booking) or booking.status == "CANCELLED":
+        return _redirect_booking_expired(request, booking)
     if requests is None:
         messages.error(request, "Payment dependency is not installed.")
         return redirect('payment_page', booking_id=booking.id)
@@ -1045,6 +1388,11 @@ def paypal_return(request):
     if not order_id:
         return _paypal_error_redirect(request, "Missing PayPal token.", booking_id, "missing_paypal_token")
 
+    if booking_id:
+        booking = get_object_or_404(Booking, id=booking_id)
+        if _booking_is_expired_for_payment(booking) or booking.status == "CANCELLED":
+            return _redirect_booking_expired(request, booking)
+
     access_token = _paypal_get_access_token()
     if requests is None:
         return _paypal_error_redirect(request, "Payment dependency is not installed.", booking_id, "payment_dependency_missing")
@@ -1114,11 +1462,21 @@ def paypal_cancel(request):
 def invoice_pdf(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id)
     amount = _ensure_booking_total(booking)
+    currency = getattr(settings, "DEFAULT_CURRENCY", "KES")
 
     try:
         from reportlab.pdfgen import canvas
     except Exception:
-        return HttpResponse("ReportLab not installed.", status=501)
+        return render(
+            request,
+            "invoice.html",
+            {
+                "booking": booking,
+                "amount": amount,
+                "currency": currency,
+                "pdf_available": False,
+            },
+        )
 
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer)
@@ -1261,6 +1619,8 @@ def mpesa_stk_push(request):
         return redirect('index')
 
     booking = get_object_or_404(Booking, id=booking_id)
+    if _booking_is_expired_for_payment(booking) or booking.status == "CANCELLED":
+        return _redirect_booking_expired(request, booking)
     normalized_phone = _normalize_mpesa_phone(phone)
     if not normalized_phone:
         messages.error(request, "Invalid phone number. Use format 07XXXXXXXX or 2547XXXXXXXX.")
@@ -1427,27 +1787,395 @@ def mpesa_callback(request):
 
     return JsonResponse({"ResultCode": 0, "ResultDesc": "Accepted"})
 
+# Google OAuth (Login with Google / Gmail)
+_GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+_GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+_GOOGLE_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs"
+_GOOGLE_ALLOWED_ISSUERS = {"https://accounts.google.com", "accounts.google.com"}
+
+
+def _google_oauth_config():
+    client_id = (getattr(settings, "GOOGLE_OAUTH_CLIENT_ID", "") or "").strip()
+    client_secret = (getattr(settings, "GOOGLE_OAUTH_CLIENT_SECRET", "") or "").strip()
+    return client_id, client_secret
+
+
+@lru_cache(maxsize=2)
+def _google_jwks_client():
+    if PyJWKClient is None:  # pragma: no cover
+        raise RuntimeError("PyJWT is required for Google login. Install with: pip install PyJWT[crypto]")
+    return PyJWKClient(_GOOGLE_JWKS_URL)
+
+
+def _verify_google_id_token(id_token: str, client_id: str) -> dict:
+    if jwt is None:  # pragma: no cover
+        raise RuntimeError("PyJWT is required for Google login. Install with: pip install PyJWT[crypto]")
+
+    signing_key = _google_jwks_client().get_signing_key_from_jwt(id_token).key
+    claims = jwt.decode(
+        id_token,
+        signing_key,
+        algorithms=["RS256"],
+        audience=client_id,
+        options={
+            "verify_signature": True,
+            "verify_exp": True,
+            "verify_aud": True,
+            "verify_iss": False,
+        },
+        leeway=60,
+    )
+
+    issuer = (claims.get("iss") or "").strip()
+    if issuer not in _GOOGLE_ALLOWED_ISSUERS:
+        raise ValueError("Invalid token issuer.")
+
+    return claims
+
+
+def _safe_next_url(request, next_url: str) -> str:
+    next_url = (next_url or "").strip()
+    if not next_url:
+        return ""
+    if url_has_allowed_host_and_scheme(
+        url=next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return next_url
+    return ""
+
+
+def google_login(request):
+    client_id, client_secret = _google_oauth_config()
+    if not client_id or not client_secret:
+        messages.error(request, "Google login is not configured.")
+        return redirect("login")
+
+    state = secrets.token_urlsafe(32)
+    request.session["google_oauth_state"] = state
+
+    next_url = (request.GET.get("next") or "").strip()
+    if next_url:
+        request.session["google_oauth_next"] = next_url
+
+    redirect_uri = request.build_absolute_uri(reverse("google_callback"))
+    params = {
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "state": state,
+        "prompt": "select_account",
+    }
+    return redirect(f"{_GOOGLE_AUTH_URL}?{urlencode(params)}")
+
+
+def google_callback(request):
+    client_id, client_secret = _google_oauth_config()
+    if not client_id or not client_secret:
+        messages.error(request, "Google login is not configured.")
+        return redirect("login")
+
+    if request.GET.get("error"):
+        messages.error(request, "Google login was cancelled.")
+        return redirect("login")
+
+    state = (request.GET.get("state") or "").strip()
+    expected_state = (request.session.pop("google_oauth_state", "") or "").strip()
+    if not state or not expected_state or state != expected_state:
+        messages.error(request, "Google login failed. Please try again.")
+        return redirect("login")
+
+    code = (request.GET.get("code") or "").strip()
+    if not code:
+        messages.error(request, "Google login failed. Missing authorization code.")
+        return redirect("login")
+
+    if requests is None:  # pragma: no cover
+        messages.error(request, "Google login is unavailable (requests not installed).")
+        return redirect("login")
+
+    redirect_uri = request.build_absolute_uri(reverse("google_callback"))
+    try:
+        response = requests.post(
+            _GOOGLE_TOKEN_URL,
+            data={
+                "code": code,
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "redirect_uri": redirect_uri,
+                "grant_type": "authorization_code",
+            },
+            timeout=15,
+        )
+        token_data = response.json() if response.content else {}
+    except Exception:
+        token_data = {}
+        response = None
+
+    if not token_data or (response is not None and response.status_code >= 400):
+        message = token_data.get("error_description") or token_data.get("error") or "Token exchange failed."
+        messages.error(request, f"Google login failed: {message}")
+        return redirect("login")
+
+    id_token = (token_data.get("id_token") or "").strip()
+    if not id_token:
+        messages.error(request, "Google login failed: missing ID token.")
+        return redirect("login")
+
+    try:
+        claims = _verify_google_id_token(id_token, client_id=client_id)
+    except Exception:
+        messages.error(request, "Google login failed: invalid ID token.")
+        return redirect("login")
+
+    email = (claims.get("email") or "").strip().lower()
+    if not email:
+        messages.error(request, "Google login failed: email not available.")
+        return redirect("login")
+
+    email_verified = claims.get("email_verified")
+    if email_verified in (False, "false", "False", "0", 0):
+        messages.error(request, "Google login failed: email not verified.")
+        return redirect("login")
+
+    given_name = (claims.get("given_name") or "").strip()
+    family_name = (claims.get("family_name") or "").strip()
+    full_name = (claims.get("name") or "").strip()
+
+    if not given_name and full_name:
+        parts = [part for part in full_name.split(" ") if part]
+        given_name = parts[0] if parts else ""
+        if not family_name and len(parts) > 1:
+            family_name = " ".join(parts[1:]).strip()
+
+    user = User.objects.filter(username__iexact=email).first() or User.objects.filter(email__iexact=email).first()
+    if user is None:
+        user = User(username=email, email=email)
+        user.set_unusable_password()
+
+    user.username = email
+    user.email = email
+    if given_name and not user.first_name:
+        user.first_name = given_name
+    if family_name and not user.last_name:
+        user.last_name = family_name
+    if not user.is_active:
+        user.is_active = True
+    user.save()
+
+    login(request, user)
+    _get_or_create_profile(user)
+
+    messages.success(request, f"Welcome, {user.first_name or user.username}!")
+    next_url = (request.session.pop("google_oauth_next", "") or "").strip()
+    return redirect(next_url or "index")
+
+
+PASSWORD_RESET_CODE_TTL = timedelta(minutes=10)
+PASSWORD_RESET_CODE_RESEND_WAIT = timedelta(seconds=60)
+PASSWORD_RESET_CODE_MAX_ATTEMPTS = 5
+
+
+def _find_user_for_password_reset(email: str):
+    email = (email or "").strip().lower()
+    if not email:
+        return None
+
+    user = User.objects.filter(username__iexact=email).first()
+    if user is None:
+        user = User.objects.filter(email__iexact=email).order_by("-id").first()
+    return user
+
+
+def _send_password_reset_code(email: str):
+    user = _find_user_for_password_reset(email)
+    if user is None or not user.is_active:
+        return
+
+    normalized_email = (email or "").strip().lower()
+    if normalized_email and not (user.email or "").strip():
+        user.email = normalized_email
+        user.save(update_fields=["email"])
+
+    now = timezone.now()
+    recent_code = (
+        PasswordResetCode.objects.filter(
+            user=user,
+            used_at__isnull=True,
+            expires_at__gt=now,
+            created_at__gte=now - PASSWORD_RESET_CODE_RESEND_WAIT,
+        )
+        .order_by("-created_at")
+        .first()
+    )
+    if recent_code is not None:
+        return
+
+    code = f"{secrets.randbelow(1_000_000):06d}"
+    PasswordResetCode.objects.filter(user=user, used_at__isnull=True).delete()
+    PasswordResetCode.objects.create(
+        user=user,
+        code_hash=make_password(code),
+        expires_at=now + PASSWORD_RESET_CODE_TTL,
+    )
+
+    subject = "Your password reset code"
+    greeting = user.first_name or "there"
+    body = (
+        f"Hi {greeting},\n\n"
+        f"Your verification code is: {code}\n"
+        f"This code expires in {int(PASSWORD_RESET_CODE_TTL.total_seconds() // 60)} minutes.\n\n"
+        "If you did not request this, you can ignore this email.\n"
+    )
+
+    send_mail(
+        subject=subject,
+        message=body,
+        from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
+        recipient_list=[(user.email or normalized_email).strip()],
+        fail_silently=False,
+    )
+
+
+def password_reset_request(request):
+    prefill_email = (request.session.get("pwd_reset_email") or "").strip()
+    if request.method == "POST":
+        email = (request.POST.get("email") or "").strip().lower()
+        if not email:
+            messages.error(request, "Email is required.")
+            return redirect("password_reset")
+
+        request.session["pwd_reset_email"] = email
+
+        try:
+            validate_email(email)
+        except ValidationError:
+            messages.error(request, "Enter a valid email address.")
+            return redirect("password_reset")
+
+        try:
+            _send_password_reset_code(email)
+        except Exception:
+            messages.error(request, "Could not send the verification code. Please try again later.")
+            return redirect("password_reset")
+
+        messages.success(request, "If an account exists for that email, a verification code has been sent.")
+        return redirect("password_reset_verify")
+
+    return render(request, "registration/password_reset_form.html", {"prefill_email": prefill_email})
+
+
+def password_reset_verify(request):
+    prefill_email = (request.session.get("pwd_reset_email") or "").strip()
+    if request.method == "POST":
+        action = (request.POST.get("action") or "").strip().lower()
+        email = (request.POST.get("email") or prefill_email or "").strip().lower()
+        if email:
+            request.session["pwd_reset_email"] = email
+
+        if action == "resend":
+            try:
+                validate_email(email)
+            except ValidationError:
+                messages.error(request, "Enter a valid email address.")
+                return redirect("password_reset_verify")
+
+            try:
+                _send_password_reset_code(email)
+            except Exception:
+                messages.error(request, "Could not resend the verification code. Please try again later.")
+                return redirect("password_reset_verify")
+
+            messages.success(request, "If an account exists for that email, a verification code has been sent.")
+            return redirect("password_reset_verify")
+
+        code = (request.POST.get("code") or "").strip()
+        password1 = request.POST.get("password1") or ""
+        password2 = request.POST.get("password2") or ""
+
+        if not email or not code or not password1 or not password2:
+            messages.error(request, "All fields are required.")
+            return redirect("password_reset_verify")
+
+        if password1 != password2:
+            messages.error(request, "Passwords do not match.")
+            return redirect("password_reset_verify")
+
+        user = _find_user_for_password_reset(email)
+        if user is None or not user.is_active:
+            messages.error(request, "Invalid verification code.")
+            return redirect("password_reset_verify")
+
+        now = timezone.now()
+        reset_code = (
+            PasswordResetCode.objects.filter(
+                user=user,
+                used_at__isnull=True,
+                expires_at__gt=now,
+            )
+            .order_by("-created_at")
+            .first()
+        )
+        if reset_code is None:
+            messages.error(request, "No active verification code found. Please request a new one.")
+            return redirect("password_reset")
+
+        is_match = False
+        if code.isdigit() and len(code) == 6:
+            is_match = check_password(code, reset_code.code_hash)
+        if not is_match:
+            reset_code.attempts += 1
+            if reset_code.attempts >= PASSWORD_RESET_CODE_MAX_ATTEMPTS:
+                reset_code.used_at = now
+                reset_code.save(update_fields=["attempts", "used_at"])
+            else:
+                reset_code.save(update_fields=["attempts"])
+            messages.error(request, "Invalid verification code.")
+            return redirect("password_reset_verify")
+
+        try:
+            validate_password(password1, user=user)
+        except ValidationError as exc:
+            messages.error(request, "; ".join(exc.messages) if getattr(exc, "messages", None) else str(exc))
+            return redirect("password_reset_verify")
+
+        user.set_password(password1)
+        user.save(update_fields=["password"])
+        reset_code.used_at = now
+        reset_code.save(update_fields=["used_at"])
+        request.session.pop("pwd_reset_email", None)
+
+        messages.success(request, "Your password has been reset. Please login.")
+        return redirect("login")
+
+    return render(request, "registration/password_reset_verify.html", {"prefill_email": prefill_email})
+
+
 # Login view
 def login_view(request):
     if request.method == "POST":
-        email = request.POST.get('login_email')
+        identifier = (request.POST.get('login_email') or '').strip()
         password = request.POST.get('login_password')
-        
-        # Django uses username, not email, for authentication
-        # We're using email as username in this case
-        user = authenticate(request, username=email, password=password)
+
+        user = authenticate(request, username=identifier, password=password)
+
+        if user is None and identifier and "@" in identifier:
+            user_obj = User.objects.filter(email__iexact=identifier).order_by("-id").first()
+            if user_obj:
+                user = authenticate(request, username=user_obj.username, password=password)
 
         if user is not None:
             login(request, user)
             _get_or_create_profile(user)
             messages.success(request, f"Welcome back, {user.first_name or user.username}!")
-            
-            # Redirect to next page if exists
+
             next_page = request.GET.get('next', 'index')
             return redirect(next_page)
-        else:
-            messages.error(request, "Invalid email or password.")
-    
+
+        messages.error(request, "Invalid email or password.")
+
     return render(request, 'login.html')
 
 # Register view
@@ -1459,7 +2187,6 @@ def register_view(request):
         repeat_password = request.POST.get('repeat_password')
         user_type = request.POST.get('user_type', 'GUEST')
 
-        # Validation
         if not all([name, email, password, repeat_password]):
             messages.error(request, "All fields are required.")
             return redirect('register')
@@ -1471,12 +2198,11 @@ def register_view(request):
         if User.objects.filter(username__iexact=email).exists() or User.objects.filter(email__iexact=email).exists():
             messages.error(request, "An account with this email already exists.")
             return redirect('register')
-        
+
         if len(password) < 8:
             messages.error(request, "Password must be at least 8 characters long.")
             return redirect('register')
 
-        # Create user
         try:
             user = User.objects.create_user(
                 username=email,
@@ -1815,7 +2541,7 @@ def owner_add_room(request):
             available=True,
             is_approved=True,
         )
-        admin_emails = _get_admin_emails()
+        admin_emails = _get_notification_emails()
         if admin_emails:
             import contextlib
             with contextlib.suppress(Exception):
@@ -1977,6 +2703,31 @@ def hotel_partner_apply(request):
                 document_type='OTHER',
                 file=other_doc,
             )
+
+        admin_emails = _get_notification_emails()
+        if admin_emails:
+            import contextlib
+            detail_url = request.build_absolute_uri(
+                reverse('admin_hotel_application_detail', args=[application.id])
+            )
+            with contextlib.suppress(Exception):
+                send_mail(
+                    subject=f"New Hotel Partnership Application #{application.id}",
+                    message=(
+                        "A new hotel partnership application was submitted.\n\n"
+                        f"Application ID: {application.id}\n"
+                        f"Hotel: {application.hotel_name}\n"
+                        f"Contact: {application.contact_name}\n"
+                        f"Email: {application.contact_email}\n"
+                        f"Phone: {application.contact_phone}\n"
+                        f"City/Country: {application.city} {application.country}\n"
+                        f"Payout: {application.payout_method} ({application.payout_schedule})\n\n"
+                        f"Review in admin dashboard: {detail_url}\n"
+                    ),
+                    from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
+                    recipient_list=admin_emails,
+                    fail_silently=True,
+                )
 
         messages.success(request, "Your hotel application has been submitted for review.")
         return redirect('hotel_application_status')
@@ -2215,11 +2966,243 @@ def admin_users_view(request):
         messages.error(request, "You do not have permission to view this page.")
         return redirect('index')
 
-    users = User.objects.all().annotate(
+    users = User.objects.select_related('profile').all().annotate(
         total_bookings=Count('booking', distinct=True),
         confirmed_bookings=Count('booking', filter=Q(booking__status='CONFIRMED'), distinct=True),
     ).order_by('-date_joined')
     return render(request, 'admin_users.html', {'users': users})
+
+
+@login_required(login_url='login')
+def admin_user_detail(request, user_id):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "You do not have permission to view this page.")
+        return redirect('index')
+
+    account = get_object_or_404(User.objects.select_related('profile'), id=user_id)
+    profile = getattr(account, 'profile', None)
+
+    owned_hotels = Hotel.objects.filter(owner=account).order_by('-created_at')
+    owned_rooms = Room.objects.filter(owner=account).select_related('hotel').order_by('-id')
+    bookings = Booking.objects.filter(user=account).select_related('room', 'room__hotel').order_by('-created_at')[:20]
+
+    return render(
+        request,
+        'admin_user_detail.html',
+        {
+            'account': account,
+            'profile': profile,
+            'owned_hotels': owned_hotels,
+            'owned_rooms': owned_rooms,
+            'bookings': bookings,
+        },
+    )
+
+
+@login_required(login_url='login')
+def admin_user_edit(request, user_id):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "You do not have permission to view this page.")
+        return redirect('index')
+
+    account = get_object_or_404(User.objects.select_related('profile'), id=user_id)
+    profile = _get_or_create_profile(account)
+
+    if request.method == "POST":
+        first_name = (request.POST.get('first_name') or '').strip()
+        last_name = (request.POST.get('last_name') or '').strip()
+        email = (request.POST.get('email') or '').strip()
+        mobile = (request.POST.get('mobile') or '').strip()
+        user_type = (request.POST.get('user_type') or '').strip()
+        is_active = bool(request.POST.get('is_active'))
+
+        if email:
+            try:
+                validate_email(email)
+            except ValidationError:
+                messages.error(request, "Please enter a valid email address.")
+                return redirect('admin_user_edit', user_id=account.id)
+
+        allowed_user_types = {choice for choice, _ in UserProfile.USER_TYPES}
+        if user_type and user_type not in allowed_user_types:
+            messages.error(request, "Invalid user type selected.")
+            return redirect('admin_user_edit', user_id=account.id)
+
+        account.first_name = first_name
+        account.last_name = last_name
+        account.email = email
+        account.is_active = is_active
+        account.save(update_fields=['first_name', 'last_name', 'email', 'is_active'])
+
+        profile.mobile = mobile
+        if user_type:
+            profile.user_type = user_type
+        profile.save(update_fields=['mobile', 'user_type'])
+
+        messages.success(request, "User profile updated successfully.")
+        return redirect('admin_user_detail', user_id=account.id)
+
+    return render(
+        request,
+        'admin_user_edit.html',
+        {
+            'account': account,
+            'profile': profile,
+            'user_types': UserProfile.USER_TYPES,
+        },
+    )
+
+
+@login_required(login_url='login')
+def admin_user_toggle_active(request, user_id):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "You do not have permission to perform this action.")
+        return redirect('index')
+    if request.method != "POST":
+        return redirect('admin_users')
+
+    account = get_object_or_404(User, id=user_id)
+    if account.is_superuser and not request.user.is_superuser:
+        messages.error(request, "You do not have permission to modify this account.")
+        return redirect('admin_users')
+
+    account.is_active = not account.is_active
+    account.save(update_fields=['is_active'])
+    messages.success(request, f"User {account.username} is now {'active' if account.is_active else 'inactive'}.")
+    return redirect(request.META.get('HTTP_REFERER') or 'admin_users')
+
+
+@login_required(login_url='login')
+def admin_hotels_view(request):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "You do not have permission to view this page.")
+        return redirect('index')
+
+    status = request.GET.get('status', 'active')
+    hotels = Hotel.objects.select_related('owner').order_by('-created_at')
+    if status == 'active':
+        hotels = hotels.filter(is_active=True)
+    elif status == 'inactive':
+        hotels = hotels.filter(is_active=False)
+    elif status == 'unapproved':
+        hotels = hotels.filter(is_approved=False)
+
+    return render(
+        request,
+        'admin_hotels.html',
+        {
+            'hotels': hotels,
+            'status': status,
+        },
+    )
+
+
+@login_required(login_url='login')
+def admin_hotel_detail(request, hotel_id):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "You do not have permission to view this page.")
+        return redirect('index')
+
+    hotel = get_object_or_404(Hotel.objects.select_related('owner'), id=hotel_id)
+    rooms = Room.objects.filter(hotel=hotel).select_related('owner').order_by('-id')
+    return render(request, 'admin_hotel_detail.html', {'hotel': hotel, 'rooms': rooms})
+
+
+@login_required(login_url='login')
+def admin_hotel_edit(request, hotel_id):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "You do not have permission to view this page.")
+        return redirect('index')
+
+    hotel = get_object_or_404(Hotel.objects.select_related('owner'), id=hotel_id)
+
+    if request.method == "POST":
+        is_active = bool(request.POST.get('is_active'))
+        is_approved = bool(request.POST.get('is_approved'))
+        remove_image = bool(request.POST.get('remove_image'))
+        image = request.FILES.get('image')
+
+        hotel.is_active = is_active
+        hotel.is_approved = is_approved
+        if remove_image:
+            hotel.image = None
+        elif image:
+            hotel.image = image
+        hotel.save(update_fields=['is_active', 'is_approved', 'image'])
+
+        messages.success(request, "Hotel profile updated.")
+        return redirect('admin_hotel_detail', hotel_id=hotel.id)
+
+    return render(request, 'admin_hotel_edit.html', {'hotel': hotel})
+
+
+@login_required(login_url='login')
+def admin_disable_hotel(request, hotel_id):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "You do not have permission to perform this action.")
+        return redirect('index')
+    if request.method != "POST":
+        return redirect('admin_hotels')
+
+    hotel = get_object_or_404(Hotel, id=hotel_id)
+    hotel.is_active = False
+    hotel.save(update_fields=['is_active'])
+    messages.success(request, f"Hotel \"{hotel.name}\" has been deactivated.")
+    return redirect(request.META.get('HTTP_REFERER') or 'admin_hotels')
+
+
+@login_required(login_url='login')
+def admin_room_detail(request, room_id):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "You do not have permission to view this page.")
+        return redirect('index')
+
+    room = get_object_or_404(Room.objects.select_related('hotel', 'owner'), id=room_id)
+    return render(request, 'admin_room_detail.html', {'room': room})
+
+
+@login_required(login_url='login')
+def admin_room_edit(request, room_id):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "You do not have permission to view this page.")
+        return redirect('index')
+
+    room = get_object_or_404(Room.objects.select_related('hotel', 'owner'), id=room_id)
+
+    if request.method == "POST":
+        is_approved = bool(request.POST.get('is_approved'))
+        available = bool(request.POST.get('available'))
+        remove_image = bool(request.POST.get('remove_image'))
+        image = request.FILES.get('image')
+
+        room.is_approved = is_approved
+        room.available = available if is_approved else False
+        if remove_image:
+            room.image = None
+        elif image:
+            room.image = image
+        room.save(update_fields=['is_approved', 'available', 'image'])
+
+        messages.success(request, "Room profile updated.")
+        return redirect('admin_room_detail', room_id=room.id)
+
+    return render(request, 'admin_room_edit.html', {'room': room})
+
+
+@login_required(login_url='login')
+def admin_disable_room(request, room_id):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "You do not have permission to perform this action.")
+        return redirect('index')
+    if request.method != "POST":
+        return redirect('admin_rooms')
+
+    room = get_object_or_404(Room, id=room_id)
+    room.is_approved = False
+    room.available = False
+    room.save(update_fields=['is_approved', 'available'])
+    messages.success(request, f"Room \"{room.title}\" has been disabled.")
+    return redirect(request.META.get('HTTP_REFERER') or 'admin_rooms')
 
 
 @login_required(login_url='login')

@@ -13,14 +13,40 @@
         </div>
 
         <div class="hotel-card hotel-card--detail">
-            <div class="hotel-card__media">
-                {% if hotel.image %}
-                    <img src="{{ hotel.image.url }}" alt="{{ hotel.name }}">
+            <div class="hotel-detail-top">
+                <div class="hotel-detail-top__image">
+                    <div class="hotel-card__media">
+                        {% if hotel.image %}
+                            <img src="{{ hotel.image.url }}" alt="{{ hotel.name }}">
+                        {% endif %}
+                        <span class="hotel-card__fav">
+                            <i class="fa fa-heart-o"></i>
+                        </span>
+                    </div>
+                </div>
+
+                {% if hotel.address or hotel.city or hotel.country %}
+                <div class="hotel-detail-top__map">
+                    <div class="hotel-map-frame">
+                        <iframe
+                            title="{% trans 'Hotel location map' %}"
+                            src="https://www.google.com/maps?q={{ map_query|urlencode }}&output=embed"
+                            loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade"
+                        ></iframe>
+                        <a
+                            class="hotel-map-frame__btn btn btn-light btn-sm"
+                            href="https://www.google.com/maps/search/?api=1&query={{ map_query|urlencode }}"
+                            target="_blank"
+                            rel="noopener"
+                        >
+                            <i class="fa fa-map-marker" aria-hidden="true"></i> {% trans "Open in Maps" %}
+                        </a>
+                    </div>
+                </div>
                 {% endif %}
-                <span class="hotel-card__fav">
-                    <i class="fa fa-heart-o"></i>
-                </span>
             </div>
+
             <div class="hotel-card__body">
                 <h3 class="hotel-card__title">{{ hotel.name }}</h3>
                 {% if hotel.city or hotel.country %}
@@ -56,33 +82,39 @@
             <p>{% blocktrans with hotel_name=hotel.name %}Explore rooms at {{ hotel_name }}.{% endblocktrans %}</p>
         </div>
 
-        <div class="hotel-grid">
+        <div class="room-rows">
             {% for room in rooms %}
-            <div class="hotel-card">
+            <div class="hotel-card room-row">
                 <div class="hotel-card__media">
                     {% if room.image %}
                         <img src="{{ room.image.url }}" alt="{{ room.title }}">
                     {% endif %}
                 </div>
                 <div class="hotel-card__body">
-                    <h4 class="hotel-card__title">{{ room.title }}</h4>
-                    <p class="hotel-card__location">{{ room.description|truncatewords:18 }}</p>
-                    <p>
-                        <strong>{% trans "Status:" %}</strong>
-                        {% if room.is_booked %}
-                            <span class="badge badge-danger">{% trans "Currently Booked" %}</span>
-                        {% else %}
-                            <span class="badge badge-success">{% trans "Available" %}</span>
-                        {% endif %}
-                    </p>
-                    <div class="d-flex align-items-center justify-content-between">
-                        <span class="room-card__price">KES {{ room.price|floatformat:0 }} / {% trans "night" %}</span>
-                        <a class="btn btn-outline-primary btn-sm" href="{% url 'room_detail' room.id %}">
-                            {% trans "View Details" %}
-                        </a>
-                    </div>
-                    <div class="room-card__actions mt-2">
-                        <a class="btn btn-primary btn-block" href="{% url 'booking' %}?room={{ room.id }}">{% trans "Book Now" %}</a>
+                    <div class="room-row__content">
+                        <div class="room-row__info">
+                            <h4 class="hotel-card__title">{{ room.title }}</h4>
+                            <p class="hotel-card__location">{{ room.description|truncatewords:18 }}</p>
+                            <p class="mb-0">
+                                <strong>{% trans "Status:" %}</strong>
+                                {% if room.is_booked %}
+                                    <span class="badge badge-danger">{% trans "Currently Booked" %}</span>
+                                {% else %}
+                                    <span class="badge badge-success">{% trans "Available" %}</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="room-row__cta">
+                            <div class="room-row__price">
+                                <span class="room-card__price">KES {{ room.price|floatformat:0 }} / {% trans "night" %}</span>
+                            </div>
+                            <a class="btn btn-outline-primary btn-sm btn-block" href="{% url 'room_detail' room.id %}">
+                                {% trans "View Details" %}
+                            </a>
+                            <a class="btn btn-primary btn-block" href="{% url 'booking' %}?room={{ room.id }}">
+                                {% trans "Book Now" %}
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
