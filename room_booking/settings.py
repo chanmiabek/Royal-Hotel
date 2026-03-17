@@ -63,9 +63,9 @@ def _normalize_allowed_hosts(values):
 SECRET_KEY = os.getenv('SECRET_KEY', 'dev-only-change-this-to-a-long-random-secret-key-value-1234567890')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = _env_bool("DEBUG", default=True)
+DEBUG = _env_bool("DEBUG", default=False)
 if RUNNING_TESTS:
-    DEBUG = True
+    DEBUG = False
 
 ALLOWED_HOSTS = _normalize_allowed_hosts(
     _env_csv("ALLOWED_HOSTS", default="royal-hotel-mwb5.onrender.com,localhost,127.0.0.1")

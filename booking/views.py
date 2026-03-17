@@ -81,8 +81,8 @@ except Exception:
     stripe = None
 
 try:
-    import jwt  # type: ignore
-    from jwt import PyJWKClient  # type: ignore
+    import jwt  
+    from jwt import PyJWKClient 
 except Exception:
     jwt = None
     PyJWKClient = None
