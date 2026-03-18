@@ -5,6 +5,7 @@ import os
 import sys
 import importlib.util
 from urllib.parse import urlparse, parse_qs, unquote
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -29,7 +30,9 @@ def _load_dotenv(dotenv_path, override=True):
 
 RUNNING_TESTS = "test" in sys.argv
 if not RUNNING_TESTS:
-    _load_dotenv(BASE_DIR / ".env", override=True)
+    # Load local development overrides without clobbering real environment
+    # variables from Render, CI, or the shell.
+    _load_dotenv(BASE_DIR / ".env", override=False)
 
 def _env_bool(name, default=False):
     value = os.getenv(name)
@@ -41,6 +44,7 @@ def _env_bool(name, default=False):
 def _env_csv(name, default=""):
     raw = os.getenv(name, default)
     return [part.strip() for part in raw.split(",") if part.strip()]
+
 
 def _normalize_allowed_hosts(values):
     hosts = []
@@ -56,16 +60,32 @@ def _normalize_allowed_hosts(values):
     return list(dict.fromkeys(hosts))
 
 
+def _default_csrf_trusted_origins():
+    origins = ["https://royal-hotel-mwb5.onrender.com"]
+    if render_external_url := os.getenv("RENDER_EXTERNAL_URL", "").strip().rstrip("/"):
+        origins.append(render_external_url)
+    if render_host := os.getenv("RENDER_EXTERNAL_HOSTNAME", "").strip():
+        origins.append(f"https://{render_host}")
+    if DEBUG:
+        origins.extend(["http://localhost", "http://127.0.0.1"])
+    return ",".join(dict.fromkeys(origins))
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'dev-only-change-this-to-a-long-random-secret-key-value-1234567890')
+DEV_ONLY_SECRET_KEY = 'dev-only-change-this-to-a-long-random-secret-key-value-1234567890'
+EXAMPLE_SECRET_KEY = 'changeme-in-render-use-a-generated-secret-key'
+SECRET_KEY = os.getenv('SECRET_KEY', DEV_ONLY_SECRET_KEY).strip()
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = _env_bool("DEBUG", default=False)
 if RUNNING_TESTS:
     DEBUG = False
+
+if not DEBUG and not RUNNING_TESTS and SECRET_KEY in {DEV_ONLY_SECRET_KEY, EXAMPLE_SECRET_KEY}:
+    raise ImproperlyConfigured("Set a unique SECRET_KEY for production.")
 
 ALLOWED_HOSTS = _normalize_allowed_hosts(
     _env_csv("ALLOWED_HOSTS", default="royal-hotel-mwb5.onrender.com,localhost,127.0.0.1")
@@ -74,7 +94,7 @@ if DEBUG:
     ALLOWED_HOSTS.append("testserver")
 CSRF_TRUSTED_ORIGINS = _env_csv(
     "CSRF_TRUSTED_ORIGINS",
-    default="https://royal-hotel-mwb5.onrender.com",
+    default=_default_csrf_trusted_origins(),
 )
 
 
@@ -130,6 +150,7 @@ def _database_config_from_url(database_url):
     sqlite_fallback = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'CONN_MAX_AGE': 0,
     }
     if not database_url:
         return sqlite_fallback
@@ -159,6 +180,7 @@ def _database_config_from_url(database_url):
         'PASSWORD': unquote(parsed.password or ''),
         'HOST': parsed.hostname or '',
         'PORT': str(parsed.port or '5432'),
+        'CONN_MAX_AGE': int(os.getenv("CONN_MAX_AGE", "60" if not DEBUG else "0")),
     }
     if options:
         config['OPTIONS'] = options
@@ -173,6 +195,11 @@ if DEBUG and not use_database_url_in_debug:
 DATABASES = {
     'default': _database_config_from_url(database_url),
 }
+
+if not DEBUG and not RUNNING_TESTS and DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
+    raise ImproperlyConfigured(
+        "Set DATABASE_URL to a PostgreSQL database for production deployments."
+    )
 
 
 # Password validation
@@ -228,14 +255,16 @@ WHITENOISE_AVAILABLE = importlib.util.find_spec("whitenoise") is not None
 if WHITENOISE_AVAILABLE:
     MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
-if not DEBUG:
+if not DEBUG and not RUNNING_TESTS:
     SECURE_SSL_REDIRECT = _env_bool("SECURE_SSL_REDIRECT", default=True)
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "31536000"))
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = _env_bool("SECURE_HSTS_INCLUDE_SUBDOMAINS", default=True)
+    SECURE_HSTS_PRELOAD = _env_bool("SECURE_HSTS_PRELOAD", default=False)
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = os.getenv("SECURE_REFERRER_POLICY", "same-origin")
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 

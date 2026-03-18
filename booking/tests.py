@@ -35,6 +35,11 @@ class PublicPagesTests(TestCase):
         response = self.client.get(reverse("register"))
         self.assertEqual(response.status_code, 200)
 
+    def test_health_check_returns_ok(self):
+        response = self.client.get(reverse("health_check"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "ok"})
+
     def test_booking_page_loads_and_prefills_room(self):
         response = self.client.get(reverse("booking"), {"room": self.room.id})
         self.assertEqual(response.status_code, 200)

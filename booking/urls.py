@@ -5,6 +5,7 @@ from . import api_views
 
 urlpatterns = [
     path('set-language/', set_language, name='set_language'),
+    path('health/', api_views.health_check, name='health_check'),
     path('api/auth/me/', api_views.jwt_me, name='jwt_me'),
     # Home
     path('', views.home, name='index'),
