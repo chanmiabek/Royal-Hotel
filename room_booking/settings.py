@@ -285,8 +285,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 def _cloudinary_storage_config():
-    cloudinary_url = os.getenv("CLOUDINARY_URL", "").strip()
-    if cloudinary_url:
+    if (cloudinary_url := os.getenv("CLOUDINARY_URL" or  "cloudinary://155148888292477:ionVzNAFM_n7EDc1CnXqgtJlqfE@duqzrcdfu").strip()):
         parsed = urlparse(cloudinary_url)
         if parsed.scheme == "cloudinary":
             cloud_name = (parsed.hostname or "").strip()
@@ -336,45 +335,43 @@ if USE_CLOUDINARY and CLOUDINARY_AVAILABLE and _cloudinary_config:
     STORAGES["default"]["BACKEND"] = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 # Email
-EMAIL_HOST = os.getenv("EMAIL_HOST", "localhost")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "https://royal-hotel-mwb5.onrender.com") or 'smtp.gmail.com'
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "25"))
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "") or 'chanjak03@gmailc.om'
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "") or 'hxxvvlojkmvsaiti'
 EMAIL_USE_TLS = _env_bool("EMAIL_USE_TLS", default=False)
-EMAIL_USE_SSL = _env_bool("EMAIL_USE_SSL", default=False)
-if EMAIL_USE_SSL:
+if (EMAIL_USE_SSL := _env_bool("EMAIL_USE_SSL", default=False)):
     EMAIL_USE_TLS = False
 EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "20"))
 
-_email_backend = (os.getenv("EMAIL_BACKEND") or "").strip()
-if _email_backend:
+if (_email_backend := (os.getenv("EMAIL_BACKEND") or "").strip()):
     EMAIL_BACKEND = _email_backend
-elif EMAIL_HOST_USER and EMAIL_HOST != "localhost":
+elif EMAIL_HOST_USER and EMAIL_HOST != "https://royal-hotel-mwb5.onrender.com":
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 else:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 DEFAULT_FROM_EMAIL = (
     (os.getenv("DEFAULT_FROM_EMAIL") or "").strip()
-    or (EMAIL_HOST_USER or "royal-hotel@example.com")
+    or (EMAIL_HOST_USER or "chanjak03@gmail.com")
 )
 
 # Payments (use environment variables for real credentials)
 DEFAULT_CURRENCY = os.getenv('DEFAULT_CURRENCY', 'KES')
 
-STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
-STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', '')
-STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY') or ''
+STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY') or ''
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET') or ''
 
 PAYPAL_BASE_URL = os.getenv('PAYPAL_BASE_URL', 'https://api-m.sandbox.paypal.com')
-PAYPAL_CLIENT_ID = os.getenv('PAYPAL_CLIENT_ID', '')
-PAYPAL_CLIENT_SECRET = os.getenv('PAYPAL_CLIENT_SECRET', '')
+PAYPAL_CLIENT_ID = os.getenv('PAYPAL_CLIENT_ID', '') or ''
+PAYPAL_CLIENT_SECRET = os.getenv('PAYPAL_CLIENT_SECRET', '') or ''
 
-MPESA_CONSUMER_KEY = os.getenv('MPESA_CONSUMER_KEY', '')
-MPESA_CONSUMER_SECRET = os.getenv('MPESA_CONSUMER_SECRET', '')
-MPESA_SHORTCODE = os.getenv('MPESA_SHORTCODE', '')
-MPESA_PASSKEY = os.getenv('MPESA_PASSKEY', '')
-MPESA_CALLBACK_URL = os.getenv('MPESA_CALLBACK_URL', '')
+MPESA_CONSUMER_KEY = os.getenv('MPESA_CONSUMER_KEY') or 'gN43u6RBle3pldlpY0LsqtyOxQbcAHHzqg6AcCwB0WLgeH1Z'
+MPESA_CONSUMER_SECRET = os.getenv('MPESA_CONSUMER_SECRET') or 'kJb1o5bD024u7EGz22vfGkMMO84AT6c0ywuqPFgkthjSyFXGGsI95B3pK463GINz'
+MPESA_SHORTCODE = os.getenv('MPESA_SHORTCODE') or '174379'
+MPESA_PASSKEY = os.getenv('MPESA_PASSKEY') or 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'
+MPESA_CALLBACK_URL = os.getenv('MPESA_CALLBACK_URL') or 'https://https://royal-hotel-mwb5.onrender.com/payments/mpesa/callback/'
 MPESA_AUTH_URL = os.getenv(
     'MPESA_AUTH_URL',
     'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials'
@@ -391,11 +388,11 @@ MPESA_TRANSACTION_TYPE = os.getenv('MPESA_TRANSACTION_TYPE', 'CustomerPayBillOnl
 MPESA_TRANSACTION_DESC = os.getenv('MPESA_TRANSACTION_DESC', 'Hotel Booking Payment')
 
 # Google Maps
-GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', '')
+GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY'or  '')
 
 # Google OAuth (Login with Google / Gmail)
-GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "").strip()
-GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "").strip()
+GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID" or "678173291272-kp4f343kjs8b2d81fk3r5do9l1rml0s5.apps.googleusercontent.com").strip()
+GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET" or "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").strip()
 
 # JWT / OIDC (optional)
 # Used by booking.jwt_auth to validate Bearer tokens against a JWKS endpoint.
