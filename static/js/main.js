@@ -23,26 +23,9 @@
         $('body').toggleClass('mobile-nav-open', isOpen);
     }
 
-    if ($mobileMenu.length && $desktopMenu.length && !$mobileMenu.children().length) {
-        var $menuClone = $desktopMenu.clone();
-
-        $menuClone.find('[id]').each(function () {
-            var currentId = $(this).attr('id');
-            $(this).attr('id', currentId + '-mobile');
-        });
-
-        $menuClone.find('.dropdown').removeClass('show');
-        $menuClone.find('.dropdown-menu').removeClass('show');
-
-        $mobileMenu.append(
-            '<div class="mobile-menu-head">' +
-                '<span class="mobile-menu-title">Menu</span>' +
-                '<button type="button" class="mobile-menu-close" aria-label="Close navigation menu">' +
-                    '<i class="fa fa-times" aria-hidden="true"></i>' +
-                '</button>' +
-            '</div>'
-        );
-        $mobileMenu.append($menuClone);
+    if ($mobileMenu.length) {
+        $mobileMenu.find('.dropdown').removeClass('show');
+        $mobileMenu.find('.dropdown-menu').removeClass('show');
     }
 
     $menuToggle.on('click', function () {

@@ -210,9 +210,10 @@
         }
         .booking-mobile-menu {
             display: none;
-            background: #1f1f1f;
-            border-top: 1px solid #343434;
-            padding: 14px 20px 20px;
+            background: #121212;
+            border-top: 1px solid rgba(255, 215, 0, 0.28);
+            padding: 16px 20px 22px;
+            box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
         }
         .booking-mobile-menu.is-open {
             display: block;
@@ -225,10 +226,10 @@
             margin-bottom: 12px;
         }
         .booking-mobile-menu .mobile-menu-title {
-            color: #FFD700;
-            font-size: 14px;
+            color: #fff4bf;
+            font-size: 15px;
             font-weight: 700;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.1em;
             text-transform: uppercase;
         }
         .booking-mobile-menu .mobile-menu-close {
@@ -239,15 +240,21 @@
             height: 40px;
             border: 1px solid rgba(255, 215, 0, 0.35);
             background: transparent;
-            color: #FFD700;
+            color: #fff4bf;
             font-size: 20px;
             cursor: pointer;
+        }
+        .booking-mobile-menu .top-menu {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 215, 0, 0.12);
+            border-radius: 18px;
+            padding: 10px;
         }
         .booking-mobile-menu .top-menu ul {
             display: flex;
             flex-direction: column;
             align-items: stretch;
-            gap: 8px;
+            gap: 10px;
         }
         .booking-mobile-menu .top-menu ul li {
             display: block;
@@ -258,18 +265,22 @@
         .booking-mobile-menu .top-menu ul li.nav-meta .dropdown-toggle {
             width: 100%;
             justify-content: space-between;
-            padding: 10px 12px;
+            padding: 13px 14px;
             margin: 0;
             line-height: 1.3;
-            border-radius: 0;
-            border: none;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 215, 0, 0.14);
             border-bottom: 2px solid transparent;
+            background: rgba(255, 255, 255, 0.02);
+            color: #ffe082;
+            font-size: 15px;
+            font-weight: 700;
         }
         .booking-mobile-menu .top-menu ul li:hover a,
         .booking-mobile-menu .top-menu ul li.active a,
         .booking-mobile-menu .top-menu ul li.nav-meta .dropdown-toggle:hover,
         .booking-mobile-menu .top-menu ul li.nav-meta .dropdown-toggle:focus {
-            background: transparent;
+            background: rgba(255, 215, 0, 0.08);
             border-bottom-color: #FFD700;
             color: #ffffff;
         }
@@ -283,12 +294,15 @@
             margin-top: 8px;
             box-shadow: none;
             border-top: 1px solid rgba(255, 215, 0, 0.15);
+            background: transparent;
         }
         .booking-mobile-menu .top-menu .dropdown.show .dropdown-menu {
             display: block;
         }
         .booking-mobile-menu .top-menu .dropdown-item {
             justify-content: flex-start;
+            color: #fff4bf;
+            border-radius: 12px;
         }
         @media (max-width: 991px) {
             .top-menu .dropdown-menu {
@@ -363,119 +377,23 @@
         </button>
         <nav class="main-menu top-menu">
             <ul>
-                <li class="{% if request.resolver_match.url_name == 'index' %} active{% endif %}">
-                    <a href="{% url 'index' %}">{% trans "Home" %}</a>
-                </li>
-                <li class="{% if request.resolver_match.url_name == 'about' %} active{% endif %}">
-                    <a href="{% url 'about' %}">{% trans "About Us" %}</a>
-                </li>
-                <li class="{% if request.resolver_match.url_name == 'hotel_list' or request.resolver_match.url_name == 'hotel_detail' %}active{% endif %}">
-                    <a href="{% url 'hotel_list' %}">{% trans "Hotels" %}</a>
-                </li>
-                {% if not user.is_authenticated %}
-                <li class="{% if request.resolver_match.url_name == 'hotel_partner_apply' %}active{% endif %}">
-                    <a href="{% url 'hotel_partner_apply' %}">{% trans "Partner With Us" %}</a>
-                </li>
-                {% elif not user.is_staff and not user.is_superuser and user.profile.user_type != 'OWNER' %}
-                <li class="{% if request.resolver_match.url_name == 'hotel_partner_apply' %}active{% endif %}">
-                    <a href="{% url 'hotel_partner_apply' %}">{% trans "Partner With Us" %}</a>
-                </li>
-                {% endif %}
-                <li class="{% if request.resolver_match.url_name == 'booking' or request.resolver_match.url_name == 'booking_confirmation' %}active{% endif %}">
-                    <a href="{% url 'booking' %}">{% trans "Booking" %}</a>
-                </li>
-                {% if user.is_authenticated and user.profile.user_type == 'OWNER' %}
-                <li class="{% if request.resolver_match.url_name == 'owner_dashboard' %}active{% endif %}">
-                    <a href="{% url 'owner_dashboard' %}">{% trans "Dashboard" %}</a>
-                </li>
-                {% endif %}
-                <li class="{% if request.resolver_match.url_name == 'contact' %}active{% endif %}">
-                    <a href="{% url 'contact' %}">{% trans "Contact Us" %}</a>
-                </li>
-                <li class="nav-meta nav-meta-first">
-                    <span>KE</span>
-                </li>
-                <li class="nav-meta dropdown">
-                    <a class="dropdown-toggle" href="#" id="langDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        {% if LANGUAGE_CODE|slice:":2" == "sw" %}KIS{% else %}ENG{% endif %}
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="langDropdown">
-                        <form method="post" action="{% url 'set_language' %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                            <button type="submit" name="language" value="en" class="dropdown-item">English</button>
-                        </form>
-                        <form method="post" action="{% url 'set_language' %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                            <button type="submit" name="language" value="sw" class="dropdown-item">Kiswahili</button>
-                        </form>
-                    </div>
-                </li>
-                {% if user.is_authenticated %}
-                <li class="nav-item dropdown {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'my_bookings' or request.resolver_match.url_name == 'owner_dashboard' or request.resolver_match.url_name|default:''|slice:':6' == 'admin_' %}active{% endif %}">
-                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fa fa-user"></i> {{ user.first_name|default:user.username }}
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="userDropdown">
-                        <a class="dropdown-item" href="{% url 'profile' %}">
-                            <i class="fa fa-user-circle"></i> {% trans "My Profile" %}
-                        </a>
-                        {% if user.is_staff or user.is_superuser %}
-                        <a class="dropdown-item" href="{% url 'admin_dashboard' %}">
-                            <i class="fa fa-dashboard"></i> {% trans "Admin Dashboard" %}
-                        </a>
-                        <a class="dropdown-item" href="{% url 'admin_hotels' %}">
-                            <i class="fa fa-building"></i> {% trans "Manage Hotels" %}
-                        </a>
-                        <a class="dropdown-item" href="{% url 'admin_rooms' %}">
-                            <i class="fa fa-building"></i> {% trans "Manage Rooms" %}
-                        </a>
-                        <a class="dropdown-item" href="{% url 'admin_booked_rooms' %}">
-                            <i class="fa fa-bed"></i> {% trans "Booked Rooms" %}
-                        </a>
-                        <a class="dropdown-item" href="{% url 'admin_users' %}">
-                            <i class="fa fa-users"></i> {% trans "Manage Users" %}
-                        </a>
-                        <a class="dropdown-item" href="{% url 'admin_payments' %}">
-                            <i class="fa fa-money"></i> {% trans "Manage Payments" %}
-                        </a>
-                        {% else %}
-                        {% if user.profile.user_type == 'OWNER' %}
-                        <a class="dropdown-item" href="{% url 'owner_dashboard' %}">
-                            <i class="fa fa-line-chart"></i> {% trans "Owner Dashboard" %}
-                        </a>
-                        <a class="dropdown-item" href="{% url 'owner_add_room' %}">
-                            <i class="fa fa-plus-square"></i> {% trans "Add Room" %}
-                        </a>
-                        {% else %}
-                        <a class="dropdown-item" href="{% url 'my_bookings' %}">
-                            <i class="fa fa-calendar-check-o"></i> {% trans "My Bookings" %}
-                        </a>
-                        {% endif %}
-                        {% endif %}
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="{% url 'logout' %}">
-                            <i class="fa fa-sign-out"></i> {% trans "Logout" %}
-                        </a>
-                    </div>
-                </li>
-                {% else %}
-                <li class="{% if request.resolver_match.url_name == 'register' %}active{% endif %}">
-                    <a href="{% url 'register' %}">
-                        <i class="fa fa-user-plus"></i> {% trans "Register" %}
-                    </a>
-                </li>
-                <li class="{% if request.resolver_match.url_name == 'login' %}active{% endif %}">
-                    <a href="{% url 'login' %}">
-                        <i class="fa fa-sign-in"></i> {% trans "Login" %}
-                    </a>
-                </li>
-                {% endif %}
+                {% include 'includes/site_nav_items.html' %}
             </ul>
         </nav>
     </header>
-    <div id="mobile-menu-panel" class="booking-mobile-menu d-xl-none" aria-hidden="true"></div>
+    <div id="mobile-menu-panel" class="booking-mobile-menu d-xl-none" aria-hidden="true">
+        <div class="mobile-menu-head">
+            <span class="mobile-menu-title">{% trans "Menu" %}</span>
+            <button type="button" class="mobile-menu-close" aria-label="{% trans 'Close navigation menu' %}">
+                <i class="fa fa-times" aria-hidden="true"></i>
+            </button>
+        </div>
+        <nav class="top-menu">
+            <ul>
+                {% include 'includes/site_nav_items.html' %}
+            </ul>
+        </nav>
+    </div>
     <!-- Header Section End -->
     {% endif %}
     {% endwith %}
