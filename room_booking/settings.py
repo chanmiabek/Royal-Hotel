@@ -391,8 +391,8 @@ MPESA_TRANSACTION_DESC = os.getenv('MPESA_TRANSACTION_DESC', 'Hotel Booking Paym
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY'or  '')
 
 # Google OAuth (Login with Google / Gmail)
-GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID" or "678173291272-kp4f343kjs8b2d81fk3r5do9l1rml0s5.apps.googleusercontent.com").strip()
-GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET" or "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").strip()
+GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID" or "").strip()
+GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET" or "").strip()
 
 # JWT / OIDC (optional)
 # Used by booking.jwt_auth to validate Bearer tokens against a JWKS endpoint.
