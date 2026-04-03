@@ -345,7 +345,7 @@
 
 <body>
     {% with url_name=request.resolver_match.url_name|default:'' %}
-    {% if url_name|slice:':6' != 'admin_' and url_name != 'login' and url_name != 'register' and url_name != 'booking' and url_name != 'hotel_partner_apply' and url_name != 'profile' and url_name != 'owner_dashboard' and url_name != 'my_bookings' %}
+    {% if url_name|slice:':6' != 'admin_' %}
     <!-- Header Section Start -->
     <header id="header" class="booking-navbar">
         <a href="{% url 'index' %}" class="logo">
