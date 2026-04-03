@@ -17,13 +17,15 @@ A scalable, full-featured Hotel Management System built with # Django & Django R
 https://royal-hotel-mwb5.onrender.com
 
 ## 🔐 Authentication
--JWT-based authentication using djangorestframework-simplejwt
--Role-based access:
+
+JWT-based authentication using djangorestframework-simplejwt
+Role-based access:
 -Customer
 -Vendor
 -Admin 
 
 ## 🚀 Future Improvements
+
 -📱 React Native mobile app
 -💳 Payment integration (Stripe / M-Pesa)
 -🔔 Real-time notifications (WebSockets)
@@ -34,4 +36,4 @@ https://royal-hotel-mwb5.onrender.com
 ## 👨‍💼 Author
 -CEO & Founder at Royal Hotel Management System
 
-A MERN stack and Python developer focused on building scalable, real-world systems in the hospitality
+A MERN stack and Python developer focused on building scalable, real-world systems in the hospitality industry
