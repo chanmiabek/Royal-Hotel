@@ -4,14 +4,14 @@
 <html lang="{{ LANGUAGE_CODE|default:'en' }}">
 <head>
     <meta charset="utf-8">
-    <title>ROYAL HOTEL</title>
+    <title>{% block title %}Royal Hotel{% endblock %}</title>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <meta content="" name="keywords">
     <meta content="" name="description">
 
     <!-- Favicons -->
-    {% comment %} <link href="{% static 'img/favicon.ico' %}" rel="icon"> {% endcomment %}
-    {% comment %} <link href="{% static 'img/apple-favicon.png' %}" rel="apple-touch-icon"> {% endcomment %}
+    <link href="{% static 'img/favicon.ico' %}" rel="icon" type="image/x-icon">
+    <link href="{% static 'img/apple-favicon.png' %}" rel="apple-touch-icon">
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:100,200,300,400,500,600,700,800,900" rel="stylesheet"> 
