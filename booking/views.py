@@ -53,6 +53,8 @@ from .models import (
     HotelApplication,
     HotelDocument,
     HotelAgreement,
+    TeamMember,
+    Testimonial,
 )
 
 ROOM_AMENITIES = [
@@ -90,6 +92,15 @@ except Exception:
 
 def _booking_tables_ready():
     required_tables = {Room._meta.db_table, Booking._meta.db_table, Hotel._meta.db_table}
+    try:
+        existing_tables = set(connection.introspection.table_names())
+    except (ProgrammingError, OperationalError):
+        return False
+    return required_tables.issubset(existing_tables)
+
+
+def _marketing_tables_ready():
+    required_tables = {TeamMember._meta.db_table, Testimonial._meta.db_table}
     try:
         existing_tables = set(connection.introspection.table_names())
     except (ProgrammingError, OperationalError):
@@ -506,7 +517,20 @@ def index(request):
 
 # Static pages
 def about(request):
-    return render(request, 'about.html')
+    if _marketing_tables_ready():
+        team_members = TeamMember.objects.filter(is_active=True)
+        testimonials = Testimonial.objects.filter(is_active=True)
+    else:
+        team_members = []
+        testimonials = []
+    return render(
+        request,
+        'about.html',
+        {
+            'team_members': team_members,
+            'testimonials': testimonials,
+        },
+    )
 
 def amenities(request):
     return render(request, 'amenities.html')
@@ -653,7 +677,9 @@ def hotel_detail(request, hotel_id):
     if not _booking_tables_ready():
         messages.error(request, "Database is initializing. Please try again shortly.")
         return redirect('hotel_list')
-    hotel = get_object_or_404(Hotel, id=hotel_id, is_active=True, is_approved=True)
+    hotel = Hotel.objects.filter(id=hotel_id, is_active=True, is_approved=True).first()
+    if not hotel:
+        return render(request, '404.html', status=404)
     rooms = _with_booking_status(
         Room.objects.filter(hotel=hotel, available=True, is_approved=True)
     )
@@ -2887,6 +2913,12 @@ def admin_dashboard(request):
     hotels_qs = Hotel.objects.select_related('owner').order_by('-created_at')
     payments_qs = Payment.objects.select_related('booking').order_by('-created_at')
     applications_qs = HotelApplication.objects.select_related('user').order_by('-created_at')
+    if _marketing_tables_ready():
+        team_members_qs = TeamMember.objects.order_by('display_order', 'name')
+        testimonials_qs = Testimonial.objects.order_by('display_order', 'name')
+    else:
+        team_members_qs = TeamMember.objects.none()
+        testimonials_qs = Testimonial.objects.none()
 
     q_int = None
     if query:
@@ -2939,6 +2971,16 @@ def admin_dashboard(request):
             | Q(contact_phone__icontains=query)
             | Q(status__icontains=query)
         )
+        team_members_qs = team_members_qs.filter(
+            Q(name__icontains=query)
+            | Q(role__icontains=query)
+            | Q(bio__icontains=query)
+        )
+        testimonials_qs = testimonials_qs.filter(
+            Q(name__icontains=query)
+            | Q(role__icontains=query)
+            | Q(quote__icontains=query)
+        )
 
     context = {
         'query': query,
@@ -2948,6 +2990,8 @@ def admin_dashboard(request):
         'hotels': hotels_qs[:10],
         'payments': payments_qs[:10],
         'applications': applications_qs[:10],
+        'team_members': team_members_qs[:10],
+        'testimonials': testimonials_qs[:10],
         'stats': {
             'users': users_qs.count(),
             'bookings': bookings_qs.count(),
@@ -2955,9 +2999,222 @@ def admin_dashboard(request):
             'hotels': hotels_qs.count(),
             'payments': payments_qs.count(),
             'applications': applications_qs.count(),
+            'team_members': team_members_qs.count(),
+            'testimonials': testimonials_qs.count(),
         },
     }
     return render(request, 'admin_dashboard.html', context)
+
+
+@login_required(login_url='login')
+def admin_team_members_view(request):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "You do not have permission to view this page.")
+        return redirect('index')
+
+    if not _marketing_tables_ready():
+        messages.info(request, "Run migrations to enable team member management.")
+        return render(request, 'admin_team_members.html', {'team_members': []})
+
+    team_members = TeamMember.objects.order_by('display_order', 'name')
+    return render(request, 'admin_team_members.html', {'team_members': team_members})
+
+
+@login_required(login_url='login')
+def admin_team_member_create(request):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "You do not have permission to perform this action.")
+        return redirect('index')
+
+    if not _marketing_tables_ready():
+        messages.error(request, "Run migrations to enable team member management.")
+        return redirect('admin_dashboard')
+
+    if request.method == "POST":
+        name = (request.POST.get('name') or '').strip()
+        role = (request.POST.get('role') or '').strip()
+        bio = (request.POST.get('bio') or '').strip()
+        display_order = request.POST.get('display_order') or 0
+
+        if not name or not role or not bio:
+            messages.error(request, "Name, role, and bio are required.")
+            return render(request, 'admin_team_member_form.html', {'team_member': None})
+
+        TeamMember.objects.create(
+            name=name,
+            role=role,
+            bio=bio,
+            image=request.FILES.get('image'),
+            facebook_url=(request.POST.get('facebook_url') or '').strip(),
+            twitter_url=(request.POST.get('twitter_url') or '').strip(),
+            instagram_url=(request.POST.get('instagram_url') or '').strip(),
+            linkedin_url=(request.POST.get('linkedin_url') or '').strip(),
+            display_order=int(display_order or 0),
+            is_active=bool(request.POST.get('is_active')),
+        )
+        messages.success(request, "Team member created successfully.")
+        return redirect('admin_team_members')
+
+    return render(request, 'admin_team_member_form.html', {'team_member': None})
+
+
+@login_required(login_url='login')
+def admin_team_member_edit(request, team_member_id):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "You do not have permission to perform this action.")
+        return redirect('index')
+
+    if not _marketing_tables_ready():
+        messages.error(request, "Run migrations to enable team member management.")
+        return redirect('admin_dashboard')
+
+    team_member = get_object_or_404(TeamMember, id=team_member_id)
+
+    if request.method == "POST":
+        name = (request.POST.get('name') or '').strip()
+        role = (request.POST.get('role') or '').strip()
+        bio = (request.POST.get('bio') or '').strip()
+
+        if not name or not role or not bio:
+            messages.error(request, "Name, role, and bio are required.")
+            return render(request, 'admin_team_member_form.html', {'team_member': team_member})
+
+        team_member.name = name
+        team_member.role = role
+        team_member.bio = bio
+        team_member.facebook_url = (request.POST.get('facebook_url') or '').strip()
+        team_member.twitter_url = (request.POST.get('twitter_url') or '').strip()
+        team_member.instagram_url = (request.POST.get('instagram_url') or '').strip()
+        team_member.linkedin_url = (request.POST.get('linkedin_url') or '').strip()
+        team_member.display_order = int(request.POST.get('display_order') or 0)
+        team_member.is_active = bool(request.POST.get('is_active'))
+        if request.POST.get('remove_image'):
+            team_member.image = None
+        elif request.FILES.get('image'):
+            team_member.image = request.FILES.get('image')
+        team_member.save()
+        messages.success(request, "Team member updated successfully.")
+        return redirect('admin_team_members')
+
+    return render(request, 'admin_team_member_form.html', {'team_member': team_member})
+
+
+@login_required(login_url='login')
+def admin_team_member_delete(request, team_member_id):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "You do not have permission to perform this action.")
+        return redirect('index')
+    if not _marketing_tables_ready():
+        messages.error(request, "Run migrations to enable team member management.")
+        return redirect('admin_dashboard')
+
+    if request.method != "POST":
+        return redirect('admin_team_members')
+
+    team_member = get_object_or_404(TeamMember, id=team_member_id)
+    team_member.delete()
+    messages.success(request, "Team member deleted successfully.")
+    return redirect('admin_team_members')
+
+
+@login_required(login_url='login')
+def admin_testimonials_view(request):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "You do not have permission to view this page.")
+        return redirect('index')
+
+    if not _marketing_tables_ready():
+        messages.info(request, "Run migrations to enable testimonial management.")
+        return render(request, 'admin_testimonials.html', {'testimonials': []})
+
+    testimonials = Testimonial.objects.order_by('display_order', 'name')
+    return render(request, 'admin_testimonials.html', {'testimonials': testimonials})
+
+
+@login_required(login_url='login')
+def admin_testimonial_create(request):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "You do not have permission to perform this action.")
+        return redirect('index')
+
+    if not _marketing_tables_ready():
+        messages.error(request, "Run migrations to enable testimonial management.")
+        return redirect('admin_dashboard')
+
+    if request.method == "POST":
+        name = (request.POST.get('name') or '').strip()
+        quote = (request.POST.get('quote') or '').strip()
+
+        if not name or not quote:
+            messages.error(request, "Name and quote are required.")
+            return render(request, 'admin_testimonial_form.html', {'testimonial': None})
+
+        Testimonial.objects.create(
+            name=name,
+            role=(request.POST.get('role') or '').strip(),
+            quote=quote,
+            image=request.FILES.get('image'),
+            display_order=int(request.POST.get('display_order') or 0),
+            is_active=bool(request.POST.get('is_active')),
+        )
+        messages.success(request, "Testimonial created successfully.")
+        return redirect('admin_testimonials')
+
+    return render(request, 'admin_testimonial_form.html', {'testimonial': None})
+
+
+@login_required(login_url='login')
+def admin_testimonial_edit(request, testimonial_id):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "You do not have permission to perform this action.")
+        return redirect('index')
+
+    if not _marketing_tables_ready():
+        messages.error(request, "Run migrations to enable testimonial management.")
+        return redirect('admin_dashboard')
+
+    testimonial = get_object_or_404(Testimonial, id=testimonial_id)
+
+    if request.method == "POST":
+        name = (request.POST.get('name') or '').strip()
+        quote = (request.POST.get('quote') or '').strip()
+
+        if not name or not quote:
+            messages.error(request, "Name and quote are required.")
+            return render(request, 'admin_testimonial_form.html', {'testimonial': testimonial})
+
+        testimonial.name = name
+        testimonial.role = (request.POST.get('role') or '').strip()
+        testimonial.quote = quote
+        testimonial.display_order = int(request.POST.get('display_order') or 0)
+        testimonial.is_active = bool(request.POST.get('is_active'))
+        if request.POST.get('remove_image'):
+            testimonial.image = None
+        elif request.FILES.get('image'):
+            testimonial.image = request.FILES.get('image')
+        testimonial.save()
+        messages.success(request, "Testimonial updated successfully.")
+        return redirect('admin_testimonials')
+
+    return render(request, 'admin_testimonial_form.html', {'testimonial': testimonial})
+
+
+@login_required(login_url='login')
+def admin_testimonial_delete(request, testimonial_id):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "You do not have permission to perform this action.")
+        return redirect('index')
+    if not _marketing_tables_ready():
+        messages.error(request, "Run migrations to enable testimonial management.")
+        return redirect('admin_dashboard')
+
+    if request.method != "POST":
+        return redirect('admin_testimonials')
+
+    testimonial = get_object_or_404(Testimonial, id=testimonial_id)
+    testimonial.delete()
+    messages.success(request, "Testimonial deleted successfully.")
+    return redirect('admin_testimonials')
 
 
 @login_required(login_url='login')
@@ -3397,3 +3654,11 @@ def subscribe(request):
         return redirect('index')
     messages.error(request, "Please enter a valid email address.")
     return redirect('index')
+
+
+def custom_404(request, exception):
+    return render(request, '404.html', status=404)
+
+
+def custom_500(request):
+    return render(request, '500.html', status=500)

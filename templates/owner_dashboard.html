@@ -2,247 +2,438 @@
 {% load i18n %}
 {% block extra_css %}
 <style>
-    .owner-portal {
-        background: radial-gradient(circle at top left, #f8f0d0 0%, #f7f7f7 45%, #ffffff 100%);
-        min-height: calc(100vh - 120px);
+    .owner-shell {
+        min-height: 100vh;
+        padding: 36px 0 48px;
+        background: linear-gradient(135deg, #f8f1d1 0%, #ffffff 42%, #eef2f7 100%);
+    }
+    .owner-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+    }
+    .owner-home-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 18px;
+        border-radius: 999px;
+        background: #111827;
+        color: #FFD700;
+        font-weight: 700;
+        text-decoration: none;
+    }
+    .owner-home-link:hover {
+        color: #ffffff;
+    }
+    .owner-top-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .owner-top-actions .btn {
+        border-radius: 999px;
+        font-weight: 700;
+        padding: 10px 18px;
     }
     .owner-hero {
-        background: linear-gradient(120deg, #1a1a1a 0%, #2b2b2b 50%, #3b2a00 100%);
-        border-radius: 18px;
-        color: #f8f1d2;
-        padding: 32px;
+        background: linear-gradient(120deg, #111827 0%, #1f2937 55%, #4b3200 100%);
+        border-radius: 26px;
+        color: #fff8e7;
+        padding: 28px;
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.24);
+        margin-bottom: 24px;
         display: grid;
-        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
         gap: 24px;
-        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
-        margin-bottom: 32px;
     }
-    .owner-hero__badge {
+    .owner-chip {
         display: inline-flex;
         align-items: center;
         gap: 8px;
         padding: 6px 14px;
         border-radius: 999px;
         background: rgba(255, 215, 0, 0.18);
-        color: #ffdd6c;
-        font-weight: 600;
-        letter-spacing: 0.04em;
+        color: #ffdf7a;
         font-size: 12px;
-        text-transform: uppercase;
-    }
-    .owner-hero__title {
-        font-size: 30px;
         font-weight: 700;
-        margin: 16px 0 8px;
-    }
-    .owner-hero__meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 16px;
-        font-size: 14px;
-        color: rgba(255, 255, 255, 0.75);
-    }
-    .owner-hero__actions .btn {
-        border-radius: 999px;
-        padding: 8px 18px;
-        font-weight: 600;
-    }
-    .owner-hero__stats {
-        background: rgba(255, 255, 255, 0.08);
-        border-radius: 16px;
-        padding: 20px;
-        display: grid;
-        gap: 16px;
-    }
-    .owner-stat {
-        background: rgba(255, 255, 255, 0.12);
-        border-radius: 12px;
-        padding: 16px;
-    }
-    .owner-stat h6 {
-        margin-bottom: 6px;
-        color: rgba(255, 255, 255, 0.7);
-        font-size: 12px;
         letter-spacing: 0.08em;
         text-transform: uppercase;
     }
-    .owner-stat h3 {
-        margin: 0;
-        font-size: 24px;
+    .owner-title {
+        font-size: 32px;
+        font-weight: 800;
+        margin: 14px 0 8px;
+    }
+    .owner-subtitle {
+        margin: 0 0 16px;
+        color: rgba(255, 248, 231, 0.82);
+        max-width: 640px;
+    }
+    .owner-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        color: rgba(255, 248, 231, 0.78);
+        font-size: 14px;
+    }
+    .owner-hero-stats {
+        display: grid;
+        gap: 14px;
+    }
+    .owner-hero-stat {
+        border-radius: 18px;
+        padding: 16px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .owner-hero-stat span {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 12px;
         font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: rgba(255, 248, 231, 0.72);
     }
-    .owner-card {
-        border: none;
-        border-radius: 16px;
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+    .owner-hero-stat strong {
+        font-size: 26px;
+        color: #ffffff;
     }
-    .owner-card .card-header {
-        background: #fdf7e3;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-        font-weight: 600;
+    .owner-grid {
+        display: grid;
+        grid-template-columns: 290px minmax(0, 1fr);
+        gap: 24px;
     }
-    .owner-section-title {
+    .owner-sidebar,
+    .owner-panel {
+        background: #ffffff;
+        border-radius: 22px;
+        box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+    }
+    .owner-sidebar {
+        padding: 22px;
+        height: fit-content;
+        position: sticky;
+        top: 24px;
+    }
+    .owner-avatar {
+        width: 76px;
+        height: 76px;
+        border-radius: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff8dc;
+        color: #b8860b;
+        font-size: 30px;
+        margin-bottom: 14px;
+    }
+    .owner-sidebar h4 {
+        margin-bottom: 6px;
+        color: #111827;
+    }
+    .owner-sidebar p {
+        color: #64748b;
+        margin-bottom: 18px;
+    }
+    .owner-nav {
+        display: grid;
+        gap: 10px;
+    }
+    .owner-nav a {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        margin-bottom: 12px;
+        gap: 10px;
+        padding: 12px 14px;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        background: #ffffff;
+        color: #111827;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .owner-nav a:hover {
+        background: #fff8dc;
+        border-color: rgba(255, 215, 0, 0.5);
+    }
+    .owner-main {
+        display: grid;
+        gap: 24px;
+    }
+    .owner-panel {
+        padding: 24px;
+    }
+    .owner-panel h4 {
+        margin-bottom: 18px;
+        color: #111827;
+        font-size: 20px;
+    }
+    .owner-overview {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+    }
+    .owner-overview-card {
+        padding: 18px;
+        border-radius: 18px;
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+    }
+    .owner-overview-card span {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748b;
+    }
+    .owner-overview-card strong {
+        color: #111827;
+        font-size: 20px;
+    }
+    .owner-hotel-image {
+        border-radius: 16px;
+        max-height: 220px;
+        object-fit: cover;
+        width: 100%;
+        margin-bottom: 14px;
+    }
+    .owner-upload .btn,
+    .owner-panel .btn {
+        border-radius: 999px;
+        font-weight: 700;
+    }
+    .owner-table-wrap {
+        overflow-x: auto;
+    }
+    .owner-table-wrap table {
+        margin-bottom: 0;
+    }
+    @media (max-width: 1199px) {
+        .owner-overview {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
     }
     @media (max-width: 991px) {
-        .owner-hero {
+        .owner-hero,
+        .owner-grid {
+            grid-template-columns: 1fr;
+        }
+        .owner-sidebar {
+            position: static;
+        }
+    }
+    @media (max-width: 575px) {
+        .owner-shell {
+            padding: 24px 0 36px;
+        }
+        .owner-hero,
+        .owner-sidebar,
+        .owner-panel {
+            padding: 20px;
+        }
+        .owner-title {
+            font-size: 28px;
+        }
+        .owner-overview {
             grid-template-columns: 1fr;
         }
     }
 </style>
 {% endblock %}
 {% block content %}
-<div class="owner-portal">
-    <div class="container py-5">
+<section class="owner-shell">
+    <div class="container">
+        <div class="owner-topbar">
+            <a class="owner-home-link" href="{% url 'index' %}">
+                <i class="fa fa-home" aria-hidden="true"></i>
+                {% trans "Back to Home" %}
+            </a>
+            <div class="owner-top-actions">
+                <a href="{% url 'owner_add_room' %}" class="btn btn-dark">{% trans "Add New Room" %}</a>
+                {% if hotel %}
+                <a href="{% url 'hotel_detail' hotel.id %}" class="btn btn-outline-dark">{% trans "View Public Listing" %}</a>
+                {% endif %}
+            </div>
+        </div>
+
         <div class="owner-hero">
             <div>
-                <span class="owner-hero__badge">{% trans "Partner Dashboard" %}</span>
-                <h2 class="owner-hero__title">
-                    {% if hotel %}{{ hotel.name }}{% else %}{% trans "Owner Dashboard" %}{% endif %}
-                </h2>
-                <p class="mb-3">{% trans "Manage your hotel listing, rooms, and bookings in one place." %}</p>
-                <div class="owner-hero__meta mb-3">
+                <span class="owner-chip">{% trans "Partner Dashboard" %}</span>
+                <h2 class="owner-title">{% if hotel %}{{ hotel.name }}{% else %}{% trans "Owner Dashboard" %}{% endif %}</h2>
+                <p class="owner-subtitle">{% trans "Manage your hotel profile, rooms, bookings, and business activity from one organized workspace." %}</p>
+                <div class="owner-meta">
                     {% if hotel %}
                         <span><i class="fa fa-map-marker"></i> {{ hotel.city }}{% if hotel.city and hotel.country %}, {% endif %}{{ hotel.country }}</span>
                         <span><i class="fa fa-envelope"></i> {{ hotel.email|default:"-" }}</span>
-                        <span><i class="fa fa-check-circle"></i> {% trans "Approved" %}</span>
+                        <span><i class="fa fa-phone"></i> {{ hotel.phone|default:"-" }}</span>
                     {% else %}
-                        <span><i class="fa fa-info-circle"></i> {% trans "Hotel not linked yet." %}</span>
-                    {% endif %}
-                </div>
-                <div class="owner-hero__actions">
-                    <a href="{% url 'owner_add_room' %}" class="btn btn-light mr-2">{% trans "Add New Room" %}</a>
-                    {% if hotel %}
-                    <a href="{% url 'hotel_detail' hotel.id %}" class="btn btn-outline-light">{% trans "View Public Listing" %}</a>
+                        <span><i class="fa fa-info-circle"></i> {% trans "Hotel profile not linked yet." %}</span>
                     {% endif %}
                 </div>
             </div>
-            <div class="owner-hero__stats">
-                <div class="owner-stat">
-                    <h6>{% trans "Total Rooms" %}</h6>
-                    <h3>{{ total_rooms }}</h3>
+            <div class="owner-hero-stats">
+                <div class="owner-hero-stat">
+                    <span>{% trans "Total Rooms" %}</span>
+                    <strong>{{ total_rooms }}</strong>
                 </div>
-                <div class="owner-stat">
-                    <h6>{% trans "Confirmed Bookings" %}</h6>
-                    <h3>{{ confirmed_bookings }}</h3>
+                <div class="owner-hero-stat">
+                    <span>{% trans "Confirmed Bookings" %}</span>
+                    <strong>{{ confirmed_bookings }}</strong>
                 </div>
-                <div class="owner-stat">
-                    <h6>{% trans "Pending Bookings" %}</h6>
-                    <h3>{{ pending_bookings }}</h3>
+                <div class="owner-hero-stat">
+                    <span>{% trans "Pending Bookings" %}</span>
+                    <strong>{{ pending_bookings }}</strong>
                 </div>
-                <div class="owner-stat">
-                    <h6>{% trans "Total Revenue" %}</h6>
-                    <h3>{{ revenue_total }}</h3>
+                <div class="owner-hero-stat">
+                    <span>{% trans "Total Revenue" %}</span>
+                    <strong>{{ revenue_total }}</strong>
                 </div>
             </div>
         </div>
 
-        <div class="row mb-4">
-            <div class="col-lg-4 mb-4 mb-lg-0">
-                <div class="card owner-card h-100">
-                    <div class="card-header">{% trans "Hotel Profile" %}</div>
-                    <div class="card-body">
-                        {% if hotel %}
-                            <h5 class="mb-2">{{ hotel.name }}</h5>
-                            <p class="text-muted mb-1">{{ hotel.address|default:"-" }}</p>
-                            <p class="text-muted mb-1">{{ hotel.city }}{% if hotel.city and hotel.country %}, {% endif %}{{ hotel.country }}</p>
-                            <p class="text-muted mb-0">{{ hotel.phone|default:"-" }}</p>
-                            <div class="mt-3">
-                                <h6 class="mb-2">{% trans "Public Hotel Image" %}</h6>
-                                {% if hotel.image %}
-                                    <img src="{{ hotel.image.url }}" alt="{{ hotel.name }}" class="img-fluid mb-2" style="border-radius: 12px;">
-                                {% endif %}
-                                <form method="post" enctype="multipart/form-data">
-                                    {% csrf_token %}
-                                    <div class="form-group mb-2">
-                                        <input type="file" name="image" class="form-control-file" accept="image/*" required>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary btn-sm">{% trans "Update Image" %}</button>
-                                </form>
-                            </div>
-                        {% else %}
-                            <p class="mb-0">{% trans "Your hotel profile will appear here after approval." %}</p>
-                        {% endif %}
-                    </div>
+        <div class="owner-grid">
+            <aside class="owner-sidebar">
+                <div class="owner-avatar">
+                    <i class="fa fa-building" aria-hidden="true"></i>
                 </div>
-            </div>
-            <div class="col-lg-8">
-                <div class="card owner-card h-100">
-                    <div class="card-header">{% trans "Recent Bookings" %}</div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-hover bg-white mb-0">
-                                <thead class="thead-light">
-                                    <tr>
-                                        <th>{% trans "Room" %}</th>
-                                        <th>{% trans "Guest" %}</th>
-                                        <th>{% trans "Check-In" %}</th>
-                                        <th>{% trans "Check-Out" %}</th>
-                                        <th>{% trans "Status" %}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for booking in recent_bookings %}
-                                    <tr>
-                                        <td>{{ booking.room.title }}</td>
-                                        <td>{{ booking.first_name }} {{ booking.last_name }}</td>
-                                        <td>{{ booking.check_in }}</td>
-                                        <td>{{ booking.check_out }}</td>
-                                        <td>{{ booking.status }}</td>
-                                    </tr>
-                                    {% empty %}
-                                    <tr>
-                                        <td colspan="5" class="text-center py-4">{% trans "No bookings yet." %}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                <h4>{% if hotel %}{{ hotel.name }}{% else %}{% trans "Partner Account" %}{% endif %}</h4>
+                <p>{% trans "Quick navigation for your hotel management workspace." %}</p>
+                <div class="owner-nav">
+                    <a href="{% url 'owner_dashboard' %}"><i class="fa fa-dashboard"></i>{% trans "Dashboard Overview" %}</a>
+                    <a href="{% url 'owner_add_room' %}"><i class="fa fa-plus-square"></i>{% trans "Add Room" %}</a>
+                    {% if hotel %}
+                    <a href="{% url 'hotel_detail' hotel.id %}"><i class="fa fa-eye"></i>{% trans "Public Hotel Page" %}</a>
+                    {% endif %}
+                    <a href="{% url 'index' %}"><i class="fa fa-home"></i>{% trans "Home Page" %}</a>
+                </div>
+            </aside>
+
+            <div class="owner-main">
+                <div class="owner-panel">
+                    <h4>{% trans "Business Snapshot" %}</h4>
+                    <div class="owner-overview">
+                        <div class="owner-overview-card">
+                            <span>{% trans "Hotel Status" %}</span>
+                            <strong>{% if hotel %}{% trans "Active" %}{% else %}{% trans "Pending" %}{% endif %}</strong>
+                        </div>
+                        <div class="owner-overview-card">
+                            <span>{% trans "Rooms" %}</span>
+                            <strong>{{ total_rooms }}</strong>
+                        </div>
+                        <div class="owner-overview-card">
+                            <span>{% trans "Confirmed" %}</span>
+                            <strong>{{ confirmed_bookings }}</strong>
+                        </div>
+                        <div class="owner-overview-card">
+                            <span>{% trans "Revenue" %}</span>
+                            <strong>{{ revenue_total }}</strong>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="card owner-card">
-            <div class="card-header owner-section-title">
-                <span>{% trans "Your Rooms" %}</span>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover bg-white mb-0">
-                        <thead class="thead-light">
-                            <tr>
-                                <th>{% trans "Room" %}</th>
-                                <th>{% trans "Hotel" %}</th>
-                                <th>{% trans "Category" %}</th>
-                                <th>{% trans "Price" %}</th>
-                                <th>{% trans "Approved" %}</th>
-                                <th>{% trans "Available" %}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for room in rooms %}
-                            <tr>
-                                <td>{{ room.title }}</td>
-                                <td>{{ room.hotel.name|default:"-" }}</td>
-                                <td>{{ room.get_category_display }}</td>
-                                <td>{{ room.price }}</td>
-                                <td>{% if room.is_approved %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
-                                <td>{% if room.available %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="6" class="text-center py-4">{% trans "No rooms submitted yet." %}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="owner-panel">
+                    <h4>{% trans "Hotel Profile" %}</h4>
+                    {% if hotel %}
+                        <div class="row">
+                            <div class="col-lg-5 mb-4 mb-lg-0">
+                                {% if hotel.image %}
+                                    <img src="{{ hotel.image.url }}" alt="{{ hotel.name }}" class="owner-hotel-image">
+                                {% endif %}
+                                <div class="owner-upload">
+                                    <form method="post" enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <div class="form-group mb-2">
+                                            <input type="file" name="image" class="form-control-file" accept="image/*" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary btn-sm">{% trans "Update Image" %}</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="col-lg-7">
+                                <p class="mb-2"><strong>{% trans "Address:" %}</strong> {{ hotel.address|default:"-" }}</p>
+                                <p class="mb-2"><strong>{% trans "Location:" %}</strong> {{ hotel.city }}{% if hotel.city and hotel.country %}, {% endif %}{{ hotel.country }}</p>
+                                <p class="mb-2"><strong>{% trans "Contact:" %}</strong> {{ hotel.phone|default:"-" }}</p>
+                                <p class="mb-0"><strong>{% trans "Email:" %}</strong> {{ hotel.email|default:"-" }}</p>
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="mb-0">{% trans "Your hotel profile will appear here after approval." %}</p>
+                    {% endif %}
+                </div>
+
+                <div class="owner-panel">
+                    <h4>{% trans "Recent Bookings" %}</h4>
+                    <div class="owner-table-wrap">
+                        <table class="table table-bordered table-hover bg-white">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>{% trans "Room" %}</th>
+                                    <th>{% trans "Guest" %}</th>
+                                    <th>{% trans "Check-In" %}</th>
+                                    <th>{% trans "Check-Out" %}</th>
+                                    <th>{% trans "Status" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in recent_bookings %}
+                                <tr>
+                                    <td>{{ booking.room.title }}</td>
+                                    <td>{{ booking.first_name }} {{ booking.last_name }}</td>
+                                    <td>{{ booking.check_in }}</td>
+                                    <td>{{ booking.check_out }}</td>
+                                    <td>{{ booking.status }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">{% trans "No bookings yet." %}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="owner-panel">
+                    <h4>{% trans "Your Rooms" %}</h4>
+                    <div class="owner-table-wrap">
+                        <table class="table table-bordered table-hover bg-white">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>{% trans "Room" %}</th>
+                                    <th>{% trans "Hotel" %}</th>
+                                    <th>{% trans "Category" %}</th>
+                                    <th>{% trans "Price" %}</th>
+                                    <th>{% trans "Approved" %}</th>
+                                    <th>{% trans "Available" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for room in rooms %}
+                                <tr>
+                                    <td>{{ room.title }}</td>
+                                    <td>{{ room.hotel.name|default:"-" }}</td>
+                                    <td>{{ room.get_category_display }}</td>
+                                    <td>{{ room.price }}</td>
+                                    <td>{% if room.is_approved %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                                    <td>{% if room.available %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">{% trans "No rooms submitted yet." %}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
 {% endblock %}

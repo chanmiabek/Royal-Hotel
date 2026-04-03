@@ -133,6 +133,12 @@
                         <a href="{% url 'admin_booked_rooms' %}" class="list-group-item list-group-item-action {% if url_name == 'admin_booked_rooms' %}active{% endif %}">
                             <i class="fa fa-calendar-check-o" aria-hidden="true"></i>{% trans "Booked Rooms" %}
                         </a>
+                        <a href="{% url 'admin_team_members' %}" class="list-group-item list-group-item-action {% if url_name == 'admin_team_members' or url_name == 'admin_team_member_create' or url_name == 'admin_team_member_edit' %}active{% endif %}">
+                            <i class="fa fa-id-badge" aria-hidden="true"></i>{% trans "Team Members" %}
+                        </a>
+                        <a href="{% url 'admin_testimonials' %}" class="list-group-item list-group-item-action {% if url_name == 'admin_testimonials' or url_name == 'admin_testimonial_create' or url_name == 'admin_testimonial_edit' %}active{% endif %}">
+                            <i class="fa fa-quote-left" aria-hidden="true"></i>{% trans "Testimonials" %}
+                        </a>
                         <a href="{% url 'admin_payments' %}" class="list-group-item list-group-item-action {% if url_name == 'admin_payments' %}active{% endif %}">
                             <i class="fa fa-credit-card" aria-hidden="true"></i>{% trans "Payments" %}
                         </a>

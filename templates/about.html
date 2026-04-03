@@ -1,86 +1,405 @@
 {% extends 'base.html' %}
 {% load static i18n %}
 
+{% block extra_css %}
+<style>
+    .about-highlight {
+        margin-top: 50px;
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        border-radius: 24px;
+        padding: 32px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.16);
+    }
+    .about-highlight h3,
+    .about-highlight p,
+    .about-highlight li {
+        color: #ffffff;
+    }
+    .about-highlight h3 {
+        margin-bottom: 14px;
+    }
+    .about-highlight ul {
+        margin: 0;
+        padding-left: 18px;
+    }
+    .about-grid-section {
+        margin-top: 55px;
+    }
+    .about-grid-section .section-header {
+        margin-bottom: 28px;
+    }
+    .about-card {
+        height: 100%;
+        background: #ffffff;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 18px 35px rgba(0, 0, 0, 0.1);
+    }
+    .about-card img {
+        width: 100%;
+        height: 240px;
+        object-fit: cover;
+    }
+    .about-card-body {
+        padding: 24px;
+    }
+    .about-card-body h4 {
+        color: #111827;
+        font-size: 20px;
+        margin-bottom: 6px;
+    }
+    .about-card-role {
+        display: inline-block;
+        margin-bottom: 12px;
+        color: #b8860b;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+    .about-card-body p:last-child {
+        margin-bottom: 0;
+    }
+    .about-social {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+    }
+    .about-social a {
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #111827;
+        color: #FFD700;
+    }
+    .about-social a:hover {
+        background: #FFD700;
+        color: #111827;
+    }
+    .testimonial-card {
+        height: 100%;
+        background: #ffffff;
+        border-left: 4px solid #FFD700;
+        border-radius: 18px;
+        padding: 24px;
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.08);
+    }
+    .testimonial-card p {
+        font-size: 15px;
+        color: #475569;
+    }
+    .testimonial-meta {
+        margin-top: 16px;
+        color: #111827;
+        font-weight: 700;
+    }
+    .testimonial-meta span {
+        display: block;
+        margin-top: 4px;
+        color: #64748b;
+        font-size: 13px;
+        font-weight: 600;
+    }
+    .benefit-card,
+    .trust-card {
+        height: 100%;
+        background: #ffffff;
+        border-radius: 18px;
+        padding: 24px;
+        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.08);
+    }
+    .benefit-card h4,
+    .trust-card h4 {
+        color: #111827;
+        margin-bottom: 12px;
+        font-size: 20px;
+    }
+    .benefit-card i,
+    .trust-card i {
+        color: #FFD700;
+        font-size: 26px;
+        margin-bottom: 14px;
+        display: inline-block;
+    }
+    .trust-banner {
+        margin-top: 28px;
+        background: #fff8dc;
+        border: 1px solid rgba(255, 215, 0, 0.45);
+        border-radius: 20px;
+        padding: 26px;
+    }
+    .trust-banner h3 {
+        color: #111827;
+        margin-bottom: 12px;
+    }
+    .trust-banner p {
+        color: #475569;
+        margin-bottom: 0;
+    }
+    @media (max-width: 767px) {
+        .about-highlight {
+            padding: 24px 20px;
+        }
+        .about-card img {
+            height: 220px;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <section class="premium-shell">
-        <div id="about">
-            <div class="container">
-                <div class="section-header">
-                    <h2>{% trans "About Royal Hotel" %}</h2>
-                    <p>
-                        {% blocktrans %}Established in 1995, Royal Hotel has been the premier destination for travelers seeking a perfect blend of luxury, comfort, and heritage.{% endblocktrans %}
-                    </p>
-                </div>
+    <div id="about">
+        <div class="container">
+            <div class="section-header">
+                <h2>{% trans "About Royal Hotel" %}</h2>
+                <p>
+                    {% blocktrans %}Royal Hotel connects guests with quality stays and gives hospitality businesses a dependable platform to manage growth with confidence.{% endblocktrans %}
+                </p>
+            </div>
 
-                <div class="row">
-                    <div class="col-md-6 img-cols">
-                        <div class="img-col">
-                            <img class="img-fluid" src="{% static 'img/about/about-1.jpg' %}" alt="{% trans 'Hotel Exterior' %}">
-                        </div>
-                    </div>
-                    <div class="col-md-6 content-cols">
-                        <div class="content-col">
-                            <h3>{% trans "A Legacy of Hospitality" %}</h3>
-                            <p>
-                                {% blocktrans %}For over nearly three decades, we have defined the standard for luxury lodging. What started as a small boutique inn has grown into a world-renowned landmark, known for its iconic architecture and unwavering commitment to guest satisfaction.{% endblocktrans %}
-                            </p>
-                            <p>
-                                {% blocktrans %}Every brick in our building tells a story of elegance. We pride ourselves on maintaining a classic atmosphere while integrating the latest in smart-hotel technology.{% endblocktrans %}
-                            </p>
-                            <a href="#">{% trans "View Our History" %}</a>
-                        </div>
+            <div class="row">
+                <div class="col-md-6 img-cols">
+                    <div class="img-col">
+                        <img class="img-fluid" src="{% static 'img/about/about-1.jpg' %}" alt="{% trans 'Royal Hotel exterior view' %}">
                     </div>
                 </div>
-                
-                <hr>
-                
-                <div class="row">
-                    <div class="col-md-6 img-cols d-block d-md-none">
-                        <div class="img-col">
-                            <img class="img-fluid" src="{% static 'img/about/about-2.jpg' %}" alt="{% trans 'Restaurant' %}">
-                        </div>
-                    </div>
-                    <div class="col-md-6 content-cols">
-                        <div class="content-col">
-                            <h3>{% trans "Fine Dining & Culinary Art" %}</h3>
-                            <p>
-                                {% blocktrans %}Our award-winning restaurant, *The Royal Palate*, offers an exquisite menu crafted by Michelin-starred chefs. We source all our ingredients from local organic farms to ensure every bite is fresh and flavorful.{% endblocktrans %}
-                            </p>
-                            <p>
-                                {% blocktrans %}From our signature breakfast buffet to intimate candlelit dinners, we provide a gastronomic journey that satisfies the most discerning palates.{% endblocktrans %}
-                            </p>
-                            <a href="#">{% trans "Explore Menu" %}</a>
-                        </div>
-                    </div>
-                    <div class="col-md-6 img-cols d-none d-md-block">
-                        <div class="img-col">
-                            <img class="img-fluid" src="{% static 'img/about/about-2.jpg' %}" alt="{% trans 'Restaurant' %}">
-                        </div>
+                <div class="col-md-6 content-cols">
+                    <div class="content-col">
+                        <h3>{% trans "A Hospitality Platform Built on Trust" %}</h3>
+                        <p>
+                            {% blocktrans %}Royal Hotel is more than a place to stay. We are building a dependable booking and hotel management experience that helps travelers discover comfort and helps accommodation businesses run with greater confidence.{% endblocktrans %}
+                        </p>
+                        <p>
+                            {% blocktrans %}Our mission is simple: deliver smooth guest experiences, reliable booking operations, and practical tools that help hotel owners manage rooms, availability, and reservations without stress.{% endblocktrans %}
+                        </p>
+                        <a href="{% url 'hotel_partner_apply' %}">{% trans "Partner With Us" %}</a>
                     </div>
                 </div>
-                
-                <hr>
-                
+            </div>
+
+            <hr>
+
+            <div class="row">
+                <div class="col-md-6 img-cols d-block d-md-none">
+                    <div class="img-col">
+                        <img class="img-fluid" src="{% static 'img/about/about-2.jpg' %}" alt="{% trans 'Royal Hotel guest service' %}">
+                    </div>
+                </div>
+                <div class="col-md-6 content-cols">
+                    <div class="content-col">
+                        <h3>{% trans "Guest Experience Meets Smart Operations" %}</h3>
+                        <p>
+                            {% blocktrans %}We combine warm hospitality with digital efficiency. Guests can browse properties, book rooms, and manage their stays easily, while business partners gain a clearer way to organize hotel information and reservations.{% endblocktrans %}
+                        </p>
+                        <p>
+                            {% blocktrans %}This balance helps hotels serve customers better, reduce booking confusion, and improve day-to-day visibility across rooms, pricing, and occupancy.{% endblocktrans %}
+                        </p>
+                        <a href="{% url 'booking' %}">{% trans "Make a Booking" %}</a>
+                    </div>
+                </div>
+                <div class="col-md-6 img-cols d-none d-md-block">
+                    <div class="img-col">
+                        <img class="img-fluid" src="{% static 'img/about/about-2.jpg' %}" alt="{% trans 'Royal Hotel guest service' %}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="about-highlight">
+                <div class="row align-items-center">
+                    <div class="col-lg-7">
+                        <h3>{% trans "Why Businesses Trust Our Management System" %}</h3>
+                        <p>
+                            {% blocktrans %}We understand that hotels and property owners need more than visibility. They need a secure and organized system they can rely on to manage reservations, partner applications, room listings, and operational decisions with peace of mind.{% endblocktrans %}
+                        </p>
+                    </div>
+                    <div class="col-lg-5">
+                        <ul>
+                            <li>{% trans "Structured booking and partner workflows" %}</li>
+                            <li>{% trans "Clear separation of guest, owner, and admin access" %}</li>
+                            <li>{% trans "Protected account areas and controlled dashboards" %}</li>
+                            <li>{% trans "A growing system designed for reliability and accountability" %}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="about-grid-section">
+                <div class="section-header">
+                    <h2>{% trans "Our Team" %}</h2>
+                    <p>{% trans "The people behind Royal Hotel are focused on dependable service, trusted partnerships, and better hospitality experiences." %}</p>
+                </div>
                 <div class="row">
-                    <div class="col-md-6 img-cols">
-                        <div class="img-col">
-                            <img class="img-fluid" src="{% static 'img/about/about-3.jpg' %}" alt="{% trans 'Spa and Wellness' %}">
+                    {% for member in team_members %}
+                    <div class="col-md-4 mb-4">
+                        <div class="about-card">
+                            <img src="{% if member.image %}{{ member.image.url }}{% else %}{% static 'img/about/about-1.jpg' %}{% endif %}" alt="{{ member.name }}">
+                            <div class="about-card-body">
+                                <span class="about-card-role">{{ member.role }}</span>
+                                <h4>{{ member.name }}</h4>
+                                <p>{{ member.bio }}</p>
+                                <div class="about-social">
+                                    {% if member.facebook_url %}<a href="{{ member.facebook_url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ member.name }} Facebook"><i class="fa fa-facebook"></i></a>{% endif %}
+                                    {% if member.twitter_url %}<a href="{{ member.twitter_url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ member.name }} Twitter"><i class="fa fa-twitter"></i></a>{% endif %}
+                                    {% if member.instagram_url %}<a href="{{ member.instagram_url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ member.name }} Instagram"><i class="fa fa-instagram"></i></a>{% endif %}
+                                    {% if member.linkedin_url %}<a href="{{ member.linkedin_url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ member.name }} LinkedIn"><i class="fa fa-linkedin"></i></a>{% endif %}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-6 content-cols">
-                        <div class="content-col">
-                            <h3>{% trans "Wellness & Serenity" %}</h3>
-                            <p>
-                                {% blocktrans %}Escape the hustle and bustle of the city in our full-service spa and wellness center. We offer a range of treatments, including Swedish massages, rejuvenating facials, and a heated indoor swimming pool.{% endblocktrans %}
-                            </p>
-                            <p>
-                                {% blocktrans %}Our state-of-the-art fitness center is open 24/7, allowing you to maintain your routine while enjoying panoramic views of the city skyline.{% endblocktrans %}
-                            </p>
-                            <a href="#">{% trans "Book a Treatment" %}</a>
+                    {% empty %}
+                    <div class="col-md-4 mb-4">
+                        <div class="about-card">
+                            <img src="{% static 'img/about/about-1.jpg' %}" alt="{% trans 'Operations team' %}">
+                            <div class="about-card-body">
+                                <span class="about-card-role">{% trans "Operations" %}</span>
+                                <h4>{% trans "Guest Success Team" %}</h4>
+                                <p>{% trans "Our operations team supports guests and partners by making sure bookings, communication, and service follow-through remain smooth and reliable." %}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="about-card">
+                            <img src="{% static 'img/about/about-2.jpg' %}" alt="{% trans 'Partnership team' %}">
+                            <div class="about-card-body">
+                                <span class="about-card-role">{% trans "Partnerships" %}</span>
+                                <h4>{% trans "Business Growth Team" %}</h4>
+                                <p>{% trans "We work closely with hotel owners and hospitality businesses to onboard quality properties and help them use the platform with confidence." %}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="about-card">
+                            <img src="{% static 'img/about/about-3.jpg' %}" alt="{% trans 'System support team' %}">
+                            <div class="about-card-body">
+                                <span class="about-card-role">{% trans "Technology" %}</span>
+                                <h4>{% trans "Platform Support Team" %}</h4>
+                                <p>{% trans "Our platform team keeps the system organized, monitored, and improving so both guests and business partners can depend on it every day." %}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="about-grid-section">
+                <div class="section-header">
+                    <h2>{% trans "Testimonials" %}</h2>
+                    <p>{% trans "Guests and business partners value responsive support, simple workflows, and a platform they can depend on." %}</p>
+                </div>
+                <div class="row">
+                    {% for testimonial in testimonials %}
+                    <div class="col-md-4 mb-4">
+                        <div class="testimonial-card">
+                            <p>"{{ testimonial.quote }}"</p>
+                            <div class="testimonial-meta">
+                                {{ testimonial.name }}
+                                <span>{{ testimonial.role|default:"Guest" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-md-4 mb-4">
+                        <div class="testimonial-card">
+                            <p>{% trans "\"Booking through Royal Hotel felt clear and fast. The communication was reassuring, and the whole process gave me confidence before I even arrived.\"" %}</p>
+                            <div class="testimonial-meta">
+                                {% trans "Amina Yusuf" %}
+                                <span>{% trans "Frequent Traveler" %}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="testimonial-card">
+                            <p>{% trans "\"As a property operator, I value the way the platform organizes listings and applications. It feels practical, professional, and built for real business use.\"" %}</p>
+                            <div class="testimonial-meta">
+                                {% trans "Daniel Otieno" %}
+                                <span>{% trans "Hotel Partner" %}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="testimonial-card">
+                            <p>{% trans "\"The system makes it easier to trust what I am booking. The layout, the details, and the follow-up all show that Royal Hotel takes service seriously.\"" %}</p>
+                            <div class="testimonial-meta">
+                                {% trans "Grace Naliaka" %}
+                                <span>{% trans "Business Traveler" %}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="about-grid-section">
+                <div class="section-header">
+                    <h2>{% trans "Benefits of Partnership" %}</h2>
+                    <p>{% trans "We help hospitality businesses present their properties better, manage demand more clearly, and build guest trust through a professional digital presence." %}</p>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <div class="benefit-card">
+                            <i class="fa fa-line-chart" aria-hidden="true"></i>
+                            <h4>{% trans "More Visibility" %}</h4>
+                            <p>{% trans "Partnership gives your property stronger online exposure so more travelers can discover your rooms and services with confidence." %}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="benefit-card">
+                            <i class="fa fa-bed" aria-hidden="true"></i>
+                            <h4>{% trans "Better Room Management" %}</h4>
+                            <p>{% trans "Manage listings, room details, and availability in a more organized way that supports smoother daily operations." %}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="benefit-card">
+                            <i class="fa fa-users" aria-hidden="true"></i>
+                            <h4>{% trans "Business Credibility" %}</h4>
+                            <p>{% trans "Being part of Royal Hotel strengthens trust with travelers by placing your property inside a structured and professional booking environment." %}</p>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <div class="about-grid-section">
+                <div class="section-header">
+                    <h2>{% trans "Security and Trust" %}</h2>
+                    <p>{% trans "Businesses need to know their information and operations are handled responsibly. We are committed to building a system that earns that trust." %}</p>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <div class="trust-card">
+                            <i class="fa fa-shield" aria-hidden="true"></i>
+                            <h4>{% trans "Protected Access" %}</h4>
+                            <p>{% trans "Our platform uses account-based access, role separation, and controlled dashboards to keep guest, partner, and admin workflows organized and protected." %}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="trust-card">
+                            <i class="fa fa-lock" aria-hidden="true"></i>
+                            <h4>{% trans "Secure Business Confidence" %}</h4>
+                            <p>{% trans "From partner applications to room management, our system is structured to reduce confusion, support accountability, and encourage dependable business management." %}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="trust-card">
+                            <i class="fa fa-check-circle" aria-hidden="true"></i>
+                            <h4>{% trans "Trustworthy Experience" %}</h4>
+                            <p>{% trans "We aim to give both travelers and property owners confidence through transparent flows, responsive support, and a platform experience designed to feel reliable." %}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="trust-banner">
+                    <h3>{% trans "A System Businesses Can Rely On" %}</h3>
+                    <p>
+                        {% blocktrans %}If you are a hotel owner, lodge operator, or hospitality business looking for a trustworthy platform, Royal Hotel is built to help you manage your presence with confidence. We are committed to secure workflows, practical management tools, and a professional environment that encourages long-term business trust.{% endblocktrans %}
+                    </p>
+                </div>
+            </div>
         </div>
-        </section>
+    </div>
+</section>
 {% endblock %}

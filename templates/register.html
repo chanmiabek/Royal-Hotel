@@ -1,46 +1,79 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load static i18n %}
 {% block extra_css %}
 <style>
-    .auth-shell {
-        background: transparent;
-        padding: 60px 0;
+    .form-page-shell {
+        min-height: 100vh;
+        padding: 32px 0 48px;
+        background: linear-gradient(135deg, #f7f1d5 0%, #ffffff 45%, #f2f2f2 100%);
     }
-    .auth-card {
+    .form-page-brand {
+        text-align: center;
+        margin-bottom: 24px;
+    }
+    .form-page-brand img {
+        max-height: 76px;
+        width: auto;
+    }
+    .form-page-layout {
         background: #ffffff;
-        border-radius: 20px;
-        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.15);
-        padding: 28px;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.14);
+    }
+    .form-page-media {
+        min-height: 100%;
+        background: linear-gradient(rgba(34, 34, 34, 0.28), rgba(34, 34, 34, 0.5)), url("{% static 'img/amenities-bg.jpg' %}") center/cover no-repeat;
+        padding: 48px 36px;
+        display: flex;
+        align-items: flex-end;
+    }
+    .form-page-media-content h2,
+    .form-page-media-content p {
+        color: #ffffff;
+    }
+    .form-page-media-content h2 {
+        font-size: 34px;
+        font-weight: 800;
+        margin-bottom: 12px;
+    }
+    .form-page-media-content p {
+        font-size: 16px;
+        line-height: 1.7;
+        margin: 0;
+    }
+    .form-page-form {
+        padding: 36px 32px;
     }
     .auth-title {
-        font-size: 26px;
-        font-weight: 700;
+        font-size: 28px;
+        font-weight: 800;
         margin-bottom: 8px;
     }
     .auth-subtitle {
         color: #64748b;
-        margin-bottom: 20px;
+        margin-bottom: 22px;
     }
-    .auth-card .form-control {
+    .form-page-form .form-control {
         border-radius: 12px;
         border-color: #e2e8f0;
         box-shadow: none;
     }
-    .auth-card .input-group .form-control {
+    .form-page-form .input-group .form-control {
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
     }
-    .auth-card .input-group-append .btn {
+    .form-page-form .input-group-append .btn {
         border-top-left-radius: 0;
         border-bottom-left-radius: 0;
         border-top-right-radius: 12px;
         border-bottom-right-radius: 12px;
     }
-    .auth-card .form-control:focus {
+    .form-page-form .form-control:focus {
         border-color: #f5c542;
         box-shadow: 0 0 0 0.2rem rgba(245, 197, 66, 0.2);
     }
-    .auth-card .btn-primary {
+    .form-page-form .btn-primary {
         border-radius: 999px;
         padding: 10px 22px;
         font-weight: 600;
@@ -56,90 +89,125 @@
     .auth-links a {
         font-weight: 600;
     }
+    @media (max-width: 991px) {
+        .form-page-media {
+            min-height: 280px;
+        }
+    }
+    @media (max-width: 767px) {
+        .form-page-shell {
+            padding: 24px 0 36px;
+        }
+        .form-page-form {
+            padding: 28px 20px;
+        }
+        .form-page-media {
+            min-height: 220px;
+            padding: 28px 20px;
+        }
+        .form-page-media-content h2 {
+            font-size: 28px;
+        }
+    }
 </style>
 {% endblock %}
 {% block content %}
-<section class="auth-shell">
+<section class="form-page-shell">
     <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="auth-card">
-                    <h2 class="auth-title">{% trans "Create Account" %}</h2>
-                    <p class="auth-subtitle">{% trans "Create your account with Google or a password." %}</p>
-                    {% if GOOGLE_OAUTH_ENABLED %}
-                    <a class="btn btn-outline-dark btn-block mb-3" href="{% url 'google_login' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}">
-                        {% trans "Continue with Google" %}
-                    </a>
-                    {% else %}
-                    <a
-                        class="btn btn-outline-dark btn-block mb-2 disabled"
-                        href="#"
-                        aria-disabled="true"
-                        tabindex="-1"
-                        title="Set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET in .env to enable"
-                    >
-                        {% trans "Continue with Google" %}
-                    </a>
-                    <small class="text-muted d-block mb-3">
-                        {% trans "Google login is not configured yet." %}
-                    </small>
-                    {% endif %}
+        <div class="form-page-brand">
+            <a href="{% url 'index' %}" aria-label="{% trans 'Back to home page' %}">
+                <img src="{% static 'img/logo.jpg' %}" alt="Royal Hotel Logo">
+            </a>
+        </div>
+        <div class="form-page-layout">
+            <div class="row no-gutters">
+                <div class="col-lg-5">
+                    <div class="form-page-media">
+                        <div class="form-page-media-content">
+                            <h2>{% trans "Join Royal Hotel" %}</h2>
+                            <p>{% trans "Create your account to book faster, manage reservations, and enjoy a smoother hotel experience." %}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-7">
+                    <div class="form-page-form">
+                        <h2 class="auth-title">{% trans "Create Account" %}</h2>
+                        <p class="auth-subtitle">{% trans "Create your account with Google or a password." %}</p>
+                        {% if GOOGLE_OAUTH_ENABLED %}
+                        <a class="btn btn-outline-dark btn-block mb-3" href="{% url 'google_login' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}">
+                            {% trans "Continue with Google" %}
+                        </a>
+                        {% else %}
+                        <a
+                            class="btn btn-outline-dark btn-block mb-2 disabled"
+                            href="#"
+                            aria-disabled="true"
+                            tabindex="-1"
+                            title="Set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET in .env to enable"
+                        >
+                            {% trans "Continue with Google" %}
+                        </a>
+                        <small class="text-muted d-block mb-3">
+                            {% trans "Google login is not configured yet." %}
+                        </small>
+                        {% endif %}
 
-                    <div class="text-center text-muted mb-3">{% trans "or create an account with a password" %}</div>
-                    <form method="POST">
-                        {% csrf_token %}
-                        <div class="form-group">
-                            <label>{% trans "Your Name" %}</label>
-                            <input type="text" name="name" class="form-control" required autocomplete="name">
-                        </div>
-                        <div class="form-group">
-                            <label>{% trans "Email" %}</label>
-                            <input type="email" name="email" class="form-control" required autocomplete="email">
-                        </div>
-                        <div class="form-group">
-                            <label for="password">{% trans "Password" %}</label>
-                            <div class="input-group">
-                                <input id="password" type="password" name="password" class="form-control" required autocomplete="new-password">
-                                <div class="input-group-append">
-                                    <button
-                                        type="button"
-                                        class="btn btn-outline-secondary"
-                                        data-toggle-password="password"
-                                        data-label-show="{% trans 'Show password' %}"
-                                        data-label-hide="{% trans 'Hide password' %}"
-                                        aria-label="{% trans 'Show password' %}"
-                                        aria-pressed="false"
-                                    >
-                                        <i class="fa fa-eye" aria-hidden="true"></i>
-                                    </button>
+                        <div class="text-center text-muted mb-3">{% trans "or create an account with a password" %}</div>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label>{% trans "Your Name" %}</label>
+                                <input type="text" name="name" class="form-control" required autocomplete="name">
+                            </div>
+                            <div class="form-group">
+                                <label>{% trans "Email" %}</label>
+                                <input type="email" name="email" class="form-control" required autocomplete="email">
+                            </div>
+                            <div class="form-group">
+                                <label for="password">{% trans "Password" %}</label>
+                                <div class="input-group">
+                                    <input id="password" type="password" name="password" class="form-control" required autocomplete="new-password">
+                                    <div class="input-group-append">
+                                        <button
+                                            type="button"
+                                            class="btn btn-outline-secondary"
+                                            data-toggle-password="password"
+                                            data-label-show="{% trans 'Show password' %}"
+                                            data-label-hide="{% trans 'Hide password' %}"
+                                            aria-label="{% trans 'Show password' %}"
+                                            aria-pressed="false"
+                                        >
+                                            <i class="fa fa-eye" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="repeat_password">{% trans "Repeat Password" %}</label>
-                            <div class="input-group">
-                                <input id="repeat_password" type="password" name="repeat_password" class="form-control" required autocomplete="new-password">
-                                <div class="input-group-append">
-                                    <button
-                                        type="button"
-                                        class="btn btn-outline-secondary"
-                                        data-toggle-password="repeat_password"
-                                        data-label-show="{% trans 'Show password' %}"
-                                        data-label-hide="{% trans 'Hide password' %}"
-                                        aria-label="{% trans 'Show password' %}"
-                                        aria-pressed="false"
-                                    >
-                                        <i class="fa fa-eye" aria-hidden="true"></i>
-                                    </button>
+                            <div class="form-group">
+                                <label for="repeat_password">{% trans "Repeat Password" %}</label>
+                                <div class="input-group">
+                                    <input id="repeat_password" type="password" name="repeat_password" class="form-control" required autocomplete="new-password">
+                                    <div class="input-group-append">
+                                        <button
+                                            type="button"
+                                            class="btn btn-outline-secondary"
+                                            data-toggle-password="repeat_password"
+                                            data-label-show="{% trans 'Show password' %}"
+                                            data-label-hide="{% trans 'Hide password' %}"
+                                            aria-label="{% trans 'Show password' %}"
+                                            aria-pressed="false"
+                                        >
+                                            <i class="fa fa-eye" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-block">{% trans "Register" %}</button>
-                        <div class="auth-links">
-                            <span>{% trans "Already have an account?" %} <a href="{% url 'login' %}">{% trans "Login" %}</a></span>
-                            <a href="{% url 'password_reset' %}">{% trans "Forgot password?" %}</a>
-                        </div>
-                    </form>
+                            <button type="submit" class="btn btn-primary btn-block">{% trans "Sign Up" %}</button>
+                            <div class="auth-links">
+                                <span>{% trans "Already have an account?" %} <a href="{% url 'login' %}">{% trans "Sign in" %}</a></span>
+                                <a href="{% url 'password_reset' %}">{% trans "Forgot password?" %}</a>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>

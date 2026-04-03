@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.db.models import Exists, OuterRef
 from django.utils import timezone
-from .models import Room, Booking, ContactMessage, Payment
+from .models import Booking, ContactMessage, Payment, Room, TeamMember, Testimonial
 
 
 class RoomOccupancyFilter(admin.SimpleListFilter):
@@ -69,3 +69,19 @@ class PaymentAdmin(admin.ModelAdmin):
     list_display = ['id', 'provider', 'amount', 'currency', 'status', 'booking', 'created_at']
     list_filter = ['provider', 'status', 'currency', 'created_at']
     search_fields = ['reference', 'booking__email', 'booking__first_name', 'booking__last_name']
+
+
+@admin.register(TeamMember)
+class TeamMemberAdmin(admin.ModelAdmin):
+    list_display = ['name', 'role', 'display_order', 'is_active', 'updated_at']
+    list_filter = ['is_active']
+    search_fields = ['name', 'role', 'bio']
+    list_editable = ['display_order', 'is_active']
+
+
+@admin.register(Testimonial)
+class TestimonialAdmin(admin.ModelAdmin):
+    list_display = ['name', 'role', 'display_order', 'is_active', 'updated_at']
+    list_filter = ['is_active']
+    search_fields = ['name', 'role', 'quote']
+    list_editable = ['display_order', 'is_active']

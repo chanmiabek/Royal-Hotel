@@ -1,0 +1,74 @@
+{% extends 'admin_base.html' %}
+{% load i18n %}
+
+{% block admin_content %}
+<div class="container py-4 px-0">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="mb-1">{% trans "Team Members" %}</h2>
+            <p class="text-muted mb-0">{% trans "Create, edit, and manage the team profiles shown on the About page." %}</p>
+        </div>
+        <a href="{% url 'admin_team_member_create' %}" class="btn btn-primary">{% trans "Add Team Member" %}</a>
+    </div>
+
+    <div class="card admin-card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover bg-white mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>{% trans "Image" %}</th>
+                            <th>{% trans "Name" %}</th>
+                            <th>{% trans "Role" %}</th>
+                            <th>{% trans "Order" %}</th>
+                            <th>{% trans "Status" %}</th>
+                            <th>{% trans "Social Links" %}</th>
+                            <th>{% trans "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for member in team_members %}
+                        <tr>
+                            <td>
+                                <span class="admin-thumb" aria-hidden="true">
+                                    {% if member.image %}
+                                        <img src="{{ member.image.url }}" alt="">
+                                    {% else %}
+                                        <i class="fa fa-id-badge" aria-hidden="true"></i>
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>{{ member.name }}</td>
+                            <td>{{ member.role }}</td>
+                            <td>{{ member.display_order }}</td>
+                            <td>{% if member.is_active %}{% trans "Active" %}{% else %}{% trans "Hidden" %}{% endif %}</td>
+                            <td>
+                                {% if member.facebook_url or member.twitter_url or member.instagram_url or member.linkedin_url %}
+                                    {% if member.facebook_url %}<span class="badge badge-light">Facebook</span>{% endif %}
+                                    {% if member.twitter_url %}<span class="badge badge-light">Twitter</span>{% endif %}
+                                    {% if member.instagram_url %}<span class="badge badge-light">Instagram</span>{% endif %}
+                                    {% if member.linkedin_url %}<span class="badge badge-light">LinkedIn</span>{% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="d-flex flex-wrap gap-2">
+                                <a href="{% url 'admin_team_member_edit' member.id %}" class="btn btn-sm btn-outline-primary">{% trans "Edit" %}</a>
+                                <form method="post" action="{% url 'admin_team_member_delete' member.id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('{% trans 'Delete this team member?' %}')">{% trans "Delete" %}</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">{% trans "No team members added yet." %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

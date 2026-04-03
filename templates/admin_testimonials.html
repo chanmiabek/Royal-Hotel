@@ -1,0 +1,55 @@
+{% extends 'admin_base.html' %}
+{% load i18n %}
+
+{% block admin_content %}
+<div class="container py-4 px-0">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="mb-1">{% trans "Testimonials" %}</h2>
+            <p class="text-muted mb-0">{% trans "Manage the testimonial content displayed on the About page." %}</p>
+        </div>
+        <a href="{% url 'admin_testimonial_create' %}" class="btn btn-primary">{% trans "Add Testimonial" %}</a>
+    </div>
+
+    <div class="card admin-card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover bg-white mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>{% trans "Name" %}</th>
+                            <th>{% trans "Role" %}</th>
+                            <th>{% trans "Quote" %}</th>
+                            <th>{% trans "Order" %}</th>
+                            <th>{% trans "Status" %}</th>
+                            <th>{% trans "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for testimonial in testimonials %}
+                        <tr>
+                            <td>{{ testimonial.name }}</td>
+                            <td>{{ testimonial.role|default:"-" }}</td>
+                            <td>{{ testimonial.quote|truncatechars:110 }}</td>
+                            <td>{{ testimonial.display_order }}</td>
+                            <td>{% if testimonial.is_active %}{% trans "Active" %}{% else %}{% trans "Hidden" %}{% endif %}</td>
+                            <td class="d-flex flex-wrap gap-2">
+                                <a href="{% url 'admin_testimonial_edit' testimonial.id %}" class="btn btn-sm btn-outline-primary">{% trans "Edit" %}</a>
+                                <form method="post" action="{% url 'admin_testimonial_delete' testimonial.id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('{% trans 'Delete this testimonial?' %}')">{% trans "Delete" %}</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">{% trans "No testimonials added yet." %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

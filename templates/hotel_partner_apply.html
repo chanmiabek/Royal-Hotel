@@ -1,219 +1,358 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load static i18n %}
+{% block extra_css %}
+<style>
+    .form-page-shell {
+        min-height: 100vh;
+        padding: 32px 0 48px;
+        background: linear-gradient(135deg, #f7f1d5 0%, #ffffff 45%, #f3f4f6 100%);
+    }
+    .form-page-brand {
+        text-align: center;
+        margin-bottom: 24px;
+    }
+    .form-page-brand img {
+        max-height: 76px;
+        width: auto;
+    }
+    .form-page-layout {
+        background: #ffffff;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.14);
+    }
+    .form-page-media {
+        min-height: 100%;
+        background: linear-gradient(rgba(34, 34, 34, 0.25), rgba(34, 34, 34, 0.55)), url("{% static 'img/amenities-bg.jpg' %}") center/cover no-repeat;
+        padding: 48px 36px;
+        display: flex;
+        align-items: flex-end;
+    }
+    .form-page-media-content h2,
+    .form-page-media-content p,
+    .form-page-media-content li {
+        color: #ffffff;
+    }
+    .form-page-media-content h2 {
+        font-size: 34px;
+        font-weight: 800;
+        margin-bottom: 12px;
+    }
+    .form-page-media-content p {
+        font-size: 16px;
+        line-height: 1.7;
+        margin-bottom: 18px;
+    }
+    .form-page-media-content ul {
+        margin: 0;
+        padding-left: 18px;
+    }
+    .form-page-form {
+        padding: 36px 32px;
+    }
+    .form-page-form h2 {
+        color: #111827;
+        font-size: 28px;
+        font-weight: 800;
+        margin-bottom: 8px;
+    }
+    .form-page-form .section-intro {
+        color: #64748b;
+        margin-bottom: 22px;
+    }
+    .form-page-form .card {
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+        box-shadow: none;
+    }
+    .form-page-form .form-control,
+    .form-page-form .form-control-file,
+    .form-page-form textarea,
+    .form-page-form select {
+        border-radius: 12px;
+        border-color: #e2e8f0;
+        box-shadow: none;
+    }
+    .form-page-form .form-control:focus,
+    .form-page-form textarea:focus,
+    .form-page-form select:focus {
+        border-color: #f5c542;
+        box-shadow: 0 0 0 0.2rem rgba(245, 197, 66, 0.2);
+    }
+    .form-page-form .btn-primary {
+        border-radius: 999px;
+        padding: 12px 24px;
+        font-weight: 700;
+    }
+    .partner-sidebar-card {
+        position: sticky;
+        top: 24px;
+    }
+    @media (max-width: 991px) {
+        .form-page-media {
+            min-height: 280px;
+        }
+        .partner-sidebar-card {
+            position: static;
+        }
+    }
+    @media (max-width: 767px) {
+        .form-page-shell {
+            padding: 24px 0 36px;
+        }
+        .form-page-form {
+            padding: 28px 20px;
+        }
+        .form-page-media {
+            min-height: 220px;
+            padding: 28px 20px;
+        }
+        .form-page-media-content h2 {
+            font-size: 28px;
+        }
+    }
+</style>
+{% endblock %}
 {% block content %}
-<section class="premium-shell">
-<div class="container py-5">
-    <div class="section-header">
-        <h2>{% trans "Hotel Partner Application" %}</h2>
-        <p>{% trans "Apply to list your hotel on our platform. Provide details for review and approval." %}</p>
-    </div>
-
-    {% if application and application.status != 'PENDING' %}
-    <div class="alert alert-info">
-        {% trans "You already submitted an application." %}
-        <a href="{% url 'hotel_application_status' %}">{% trans "View status" %}</a>
-    </div>
-    {% endif %}
-
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="row">
-            <div class="col-lg-8">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h4 class="mb-3">{% trans "Hotel Details" %}</h4>
-                        <div class="form-group">
-                            <label>{% trans "Hotel Name" %}</label>
-                            <input type="text" name="hotel_name" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label>{% trans "Star Rating" %}</label>
-                            <select name="star_rating" class="form-control">
-                                <option value="">{% trans "Select rating" %}</option>
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3">3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>{% trans "Description" %}</label>
-                            <textarea name="description" class="form-control" rows="4"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>{% trans "Address" %}</label>
-                            <input type="text" name="address" class="form-control">
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>{% trans "City" %}</label>
-                                <input type="text" name="city" class="form-control">
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label>{% trans "Country" %}</label>
-                                <input type="text" name="country" class="form-control">
-                            </div>
+<section class="form-page-shell">
+    <div class="container">
+        <div class="form-page-brand">
+            <a href="{% url 'index' %}" aria-label="{% trans 'Back to home page' %}">
+                <img src="{% static 'img/logo.jpg' %}" alt="Royal Hotel Logo">
+            </a>
+        </div>
+        <div class="form-page-layout">
+            <div class="row no-gutters">
+                <div class="col-lg-4">
+                    <div class="form-page-media">
+                        <div class="form-page-media-content">
+                            <h2>{% trans "Partner With Royal Hotel" %}</h2>
+                            <p>{% trans "Share your property details and grow with a platform built for trusted hospitality partners." %}</p>
+                            <ul>
+                                <li>{% trans "Property review and onboarding support" %}</li>
+                                <li>{% trans "Access to hotel dashboard tools" %}</li>
+                                <li>{% trans "Room, pricing, and availability management" %}</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
+                <div class="col-lg-8">
+                    <div class="form-page-form">
+                        <h2>{% trans "Hotel Partner Application" %}</h2>
+                        <p class="section-intro">{% trans "Apply to list your hotel on our platform. Provide details for review and approval." %}</p>
 
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h4 class="mb-3">{% trans "Contact & Rooms" %}</h4>
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>{% trans "Contact Person" %}</label>
-                                <input type="text" name="contact_name" class="form-control" value="{{ prefill_name }}" required>
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label>{% trans "Contact Email" %}</label>
-                                <input type="email" name="contact_email" class="form-control" value="{{ prefill_email }}" required>
-                            </div>
+                        {% if application and application.status != 'PENDING' %}
+                        <div class="alert alert-info">
+                            {% trans "You already submitted an application." %}
+                            <a href="{% url 'hotel_application_status' %}">{% trans "View status" %}</a>
                         </div>
-                        <div class="form-group">
-                            <label>{% trans "Contact Phone" %}</label>
-                            <input type="text" name="contact_phone" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label>{% trans "Room Types" %}</label>
-                            <textarea name="room_types" class="form-control" rows="3" placeholder="{% trans 'e.g., Deluxe, Standard, Family Suite' %}"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>{% trans "Room Pricing" %}</label>
-                            <textarea name="room_pricing" class="form-control" rows="3" placeholder="{% trans 'Include price ranges or nightly rates.' %}"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>{% trans "Availability Details" %}</label>
-                            <textarea name="availability_details" class="form-control" rows="3" placeholder="{% trans 'Typical availability, seasonal notes, or blackout dates.' %}"></textarea>
-                        </div>
-                    </div>
-                </div>
+                        {% endif %}
 
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h4 class="mb-3">{% trans "Commission & Payout" %}</h4>
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>{% trans "Requested Commission Rate" %}</label>
-                                <input type="number" name="commission_rate" step="0.01" min="0.05" max="0.30" class="form-control" placeholder="0.15">
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label>{% trans "Payout Method" %}</label>
-                                <select name="payout_method" class="form-control">
-                                    {% for code, label in payout_methods %}
-                                    <option value="{{ code }}" {% if application and application.payout_method == code %}selected{% elif not application and forloop.first %}selected{% endif %}>{{ label }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>{% trans "Payout Schedule" %}</label>
-                            <select name="payout_schedule" class="form-control">
-                                {% for code, label in payout_schedules %}
-                                <option value="{{ code }}" {% if application and application.payout_schedule == code %}selected{% elif not application and forloop.first %}selected{% endif %}>{{ label }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <hr>
-                        <h6 class="mb-3">{% trans "Bank / Mobile Money / PayPal Details" %}</h6>
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>{% trans "Bank Name" %}</label>
-                                <input type="text" name="bank_name" class="form-control">
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label>{% trans "Account Name" %}</label>
-                                <input type="text" name="bank_account_name" class="form-control">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>{% trans "Account Number" %}</label>
-                                <input type="text" name="bank_account_number" class="form-control">
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label>{% trans "Bank Branch" %}</label>
-                                <input type="text" name="bank_branch" class="form-control">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>{% trans "SWIFT Code" %}</label>
-                                <input type="text" name="bank_swift" class="form-control">
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label>{% trans "Mobile Money Provider" %}</label>
-                                <input type="text" name="mobile_money_provider" class="form-control">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>{% trans "Mobile Money Number" %}</label>
-                                <input type="text" name="mobile_money_number" class="form-control">
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label>{% trans "PayPal Email" %}</label>
-                                <input type="email" name="paypal_email" class="form-control">
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-lg-8">
+                                    <div class="card mb-4">
+                                        <div class="card-body">
+                                            <h4 class="mb-3">{% trans "Hotel Details" %}</h4>
+                                            <div class="form-group">
+                                                <label>{% trans "Hotel Name" %}</label>
+                                                <input type="text" name="hotel_name" class="form-control" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>{% trans "Star Rating" %}</label>
+                                                <select name="star_rating" class="form-control">
+                                                    <option value="">{% trans "Select rating" %}</option>
+                                                    <option value="1">1</option>
+                                                    <option value="2">2</option>
+                                                    <option value="3">3</option>
+                                                    <option value="4">4</option>
+                                                    <option value="5">5</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>{% trans "Description" %}</label>
+                                                <textarea name="description" class="form-control" rows="4"></textarea>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>{% trans "Address" %}</label>
+                                                <input type="text" name="address" class="form-control">
+                                            </div>
+                                            <div class="form-row">
+                                                <div class="form-group col-md-6">
+                                                    <label>{% trans "City" %}</label>
+                                                    <input type="text" name="city" class="form-control">
+                                                </div>
+                                                <div class="form-group col-md-6">
+                                                    <label>{% trans "Country" %}</label>
+                                                    <input type="text" name="country" class="form-control">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h4 class="mb-3">{% trans "Verification Documents" %}</h4>
-                        <div class="form-group">
-                            <label>{% trans "Business License" %}</label>
-                            <input type="file" name="license_doc" class="form-control-file">
-                        </div>
-                        <div class="form-group">
-                            <label>{% trans "Property Photos" %}</label>
-                            <input type="file" name="property_photos" class="form-control-file" multiple>
-                        </div>
-                        <div class="form-group">
-                            <label>{% trans "Amenities Proof" %}</label>
-                            <input type="file" name="amenities_doc" class="form-control-file">
-                        </div>
-                        <div class="form-group">
-                            <label>{% trans "Signed Agreement" %}</label>
-                            <input type="file" name="agreement_doc" class="form-control-file">
-                        </div>
-                        <div class="form-group">
-                            <label>{% trans "Other Documents" %}</label>
-                            <input type="file" name="other_docs" class="form-control-file" multiple>
-                        </div>
-                    </div>
-                </div>
+                                    <div class="card mb-4">
+                                        <div class="card-body">
+                                            <h4 class="mb-3">{% trans "Contact & Rooms" %}</h4>
+                                            <div class="form-row">
+                                                <div class="form-group col-md-6">
+                                                    <label>{% trans "Contact Person" %}</label>
+                                                    <input type="text" name="contact_name" class="form-control" value="{{ prefill_name }}" required>
+                                                </div>
+                                                <div class="form-group col-md-6">
+                                                    <label>{% trans "Contact Email" %}</label>
+                                                    <input type="email" name="contact_email" class="form-control" value="{{ prefill_email }}" required>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>{% trans "Contact Phone" %}</label>
+                                                <input type="text" name="contact_phone" class="form-control" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>{% trans "Room Types" %}</label>
+                                                <textarea name="room_types" class="form-control" rows="3" placeholder="{% trans 'e.g., Deluxe, Standard, Family Suite' %}"></textarea>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>{% trans "Room Pricing" %}</label>
+                                                <textarea name="room_pricing" class="form-control" rows="3" placeholder="{% trans 'Include price ranges or nightly rates.' %}"></textarea>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>{% trans "Availability Details" %}</label>
+                                                <textarea name="availability_details" class="form-control" rows="3" placeholder="{% trans 'Typical availability, seasonal notes, or blackout dates.' %}"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                <div class="form-group form-check">
-                    <input type="checkbox" class="form-check-input" id="agreeTerms" name="agreed_to_terms" required>
-                    <label class="form-check-label" for="agreeTerms">
-                        {% trans "I agree to the partnership terms and commission policy." %}
-                    </label>
-                </div>
+                                    <div class="card mb-4">
+                                        <div class="card-body">
+                                            <h4 class="mb-3">{% trans "Commission & Payout" %}</h4>
+                                            <div class="form-row">
+                                                <div class="form-group col-md-6">
+                                                    <label>{% trans "Requested Commission Rate" %}</label>
+                                                    <input type="number" name="commission_rate" step="0.01" min="0.05" max="0.30" class="form-control" placeholder="0.15">
+                                                </div>
+                                                <div class="form-group col-md-6">
+                                                    <label>{% trans "Payout Method" %}</label>
+                                                    <select name="payout_method" class="form-control">
+                                                        {% for code, label in payout_methods %}
+                                                        <option value="{{ code }}" {% if application and application.payout_method == code %}selected{% elif not application and forloop.first %}selected{% endif %}>{{ label }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>{% trans "Payout Schedule" %}</label>
+                                                <select name="payout_schedule" class="form-control">
+                                                    {% for code, label in payout_schedules %}
+                                                    <option value="{{ code }}" {% if application and application.payout_schedule == code %}selected{% elif not application and forloop.first %}selected{% endif %}>{{ label }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <hr>
+                                            <h6 class="mb-3">{% trans "Bank / Mobile Money / PayPal Details" %}</h6>
+                                            <div class="form-row">
+                                                <div class="form-group col-md-6">
+                                                    <label>{% trans "Bank Name" %}</label>
+                                                    <input type="text" name="bank_name" class="form-control">
+                                                </div>
+                                                <div class="form-group col-md-6">
+                                                    <label>{% trans "Account Name" %}</label>
+                                                    <input type="text" name="bank_account_name" class="form-control">
+                                                </div>
+                                            </div>
+                                            <div class="form-row">
+                                                <div class="form-group col-md-6">
+                                                    <label>{% trans "Account Number" %}</label>
+                                                    <input type="text" name="bank_account_number" class="form-control">
+                                                </div>
+                                                <div class="form-group col-md-6">
+                                                    <label>{% trans "Bank Branch" %}</label>
+                                                    <input type="text" name="bank_branch" class="form-control">
+                                                </div>
+                                            </div>
+                                            <div class="form-row">
+                                                <div class="form-group col-md-6">
+                                                    <label>{% trans "SWIFT Code" %}</label>
+                                                    <input type="text" name="bank_swift" class="form-control">
+                                                </div>
+                                                <div class="form-group col-md-6">
+                                                    <label>{% trans "Mobile Money Provider" %}</label>
+                                                    <input type="text" name="mobile_money_provider" class="form-control">
+                                                </div>
+                                            </div>
+                                            <div class="form-row">
+                                                <div class="form-group col-md-6">
+                                                    <label>{% trans "Mobile Money Number" %}</label>
+                                                    <input type="text" name="mobile_money_number" class="form-control">
+                                                </div>
+                                                <div class="form-group col-md-6">
+                                                    <label>{% trans "PayPal Email" %}</label>
+                                                    <input type="email" name="paypal_email" class="form-control">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                <button type="submit" class="btn btn-primary">{% trans "Submit Application" %}</button>
-            </div>
+                                    <div class="card mb-4">
+                                        <div class="card-body">
+                                            <h4 class="mb-3">{% trans "Verification Documents" %}</h4>
+                                            <div class="form-group">
+                                                <label>{% trans "Business License" %}</label>
+                                                <input type="file" name="license_doc" class="form-control-file">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>{% trans "Property Photos" %}</label>
+                                                <input type="file" name="property_photos" class="form-control-file" multiple>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>{% trans "Amenities Proof" %}</label>
+                                                <input type="file" name="amenities_doc" class="form-control-file">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>{% trans "Signed Agreement" %}</label>
+                                                <input type="file" name="agreement_doc" class="form-control-file">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>{% trans "Other Documents" %}</label>
+                                                <input type="file" name="other_docs" class="form-control-file" multiple>
+                                            </div>
+                                        </div>
+                                    </div>
 
-            <div class="col-lg-4">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h5>{% trans "What Happens Next" %}</h5>
-                        <p class="mb-2">{% trans "We review your documents and verify your property." %}</p>
-                        <p class="mb-2">{% trans "If approved, you will receive access to your hotel dashboard." %}</p>
-                        <p class="mb-0">{% trans "You can manage rooms, pricing, and availability in real time." %}</p>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-body">
-                        <h5>{% trans "Need help?" %}</h5>
-                        <p class="mb-0">{% trans "Contact our partnership team for assistance." %}</p>
+                                    <div class="form-group form-check">
+                                        <input type="checkbox" class="form-check-input" id="agreeTerms" name="agreed_to_terms" required>
+                                        <label class="form-check-label" for="agreeTerms">
+                                            {% trans "I agree to the partnership terms and commission policy." %}
+                                        </label>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary">{% trans "Submit Application" %}</button>
+                                </div>
+
+                                <div class="col-lg-4">
+                                    <div class="partner-sidebar-card">
+                                        <div class="card mb-4">
+                                            <div class="card-body">
+                                                <h5>{% trans "What Happens Next" %}</h5>
+                                                <p class="mb-2">{% trans "We review your documents and verify your property." %}</p>
+                                                <p class="mb-2">{% trans "If approved, you will receive access to your hotel dashboard." %}</p>
+                                                <p class="mb-0">{% trans "You can manage rooms, pricing, and availability in real time." %}</p>
+                                            </div>
+                                        </div>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h5>{% trans "Need help?" %}</h5>
+                                                <p class="mb-0">{% trans "Contact our partnership team for assistance." %}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
-    </form>
-</div>
+    </div>
 </section>
 {% endblock %}

@@ -1,0 +1,124 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>{% trans "Something Went Wrong" %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #f8f1d1 0%, #ffffff 45%, #eef2f7 100%);
+            color: #111827;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .error-shell {
+            width: 100%;
+            max-width: 760px;
+            background: #ffffff;
+            border-radius: 28px;
+            padding: 36px 28px;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.14);
+            text-align: center;
+        }
+        .error-shell img {
+            max-height: 86px;
+            width: auto;
+            margin-bottom: 18px;
+        }
+        .error-code {
+            font-size: 82px;
+            line-height: 1;
+            font-weight: 800;
+            color: #FFD700;
+            margin-bottom: 12px;
+        }
+        .error-title {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+        .error-text {
+            max-width: 540px;
+            margin: 0 auto 24px;
+            color: #64748b;
+            font-size: 16px;
+            line-height: 1.7;
+        }
+        .error-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .error-actions a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 180px;
+            padding: 12px 22px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-weight: 700;
+        }
+        .error-actions .primary {
+            background: #111827;
+            color: #FFD700;
+        }
+        .error-actions .secondary {
+            background: #fff8dc;
+            color: #111827;
+            border: 1px solid rgba(255, 215, 0, 0.5);
+        }
+        .error-note {
+            margin-top: 18px;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+        @media (max-width: 575px) {
+            .error-shell {
+                padding: 28px 20px;
+            }
+            .error-code {
+                font-size: 64px;
+            }
+            .error-title {
+                font-size: 26px;
+            }
+            .error-actions a {
+                width: 100%;
+            }
+        }
+    </style>
+    <script>
+        window.setTimeout(function () {
+            window.location.href = "/";
+        }, 8000);
+    </script>
+</head>
+<body>
+    <div class="error-shell">
+        <a href="{% url 'index' %}" aria-label="{% trans 'Go to home page' %}">
+            <img src="{% static 'img/logo.jpg' %}" alt="Royal Hotel Logo">
+        </a>
+        <div class="error-code">500</div>
+        <div class="error-title">{% trans "Something went wrong or the page was moved!" %}</div>
+        <p class="error-text">
+            {% trans "We could not complete your request right now. This may be a temporary issue, a broken link, or a page that is no longer available. Please return home and try again." %}
+        </p>
+        <div class="error-actions">
+            <a class="primary" href="{% url 'index' %}">{% trans "Go Home" %}</a>
+            <a class="secondary" href="{% url 'contact' %}">{% trans "Contact Support" %}</a>
+        </div>
+        <p class="error-note">{% trans "You will be redirected to the home page automatically in a few seconds." %}</p>
+    </div>
+</body>
+</html>

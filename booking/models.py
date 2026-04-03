@@ -23,6 +23,44 @@ class UserProfile(models.Model):
         return f"{self.user.username} ({self.user_type})"
 
 
+class TeamMember(models.Model):
+    name = models.CharField(max_length=120)
+    role = models.CharField(max_length=120)
+    bio = models.TextField()
+    image = models.ImageField(upload_to='team/', blank=True, null=True)
+    facebook_url = models.URLField(blank=True)
+    twitter_url = models.URLField(blank=True)
+    instagram_url = models.URLField(blank=True)
+    linkedin_url = models.URLField(blank=True)
+    display_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['display_order', 'name']
+
+    def __str__(self):
+        return self.name
+
+
+class Testimonial(models.Model):
+    name = models.CharField(max_length=120)
+    role = models.CharField(max_length=120, blank=True)
+    quote = models.TextField()
+    image = models.ImageField(upload_to='testimonials/', blank=True, null=True)
+    display_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['display_order', 'name']
+
+    def __str__(self):
+        return self.name
+
+
 class PasswordResetCode(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="password_reset_codes")
     code_hash = models.CharField(max_length=128)

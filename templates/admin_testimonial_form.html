@@ -1,0 +1,59 @@
+{% extends 'admin_base.html' %}
+{% load i18n %}
+
+{% block admin_content %}
+<div class="container py-4 px-0">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="mb-1">{% if testimonial %}{% trans "Edit Testimonial" %}{% else %}{% trans "Add Testimonial" %}{% endif %}</h2>
+            <p class="text-muted mb-0">{% trans "Create or update public testimonials for the About page." %}</p>
+        </div>
+        <a href="{% url 'admin_testimonials' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
+    </div>
+
+    <div class="card admin-card">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>{% trans "Name" %}</label>
+                        <input type="text" name="name" class="form-control" value="{{ testimonial.name|default:'' }}" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>{% trans "Role or Title" %}</label>
+                        <input type="text" name="role" class="form-control" value="{{ testimonial.role|default:'' }}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>{% trans "Quote" %}</label>
+                    <textarea name="quote" class="form-control" rows="5" required>{{ testimonial.quote|default:'' }}</textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>{% trans "Image" %}</label>
+                        <input type="file" name="image" class="form-control-file">
+                        {% if testimonial and testimonial.image %}
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" name="remove_image" id="remove_image">
+                            <label class="form-check-label" for="remove_image">{% trans "Remove current image" %}</label>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>{% trans "Display Order" %}</label>
+                        <input type="number" name="display_order" class="form-control" value="{{ testimonial.display_order|default:0 }}">
+                    </div>
+                    <div class="form-group col-md-3 d-flex align-items-end">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {% if testimonial.is_active or not testimonial %}checked{% endif %}>
+                            <label class="form-check-label" for="is_active">{% trans "Active" %}</label>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">{% if testimonial %}{% trans "Save Changes" %}{% else %}{% trans "Create Testimonial" %}{% endif %}</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

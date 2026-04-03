@@ -4,11 +4,76 @@
     // Initiate the wowjs animation library
     new WOW().init();
     
-    // Initiate menu
-    $('#header').after('<div class="mobile-menu d-xl-none">');
-    $('.top-menu').clone().appendTo('.mobile-menu');
-    $('.mobile-menu-btn').click(function () {
-        $('.mobile-menu').stop().slideToggle();
+    // Initiate responsive menu
+    var $menuToggle = $('.mobile-menu-btn');
+    var $mobileMenu = $('#mobile-menu-panel');
+    var $desktopMenu = $('#header .top-menu').first();
+
+    function setMobileMenuState(isOpen) {
+        if (!$mobileMenu.length || !$menuToggle.length) {
+            return;
+        }
+
+        $mobileMenu.toggleClass('is-open', isOpen).attr('aria-hidden', String(!isOpen));
+        $menuToggle.attr('aria-expanded', String(isOpen));
+        $menuToggle
+            .find('i')
+            .toggleClass('fa-bars', !isOpen)
+            .toggleClass('fa-times', isOpen);
+        $('body').toggleClass('mobile-nav-open', isOpen);
+    }
+
+    if ($mobileMenu.length && $desktopMenu.length && !$mobileMenu.children().length) {
+        var $menuClone = $desktopMenu.clone();
+
+        $menuClone.find('[id]').each(function () {
+            var currentId = $(this).attr('id');
+            $(this).attr('id', currentId + '-mobile');
+        });
+
+        $menuClone.find('.dropdown').removeClass('show');
+        $menuClone.find('.dropdown-menu').removeClass('show');
+
+        $mobileMenu.append(
+            '<div class="mobile-menu-head">' +
+                '<span class="mobile-menu-title">Menu</span>' +
+                '<button type="button" class="mobile-menu-close" aria-label="Close navigation menu">' +
+                    '<i class="fa fa-times" aria-hidden="true"></i>' +
+                '</button>' +
+            '</div>'
+        );
+        $mobileMenu.append($menuClone);
+    }
+
+    $menuToggle.on('click', function () {
+        setMobileMenuState(!$mobileMenu.hasClass('is-open'));
+    });
+
+    $(document).on('click', '.mobile-menu-close', function () {
+        setMobileMenuState(false);
+    });
+
+    $(document).on('click', '#mobile-menu-panel a', function () {
+        if (!$(this).hasClass('dropdown-toggle')) {
+            setMobileMenuState(false);
+        }
+    });
+
+    $(document).on('click', '#mobile-menu-panel .dropdown-toggle', function (event) {
+        event.preventDefault();
+        $(this).closest('.dropdown').toggleClass('show');
+    });
+
+    $(document).on('keyup', function (event) {
+        if (event.key === 'Escape') {
+            setMobileMenuState(false);
+        }
+    });
+
+    $(window).on('resize', function () {
+        if (window.innerWidth >= 1200) {
+            setMobileMenuState(false);
+        }
     });
     
     // Back to top button

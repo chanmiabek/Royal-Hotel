@@ -1,19 +1,146 @@
 {% extends 'base.html' %}
 {% load static i18n %}
 
+{% block extra_css %}
+<style>
+    .form-page-shell {
+        min-height: 100vh;
+        padding: 32px 0 48px;
+        background: linear-gradient(135deg, #f7f1d5 0%, #ffffff 45%, #f3f4f6 100%);
+    }
+    .form-page-brand {
+        text-align: center;
+        margin-bottom: 24px;
+    }
+    .form-page-brand img {
+        max-height: 76px;
+        width: auto;
+    }
+    .form-page-layout {
+        background: #ffffff;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.14);
+    }
+    .form-page-media {
+        min-height: 100%;
+        background: linear-gradient(rgba(34, 34, 34, 0.28), rgba(34, 34, 34, 0.55)), url("{% static 'img/hero.jpg' %}") center/cover no-repeat;
+        padding: 48px 36px;
+        display: flex;
+        align-items: flex-end;
+    }
+    .form-page-media-content h2,
+    .form-page-media-content p,
+    .form-page-media-content li {
+        color: #ffffff;
+    }
+    .form-page-media-content h2 {
+        font-size: 34px;
+        font-weight: 800;
+        margin-bottom: 12px;
+    }
+    .form-page-media-content p {
+        font-size: 16px;
+        line-height: 1.7;
+        margin-bottom: 18px;
+    }
+    .form-page-media-content ul {
+        margin: 0;
+        padding-left: 18px;
+    }
+    .form-page-form {
+        padding: 36px 32px;
+    }
+    .form-page-form h2 {
+        color: #111827;
+        font-size: 28px;
+        font-weight: 800;
+        margin-bottom: 8px;
+    }
+    .form-page-form .section-intro {
+        color: #64748b;
+        margin-bottom: 22px;
+    }
+    .form-page-form .booking-form {
+        box-shadow: none;
+        padding: 0;
+        border-radius: 0;
+        background: transparent;
+    }
+    .form-page-form .form-control,
+    .form-page-form textarea,
+    .form-page-form select {
+        border-radius: 12px;
+        border-color: #e2e8f0;
+        min-height: 46px;
+        box-shadow: none;
+    }
+    .form-page-form textarea.form-control {
+        min-height: 120px;
+    }
+    .form-page-form .form-control:focus,
+    .form-page-form textarea:focus,
+    .form-page-form select:focus {
+        border-color: #f5c542;
+        box-shadow: 0 0 0 0.2rem rgba(245, 197, 66, 0.2);
+    }
+    .form-page-form .btn-primary {
+        border-radius: 999px;
+        padding: 12px 24px;
+        font-weight: 700;
+    }
+    @media (max-width: 991px) {
+        .form-page-media {
+            min-height: 280px;
+        }
+    }
+    @media (max-width: 767px) {
+        .form-page-shell {
+            padding: 24px 0 36px;
+        }
+        .form-page-form {
+            padding: 28px 20px;
+        }
+        .form-page-media {
+            min-height: 220px;
+            padding: 28px 20px;
+        }
+        .form-page-media-content h2 {
+            font-size: 28px;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="premium-shell">
-        
-        <div id="booking">
-            <div class="container">
-                <div class="section-header">
-                    <h2>{% trans "Reserve Your Stay" %}</h2>
-                    <p>
-                        {% blocktrans %}Secure your room at Royal Hotel today. Fill out the form below, and our team will confirm your reservation within 24 hours.{% endblocktrans %}
-                    </p>
+<section class="form-page-shell">
+    <div class="container">
+        <div class="form-page-brand">
+            <a href="{% url 'index' %}" aria-label="{% trans 'Back to home page' %}">
+                <img src="{% static 'img/logo.jpg' %}" alt="Royal Hotel Logo">
+            </a>
+        </div>
+        <div class="form-page-layout">
+            <div class="row no-gutters">
+                <div class="col-lg-5">
+                    <div class="form-page-media">
+                        <div class="form-page-media-content">
+                            <h2>{% trans "Reserve With Confidence" %}</h2>
+                            <p>{% trans "Choose your room, share your stay details, and let our team confirm your reservation quickly." %}</p>
+                            <ul>
+                                <li>{% trans "Fast confirmation support" %}</li>
+                                <li>{% trans "Comfortable rooms for every stay" %}</li>
+                                <li>{% trans "Simple and secure booking process" %}</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
-                <div class="row">
-                    <div class="col-12">
+                <div class="col-lg-7">
+                    <div class="form-page-form">
+                        <h2>{% trans "Reserve Your Stay" %}</h2>
+                        <p class="section-intro">
+                            {% blocktrans %}Secure your room at Royal Hotel today. Fill out the form below, and our team will confirm your reservation within 24 hours.{% endblocktrans %}
+                        </p>
                         <div class="booking-form">
                             <div id="success"></div>
                             <form name="sentMessage" id="bookingForm" method="post" action="{% url 'booking' %}" novalidate="novalidate">
@@ -103,5 +230,6 @@
                 </div>
             </div>
         </div>
-        </section>
+    </div>
+</section>
 {% endblock %}

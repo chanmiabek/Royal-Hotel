@@ -2,33 +2,52 @@
 {% load i18n %}
 {% block extra_css %}
 <style>
-    .profile-dashboard {
-        background: transparent;
-        padding: 60px 0;
-        color: #1f2937;
+    .member-shell {
+        min-height: 100vh;
+        padding: 36px 0 48px;
+        background: linear-gradient(135deg, #f8f1d1 0%, #ffffff 42%, #eef2f7 100%);
     }
-    .profile-hero {
-        background: linear-gradient(120deg, #0f0f0f 0%, #1f1f1f 55%, #3b2a00 100%);
-        border-radius: 22px;
-        color: #fef8e7;
-        padding: 28px 32px;
-        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+    .member-topbar {
         display: flex;
-        flex-wrap: wrap;
         align-items: center;
         justify-content: space-between;
         gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
     }
-    .profile-hero__title {
-        font-size: 28px;
+    .member-home-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 18px;
+        border-radius: 999px;
+        background: #111827;
+        color: #FFD700;
         font-weight: 700;
-        margin-bottom: 6px;
+        text-decoration: none;
     }
-    .profile-hero__subtitle {
-        margin: 0;
-        color: rgba(255, 248, 231, 0.8);
+    .member-home-link:hover {
+        color: #ffffff;
     }
-    .profile-chip {
+    .member-top-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .member-top-actions .btn {
+        border-radius: 999px;
+        font-weight: 600;
+        padding: 10px 18px;
+    }
+    .member-hero {
+        background: linear-gradient(120deg, #0f172a 0%, #1f2937 55%, #4b3200 100%);
+        border-radius: 26px;
+        color: #fff8e7;
+        padding: 28px;
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.24);
+        margin-bottom: 24px;
+    }
+    .member-chip {
         display: inline-flex;
         align-items: center;
         gap: 8px;
@@ -37,110 +56,221 @@
         background: rgba(255, 215, 0, 0.18);
         color: #ffdf7a;
         font-size: 12px;
-        font-weight: 600;
+        font-weight: 700;
         letter-spacing: 0.08em;
         text-transform: uppercase;
     }
-    .profile-card {
-        background: #ffffff;
-        border-radius: 18px;
-        border: none;
-        box-shadow: 0 14px 30px rgba(15, 15, 15, 0.08);
-        padding: 24px;
-        height: 100%;
+    .member-title {
+        font-size: 30px;
+        font-weight: 800;
+        margin: 14px 0 8px;
     }
-    .profile-card h4 {
-        font-size: 18px;
-        margin-bottom: 16px;
-        color: #1f2937;
+    .member-subtitle {
+        margin: 0;
+        max-width: 640px;
+        color: rgba(255, 248, 231, 0.82);
     }
-    .profile-meta {
+    .member-grid {
         display: grid;
-        gap: 8px;
-        font-size: 14px;
-        color: #475569;
+        grid-template-columns: 280px minmax(0, 1fr);
+        gap: 24px;
     }
-    .profile-meta strong {
-        color: #0f172a;
+    .member-sidebar,
+    .member-panel {
+        background: #ffffff;
+        border-radius: 22px;
+        box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
     }
-    .profile-actions {
-        display: flex;
-        flex-wrap: wrap;
+    .member-sidebar {
+        padding: 22px;
+        height: fit-content;
+        position: sticky;
+        top: 24px;
+    }
+    .member-avatar {
+        width: 74px;
+        height: 74px;
+        border-radius: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff8dc;
+        color: #b8860b;
+        font-size: 28px;
+        margin-bottom: 14px;
+    }
+    .member-sidebar h4 {
+        margin-bottom: 6px;
+        color: #111827;
+    }
+    .member-sidebar p {
+        color: #64748b;
+        margin-bottom: 18px;
+    }
+    .member-nav {
+        display: grid;
         gap: 10px;
-        margin-top: 16px;
     }
-    .profile-actions .btn {
-        border-radius: 999px;
+    .member-nav a,
+    .member-nav button {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        background: #ffffff;
+        color: #111827;
         font-weight: 600;
-        padding: 8px 18px;
+        text-decoration: none;
+        text-align: left;
+    }
+    .member-nav a:hover,
+    .member-nav button:hover {
+        background: #fff8dc;
+        border-color: rgba(255, 215, 0, 0.5);
+    }
+    .member-main {
+        display: grid;
+        gap: 24px;
+    }
+    .member-panel {
+        padding: 24px;
+    }
+    .member-panel h4 {
+        margin-bottom: 18px;
+        color: #111827;
+        font-size: 20px;
+    }
+    .member-overview {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+    .member-stat {
+        padding: 16px;
+        border-radius: 18px;
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+    }
+    .member-stat span {
+        display: block;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748b;
+        margin-bottom: 8px;
+        font-weight: 700;
+    }
+    .member-stat strong {
+        color: #111827;
+        font-size: 16px;
     }
     .profile-form .form-control {
-        border-radius: 12px;
-        border-color: #e2e8f0;
+        min-height: 46px;
+        border-radius: 14px;
+        border-color: #dbe2ea;
         box-shadow: none;
     }
     .profile-form .form-control:focus {
         border-color: #f5c542;
-        box-shadow: 0 0 0 0.2rem rgba(245, 197, 66, 0.2);
+        box-shadow: 0 0 0 0.2rem rgba(245, 197, 66, 0.18);
     }
-    .profile-form .btn-primary {
+    .profile-form .btn {
         border-radius: 999px;
-        padding: 10px 22px;
-        font-weight: 600;
+        font-weight: 700;
+        padding: 10px 20px;
     }
-    .profile-form .btn-outline-danger,
-    .profile-form .btn-outline-primary {
-        border-radius: 999px;
-        font-weight: 600;
-        padding: 8px 18px;
-    }
-    @media (max-width: 767px) {
-        .profile-dashboard {
-            padding: 40px 0;
+    @media (max-width: 991px) {
+        .member-grid {
+            grid-template-columns: 1fr;
         }
-        .profile-hero {
-            padding: 22px;
+        .member-sidebar {
+            position: static;
+        }
+    }
+    @media (max-width: 575px) {
+        .member-shell {
+            padding: 24px 0 36px;
+        }
+        .member-hero,
+        .member-sidebar,
+        .member-panel {
+            padding: 20px;
+        }
+        .member-title {
+            font-size: 26px;
+        }
+        .member-overview {
+            grid-template-columns: 1fr;
         }
     }
 </style>
 {% endblock %}
 {% block content %}
-<section class="profile-dashboard">
+<section class="member-shell">
     <div class="container">
-        <div class="profile-hero mb-4">
-            <div>
-                <span class="profile-chip">{% trans "Member Dashboard" %}</span>
-                <h2 class="profile-hero__title">{{ user.first_name|default:user.username }} {{ user.last_name|default:"" }}</h2>
-                <p class="profile-hero__subtitle">{% trans "Edit your profile, manage security, and keep your booking info current." %}</p>
-            </div>
-            <div class="profile-actions">
-                <a class="btn btn-light" href="{% url 'my_bookings' %}">{% trans "View My Bookings" %}</a>
-                <a class="btn btn-outline-light" href="{% url 'password_reset' %}">{% trans "Forgot Password" %}</a>
+        <div class="member-topbar">
+            <a class="member-home-link" href="{% url 'index' %}">
+                <i class="fa fa-home" aria-hidden="true"></i>
+                {% trans "Back to Home" %}
+            </a>
+            <div class="member-top-actions">
+                <a class="btn btn-outline-dark" href="{% url 'my_bookings' %}">{% trans "My Bookings" %}</a>
+                <a class="btn btn-outline-dark" href="{% url 'password_reset' %}">{% trans "Reset Password" %}</a>
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-lg-5 mb-4">
-                <div class="profile-card">
+        <div class="member-hero">
+            <span class="member-chip">{% trans "Member Profile" %}</span>
+            <h2 class="member-title">{{ user.first_name|default:user.username }} {{ user.last_name|default:"" }}</h2>
+            <p class="member-subtitle">{% trans "Keep your personal details updated, move quickly between your account pages, and return home whenever you need." %}</p>
+        </div>
+
+        <div class="member-grid">
+            <aside class="member-sidebar">
+                <div class="member-avatar">
+                    <i class="fa fa-user" aria-hidden="true"></i>
+                </div>
+                <h4>{{ user.first_name|default:user.username }}</h4>
+                <p>{{ user.email|default:"-" }}</p>
+                <div class="member-nav">
+                    <a href="{% url 'profile' %}"><i class="fa fa-id-card-o"></i>{% trans "Profile Overview" %}</a>
+                    <a href="{% url 'my_bookings' %}"><i class="fa fa-calendar-check-o"></i>{% trans "My Bookings" %}</a>
+                    <a href="{% url 'index' %}"><i class="fa fa-home"></i>{% trans "Home Page" %}</a>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="reset_profile">
+                        <button type="submit"><i class="fa fa-refresh"></i>{% trans "Reset Profile" %}</button>
+                    </form>
+                </div>
+            </aside>
+
+            <div class="member-main">
+                <div class="member-panel">
                     <h4>{% trans "Account Overview" %}</h4>
-                    <div class="profile-meta">
-                        <div><strong>{% trans "Name:" %}</strong> {{ user.first_name|default:"-" }} {{ user.last_name|default:"" }}</div>
-                        <div><strong>{% trans "Email:" %}</strong> {{ user.email|default:"-" }}</div>
-                        <div><strong>{% trans "Phone:" %}</strong> {{ profile.mobile|default:"-" }}</div>
-                        <div><strong>{% trans "Member Since:" %}</strong> {{ user.date_joined|date:"F j, Y" }}</div>
-                    </div>
-                    <div class="profile-actions">
-                        <a class="btn btn-primary" href="{% url 'my_bookings' %}">{% trans "View My Bookings" %}</a>
-                        <form method="post" class="d-inline">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="reset_profile">
-                            <button type="submit" class="btn btn-outline-danger">{% trans "Reset Profile" %}</button>
-                        </form>
+                    <div class="member-overview">
+                        <div class="member-stat">
+                            <span>{% trans "Full Name" %}</span>
+                            <strong>{{ user.first_name|default:"-" }} {{ user.last_name|default:"" }}</strong>
+                        </div>
+                        <div class="member-stat">
+                            <span>{% trans "Email Address" %}</span>
+                            <strong>{{ user.email|default:"-" }}</strong>
+                        </div>
+                        <div class="member-stat">
+                            <span>{% trans "Phone Number" %}</span>
+                            <strong>{{ profile.mobile|default:"-" }}</strong>
+                        </div>
+                        <div class="member-stat">
+                            <span>{% trans "Member Since" %}</span>
+                            <strong>{{ user.date_joined|date:"F j, Y" }}</strong>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-lg-7">
-                <div class="profile-card profile-form">
+
+                <div class="member-panel profile-form">
                     <h4>{% trans "Edit Profile Details" %}</h4>
                     <form method="post">
                         {% csrf_token %}
@@ -164,7 +294,7 @@
                             <input type="text" name="mobile" class="form-control" value="{{ profile.mobile }}">
                         </div>
                         <button type="submit" class="btn btn-primary">{% trans "Save Changes" %}</button>
-                        <a class="btn btn-outline-primary ml-2" href="{% url 'password_reset' %}">{% trans "Reset Password" %}</a>
+                        <a class="btn btn-outline-dark ml-2" href="{% url 'index' %}">{% trans "Go Home" %}</a>
                     </form>
                 </div>
             </div>
