@@ -3020,6 +3020,54 @@ def admin_team_members_view(request):
     return render(request, 'admin_team_members.html', {'team_members': team_members})
 
 
+def _team_member_form_values(team_member=None, post_data=None):
+    if post_data is not None:
+        return {
+            'name': (post_data.get('name') or '').strip(),
+            'role': (post_data.get('role') or '').strip(),
+            'bio': (post_data.get('bio') or '').strip(),
+            'display_order': post_data.get('display_order') or '0',
+            'is_active': bool(post_data.get('is_active')),
+            'facebook_url': (post_data.get('facebook_url') or '').strip(),
+            'twitter_url': (post_data.get('twitter_url') or '').strip(),
+            'instagram_url': (post_data.get('instagram_url') or '').strip(),
+            'linkedin_url': (post_data.get('linkedin_url') or '').strip(),
+        }
+
+    if team_member is not None:
+        return {
+            'name': team_member.name,
+            'role': team_member.role,
+            'bio': team_member.bio,
+            'display_order': team_member.display_order,
+            'is_active': team_member.is_active,
+            'facebook_url': team_member.facebook_url,
+            'twitter_url': team_member.twitter_url,
+            'instagram_url': team_member.instagram_url,
+            'linkedin_url': team_member.linkedin_url,
+        }
+
+    return {
+        'name': '',
+        'role': '',
+        'bio': '',
+        'display_order': 0,
+        'is_active': True,
+        'facebook_url': '',
+        'twitter_url': '',
+        'instagram_url': '',
+        'linkedin_url': '',
+    }
+
+
+def _parse_team_member_display_order(raw_value):
+    try:
+        display_order = int(raw_value or 0)
+    except (TypeError, ValueError):
+        return None
+    return max(display_order, 0)
+
+
 @login_required(login_url='login')
 def admin_team_member_create(request):
     if not (request.user.is_staff or request.user.is_superuser):
@@ -3031,31 +3079,35 @@ def admin_team_member_create(request):
         return redirect('admin_dashboard')
 
     if request.method == "POST":
-        name = (request.POST.get('name') or '').strip()
-        role = (request.POST.get('role') or '').strip()
-        bio = (request.POST.get('bio') or '').strip()
-        display_order = request.POST.get('display_order') or 0
+        form_values = _team_member_form_values(post_data=request.POST)
+        name = form_values['name']
+        role = form_values['role']
+        bio = form_values['bio']
+        display_order = _parse_team_member_display_order(form_values['display_order'])
 
         if not name or not role or not bio:
             messages.error(request, "Name, role, and bio are required.")
-            return render(request, 'admin_team_member_form.html', {'team_member': None})
+            return render(request, 'admin_team_member_form.html', {'team_member': None, 'form_values': form_values})
+        if display_order is None:
+            messages.error(request, "Display order must be a valid number.")
+            return render(request, 'admin_team_member_form.html', {'team_member': None, 'form_values': form_values})
 
         TeamMember.objects.create(
             name=name,
             role=role,
             bio=bio,
             image=request.FILES.get('image'),
-            facebook_url=(request.POST.get('facebook_url') or '').strip(),
-            twitter_url=(request.POST.get('twitter_url') or '').strip(),
-            instagram_url=(request.POST.get('instagram_url') or '').strip(),
-            linkedin_url=(request.POST.get('linkedin_url') or '').strip(),
-            display_order=int(display_order or 0),
-            is_active=bool(request.POST.get('is_active')),
+            facebook_url=form_values['facebook_url'],
+            twitter_url=form_values['twitter_url'],
+            instagram_url=form_values['instagram_url'],
+            linkedin_url=form_values['linkedin_url'],
+            display_order=display_order,
+            is_active=form_values['is_active'],
         )
         messages.success(request, "Team member created successfully.")
         return redirect('admin_team_members')
 
-    return render(request, 'admin_team_member_form.html', {'team_member': None})
+    return render(request, 'admin_team_member_form.html', {'team_member': None, 'form_values': _team_member_form_values()})
 
 
 @login_required(login_url='login')
@@ -3071,23 +3123,28 @@ def admin_team_member_edit(request, team_member_id):
     team_member = get_object_or_404(TeamMember, id=team_member_id)
 
     if request.method == "POST":
-        name = (request.POST.get('name') or '').strip()
-        role = (request.POST.get('role') or '').strip()
-        bio = (request.POST.get('bio') or '').strip()
+        form_values = _team_member_form_values(team_member=team_member, post_data=request.POST)
+        name = form_values['name']
+        role = form_values['role']
+        bio = form_values['bio']
+        display_order = _parse_team_member_display_order(form_values['display_order'])
 
         if not name or not role or not bio:
             messages.error(request, "Name, role, and bio are required.")
-            return render(request, 'admin_team_member_form.html', {'team_member': team_member})
+            return render(request, 'admin_team_member_form.html', {'team_member': team_member, 'form_values': form_values})
+        if display_order is None:
+            messages.error(request, "Display order must be a valid number.")
+            return render(request, 'admin_team_member_form.html', {'team_member': team_member, 'form_values': form_values})
 
         team_member.name = name
         team_member.role = role
         team_member.bio = bio
-        team_member.facebook_url = (request.POST.get('facebook_url') or '').strip()
-        team_member.twitter_url = (request.POST.get('twitter_url') or '').strip()
-        team_member.instagram_url = (request.POST.get('instagram_url') or '').strip()
-        team_member.linkedin_url = (request.POST.get('linkedin_url') or '').strip()
-        team_member.display_order = int(request.POST.get('display_order') or 0)
-        team_member.is_active = bool(request.POST.get('is_active'))
+        team_member.facebook_url = form_values['facebook_url']
+        team_member.twitter_url = form_values['twitter_url']
+        team_member.instagram_url = form_values['instagram_url']
+        team_member.linkedin_url = form_values['linkedin_url']
+        team_member.display_order = display_order
+        team_member.is_active = form_values['is_active']
         if request.POST.get('remove_image'):
             team_member.image = None
         elif request.FILES.get('image'):
@@ -3096,7 +3153,7 @@ def admin_team_member_edit(request, team_member_id):
         messages.success(request, "Team member updated successfully.")
         return redirect('admin_team_members')
 
-    return render(request, 'admin_team_member_form.html', {'team_member': team_member})
+    return render(request, 'admin_team_member_form.html', {'team_member': team_member, 'form_values': _team_member_form_values(team_member=team_member)})
 
 
 @login_required(login_url='login')

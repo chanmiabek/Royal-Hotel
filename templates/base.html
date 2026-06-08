@@ -175,7 +175,7 @@
             opacity: 0;
             visibility: hidden;
             transform: translateY(8px);
-            z-index: 2000;
+            z-index: 5000;
             background: #222222;
             border: 1px solid #3a3a3a;
             border-radius: 0;
@@ -185,6 +185,7 @@
             transition: opacity .2s ease, transform .2s ease, visibility .2s ease;
         }
         .top-menu .dropdown.show .dropdown-menu,
+        .top-menu .dropdown-menu.show,
         .top-menu .dropdown:hover .dropdown-menu {
             opacity: 1;
             visibility: visible;
@@ -210,6 +211,8 @@
         }
         .booking-mobile-menu {
             display: none;
+            position: relative;
+            z-index: 4990;
             background: #121212;
             border-top: 1px solid rgba(255, 215, 0, 0.28);
             padding: 16px 20px 22px;
@@ -291,12 +294,15 @@
             visibility: visible;
             transform: none;
             min-width: 100%;
+            max-height: 55vh;
+            overflow-y: auto;
             margin-top: 8px;
             box-shadow: none;
             border-top: 1px solid rgba(255, 215, 0, 0.15);
             background: transparent;
         }
-        .booking-mobile-menu .top-menu .dropdown.show .dropdown-menu {
+        .booking-mobile-menu .top-menu .dropdown.show .dropdown-menu,
+        .booking-mobile-menu .top-menu .dropdown-menu.show {
             display: block;
         }
         .booking-mobile-menu .top-menu .dropdown-item {
@@ -304,11 +310,19 @@
             color: #fff4bf;
             border-radius: 12px;
         }
+        .booking-mobile-menu .top-menu .dropdown-menu .dropdown-item {
+            border: 1px solid rgba(255, 215, 0, 0.1);
+            border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+            background: rgba(255, 255, 255, 0.04);
+            margin-top: 6px;
+            white-space: normal;
+        }
         @media (max-width: 991px) {
             .top-menu .dropdown-menu {
-                right: auto;
-                left: 0;
-                min-width: 200px;
+                right: 0;
+                left: auto;
+                min-width: min(260px, calc(100vw - 32px));
+                max-width: calc(100vw - 32px);
             }
         }
         @media (min-width: 1200px) {

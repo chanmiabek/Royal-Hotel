@@ -280,7 +280,10 @@
         <div class="col-12">
             <div class="d-flex align-items-center justify-content-between mb-3">
                 <h3 class="mb-0">{% trans "Team Members" %}</h3>
-                <a href="{% url 'admin_team_members' %}" class="btn btn-outline-primary btn-sm">{% trans "Manage" %}</a>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{% url 'admin_team_member_create' %}" class="btn btn-primary btn-sm">{% trans "Add" %}</a>
+                    <a href="{% url 'admin_team_members' %}" class="btn btn-outline-primary btn-sm">{% trans "Manage" %}</a>
+                </div>
             </div>
             <div class="table-responsive">
                 <table class="table table-bordered table-hover bg-white">

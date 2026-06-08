@@ -18,16 +18,16 @@
                 <div class="form-row">
                     <div class="form-group col-md-6">
                         <label>{% trans "Name" %}</label>
-                        <input type="text" name="name" class="form-control" value="{{ team_member.name|default:'' }}" required>
+                        <input type="text" name="name" class="form-control" value="{{ form_values.name }}" required>
                     </div>
                     <div class="form-group col-md-6">
                         <label>{% trans "Role" %}</label>
-                        <input type="text" name="role" class="form-control" value="{{ team_member.role|default:'' }}" required>
+                        <input type="text" name="role" class="form-control" value="{{ form_values.role }}" required>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>{% trans "Bio" %}</label>
-                    <textarea name="bio" class="form-control" rows="5" required>{{ team_member.bio|default:'' }}</textarea>
+                    <textarea name="bio" class="form-control" rows="5" required>{{ form_values.bio }}</textarea>
                 </div>
                 <div class="form-row">
                     <div class="form-group col-md-6">
@@ -42,11 +42,11 @@
                     </div>
                     <div class="form-group col-md-3">
                         <label>{% trans "Display Order" %}</label>
-                        <input type="number" name="display_order" class="form-control" value="{{ team_member.display_order|default:0 }}">
+                        <input type="number" name="display_order" class="form-control" min="0" value="{{ form_values.display_order }}">
                     </div>
                     <div class="form-group col-md-3 d-flex align-items-end">
                         <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {% if team_member.is_active or not team_member %}checked{% endif %}>
+                            <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {% if form_values.is_active %}checked{% endif %}>
                             <label class="form-check-label" for="is_active">{% trans "Active" %}</label>
                         </div>
                     </div>
@@ -54,21 +54,21 @@
                 <div class="form-row">
                     <div class="form-group col-md-6">
                         <label>{% trans "Facebook URL" %}</label>
-                        <input type="url" name="facebook_url" class="form-control" value="{{ team_member.facebook_url|default:'' }}">
+                        <input type="url" name="facebook_url" class="form-control" value="{{ form_values.facebook_url }}">
                     </div>
                     <div class="form-group col-md-6">
                         <label>{% trans "Twitter URL" %}</label>
-                        <input type="url" name="twitter_url" class="form-control" value="{{ team_member.twitter_url|default:'' }}">
+                        <input type="url" name="twitter_url" class="form-control" value="{{ form_values.twitter_url }}">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group col-md-6">
                         <label>{% trans "Instagram URL" %}</label>
-                        <input type="url" name="instagram_url" class="form-control" value="{{ team_member.instagram_url|default:'' }}">
+                        <input type="url" name="instagram_url" class="form-control" value="{{ form_values.instagram_url }}">
                     </div>
                     <div class="form-group col-md-6">
                         <label>{% trans "LinkedIn URL" %}</label>
-                        <input type="url" name="linkedin_url" class="form-control" value="{{ team_member.linkedin_url|default:'' }}">
+                        <input type="url" name="linkedin_url" class="form-control" value="{{ form_values.linkedin_url }}">
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary">{% if team_member %}{% trans "Save Changes" %}{% else %}{% trans "Create Team Member" %}{% endif %}</button>

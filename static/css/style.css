@@ -1704,3 +1704,251 @@ input::-ms-input-placeholder {
         width: 100%;
     }
 }
+
+/* ================================================= */
+/* ------------- Mobile Responsiveness ------------- */
+/* ================================================= */
+
+img,
+iframe,
+video {
+    max-width: 100%;
+}
+
+main {
+    overflow-x: hidden;
+}
+
+.btn,
+button,
+.form-control,
+.custom-select {
+    min-height: 44px;
+}
+
+.btn {
+    white-space: normal;
+}
+
+.table-responsive {
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive .table {
+    min-width: 720px;
+    margin-bottom: 0;
+}
+
+@media (max-width: 991.98px) {
+    .premium-shell {
+        padding: 32px 0;
+    }
+
+    .premium-shell .booking-form,
+    .premium-shell .table-responsive {
+        border-radius: 12px;
+        padding: 16px;
+    }
+
+    .section-header {
+        margin-bottom: 18px;
+    }
+
+    .section-header h2 {
+        font-size: 26px;
+        line-height: 1.2;
+    }
+
+    #headerSlider {
+        max-height: none;
+    }
+
+    #headerSlider .carousel-item img {
+        min-height: 320px;
+        object-fit: cover;
+    }
+
+    #headerSlider .carousel-caption {
+        top: 32px;
+        height: auto;
+        padding: 16px 20px;
+    }
+
+    #headerSlider .carousel-caption h1 {
+        font-size: 30px;
+        line-height: 1.2;
+        letter-spacing: 1px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .container,
+    .container-fluid {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    #messages.container {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .section-header {
+        text-align: left;
+    }
+
+    .section-header h2 {
+        font-size: 24px;
+    }
+
+    .section-header p {
+        font-size: 14px;
+        line-height: 1.55;
+    }
+
+    #headerSlider .carousel-indicators,
+    #headerSlider .carousel-control-prev,
+    #headerSlider .carousel-control-next {
+        display: none;
+    }
+
+    #headerSlider .carousel-item img {
+        min-height: 260px;
+    }
+
+    #headerSlider .carousel-caption {
+        top: 24px;
+        left: 16px;
+        right: 16px;
+        background: rgba(0, 0, 0, 0.42);
+    }
+
+    #headerSlider .carousel-caption h1 {
+        font-size: 24px;
+        font-weight: 700;
+    }
+
+    #headerSlider .carousel-search {
+        margin-top: 0;
+        padding: 16px 0 8px;
+        background: #f8fafc;
+    }
+
+    #headerSlider .carousel-search .search-card {
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.1);
+    }
+
+    #headerSlider .carousel-search .form-row > [class*="col-"],
+    #search .form-row > [class*="col-"],
+    .booking-form .form-row > [class*="col-"],
+    .contact-form .form-row > [class*="col-"],
+    .login-form .form-row > [class*="col-"],
+    .profile-form .form-row > [class*="col-"] {
+        flex: 0 0 100%;
+        max-width: 100%;
+        margin-bottom: 12px;
+    }
+
+    #headerSlider .carousel-search .btn,
+    #search .btn,
+    #booking .button button,
+    #contact .contact-form button,
+    #login .login-form button {
+        width: 100%;
+        margin-top: 4px;
+    }
+
+    .form-row {
+        margin-left: -6px;
+        margin-right: -6px;
+    }
+
+    .form-row > [class*="col-"] {
+        padding-left: 6px;
+        padding-right: 6px;
+    }
+
+    .card .card-body {
+        padding: 16px;
+    }
+
+    .back-to-top {
+        width: 40px;
+        height: 40px;
+        right: 12px;
+        bottom: 12px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    body {
+        font-size: 14px;
+    }
+
+    p {
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .container,
+    .container-fluid {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .premium-shell {
+        padding: 24px 0;
+    }
+
+    .premium-shell .booking-form,
+    .premium-shell .table-responsive {
+        padding: 12px;
+    }
+
+    .section-header h2 {
+        font-size: 22px;
+    }
+
+    #welcome {
+        padding: 28px 0 22px;
+    }
+
+    #welcome h3 {
+        font-size: 24px;
+        line-height: 1.2;
+    }
+
+    #welcome p {
+        font-size: 15px;
+        line-height: 1.55;
+    }
+
+    #headerSlider .carousel-caption h1 {
+        font-size: 21px;
+    }
+
+    #headerSlider .carousel-search .search-card {
+        padding: 14px;
+    }
+
+    .btn,
+    .form-control,
+    .custom-select {
+        width: 100%;
+    }
+
+    .btn + .btn,
+    .btn + a.btn,
+    a.btn + .btn,
+    a.btn + a.btn {
+        margin-top: 8px;
+        margin-left: 0 !important;
+    }
+
+    .alert {
+        font-size: 13px;
+        padding-right: 42px;
+    }
+}

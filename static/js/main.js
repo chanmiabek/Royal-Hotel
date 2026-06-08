@@ -21,6 +21,12 @@
             .toggleClass('fa-bars', !isOpen)
             .toggleClass('fa-times', isOpen);
         $('body').toggleClass('mobile-nav-open', isOpen);
+
+        if (!isOpen) {
+            $mobileMenu.find('.dropdown').removeClass('show');
+            $mobileMenu.find('.dropdown-menu').removeClass('show');
+            $mobileMenu.find('.dropdown-toggle').attr('aria-expanded', 'false');
+        }
     }
 
     if ($mobileMenu.length) {
@@ -44,7 +50,15 @@
 
     $(document).on('click', '#mobile-menu-panel .dropdown-toggle', function (event) {
         event.preventDefault();
-        $(this).closest('.dropdown').toggleClass('show');
+        var $dropdown = $(this).closest('.dropdown');
+        var isOpen = !$dropdown.hasClass('show');
+
+        $dropdown
+            .toggleClass('show', isOpen)
+            .find('.dropdown-menu')
+            .first()
+            .toggleClass('show', isOpen);
+        $(this).attr('aria-expanded', String(isOpen));
     });
 
     $(document).on('keyup', function (event) {

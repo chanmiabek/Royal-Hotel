@@ -583,8 +583,12 @@
     }
 }
 @media (max-width: 991px) {
+    .hotel-search {
+        padding: 36px 0 48px;
+    }
     .hotel-search-layout {
         grid-template-columns: 1fr;
+        gap: 18px;
     }
     .hotel-search-sidebar {
         position: static;
@@ -613,33 +617,94 @@
 }
 @media (max-width: 767px) {
     .hotel-collection {
-        padding: 36px 0 48px;
+        padding: 28px 0 40px;
     }
     .hotel-search-layout {
         grid-template-columns: 1fr;
+        gap: 16px;
     }
     .hotel-search-sidebar {
         position: static;
     }
+    .search-panel {
+        border-radius: 12px;
+    }
+    .search-panel__body {
+        padding: 16px;
+    }
     .search-map {
         height: 220px;
     }
+    .results-head {
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+    .results-title {
+        font-size: 23px;
+        line-height: 1.2;
+    }
+    .results-controls,
+    .results-controls .form-inline {
+        width: 100%;
+    }
+    .results-controls .form-inline {
+        align-items: stretch;
+        gap: 8px;
+    }
+    .results-controls label,
+    .results-controls select,
+    .results-view-toggle {
+        width: 100%;
+    }
+    .results-view-toggle {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+    .results-view-toggle .btn {
+        width: 100%;
+    }
     .result-card {
         flex-direction: column;
+        gap: 0;
+        padding: 0;
+        overflow: hidden;
     }
     .result-card__image {
         width: 100%;
-        height: 220px;
+        height: 210px;
         flex: none;
+        border-radius: 0;
+    }
+    .result-card__body,
+    .result-card__aside {
+        padding: 14px;
     }
     .result-card__aside {
         width: 100%;
         flex: none;
         align-items: flex-start;
         text-align: left;
+        gap: 12px;
+        padding-top: 0;
+    }
+    .result-card__title {
+        font-size: 20px;
+        line-height: 1.25;
+    }
+    .result-card__meta {
+        align-items: flex-start;
+        line-height: 1.45;
     }
     .result-card__rating {
         justify-content: flex-start;
+    }
+    .result-card__rating-score {
+        min-width: 44px;
+    }
+    .hotel-grid,
+    #hotels .hotel-grid,
+    #rooms .hotel-grid {
+        grid-template-columns: 1fr;
     }
     .hotel-card__media {
         height: 160px;
@@ -647,8 +712,90 @@
     .hotel-card--detail .hotel-card__media {
         height: 210px;
     }
+    .hotel-card,
+    .hotel-card--detail,
+    .review-card,
+    .hotel-map {
+        border-radius: 12px;
+    }
+    .hotel-card__body,
+    .hotel-card--detail .hotel-card__body {
+        padding: 14px;
+    }
+    .hotel-card__title {
+        font-size: 17px;
+        line-height: 1.3;
+    }
+    .hotel-detail-top {
+        grid-template-columns: 1fr;
+    }
+    .hotel-map-frame {
+        height: 210px;
+    }
+    .room-row__content {
+        gap: 14px;
+    }
+    .room-row__cta {
+        max-width: none;
+    }
     .result-card__cta {
         width: 100%;
         min-width: 0;
+    }
+}
+
+@media (max-width: 575px) {
+    .hotel-search {
+        padding: 24px 0 36px;
+    }
+    .hotel-search .container-fluid {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+    .search-map,
+    .hotel-map-frame {
+        height: 190px;
+    }
+    .search-map__btn,
+    .hotel-map-frame__btn {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        width: auto;
+        text-align: center;
+    }
+    .results-title {
+        font-size: 21px;
+    }
+    .results-subtitle {
+        font-size: 13px;
+    }
+    .result-card__image {
+        height: 185px;
+    }
+    .result-card__body,
+    .result-card__aside {
+        padding: 12px;
+    }
+    .result-card__rating {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .result-card__title {
+        font-size: 18px;
+    }
+    .hotel-card__media,
+    .hotel-card--detail .hotel-card__media,
+    .room-row .hotel-card__media {
+        height: 185px;
+    }
+    .room-card__actions,
+    .room-card__actions .btn,
+    .room-row__cta .btn {
+        width: 100%;
+    }
+    .room-amenities li {
+        max-width: 100%;
+        overflow-wrap: anywhere;
     }
 }
