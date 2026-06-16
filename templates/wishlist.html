@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block content %}
+<section class="hotel-collection">
+    <div class="container">
+        <div class="section-header">
+            <h2>{% trans "Saved hotels" %}</h2>
+            <p>{% trans "Hotels you added to your wishlist." %}</p>
+        </div>
+        <div class="hotel-grid">
+            {% for saved in saved_hotels %}
+            <a href="{% url 'hotel_detail' saved.hotel.id %}" class="hotel-card">
+                <div class="hotel-card__media">
+                    {% if saved.hotel.image %}
+                    <img src="{{ saved.hotel.image.url }}" alt="{{ saved.hotel.name }}">
+                    {% endif %}
+                    <span class="hotel-card__fav"><i class="fa fa-heart"></i></span>
+                </div>
+                <div class="hotel-card__body">
+                    <h3 class="hotel-card__title">{{ saved.hotel.name }}</h3>
+                    <p class="hotel-card__location">{{ saved.hotel.city }}{% if saved.hotel.city and saved.hotel.country %}, {% endif %}{{ saved.hotel.country }}</p>
+                    {% if saved.hotel.star_rating %}
+                    <div class="hotel-card__rating">
+                        <span class="hotel-card__score">{{ saved.hotel.star_rating }}</span>
+                        <span>{% trans "Rating" %}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </a>
+            {% empty %}
+            <p>{% trans "No saved hotels yet." %}</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

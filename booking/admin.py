@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.db.models import Exists, OuterRef
 from django.utils import timezone
-from .models import Booking, ContactMessage, Payment, Room, TeamMember, Testimonial
+from .models import Booking, ContactMessage, HotelComplaint, HotelReview, HotelStaff, Payment, Room, TeamMember, Testimonial, Wishlist
 
 
 class RoomOccupancyFilter(admin.SimpleListFilter):
@@ -64,6 +64,36 @@ class ContactMessageAdmin(admin.ModelAdmin):
     list_filter = ['is_resolved', 'created_at']
     search_fields = ['full_name', 'email', 'subject']
 
+
+@admin.register(HotelReview)
+class HotelReviewAdmin(admin.ModelAdmin):
+    list_display = ['hotel', 'user', 'rating', 'title', 'created_at']
+    list_filter = ['rating', 'created_at', 'hotel']
+    search_fields = ['hotel__name', 'user__username', 'title', 'comment']
+
+
+@admin.register(HotelComplaint)
+class HotelComplaintAdmin(admin.ModelAdmin):
+    list_display = ['hotel', 'full_name', 'email', 'subject', 'status', 'created_at']
+    list_filter = ['status', 'created_at', 'hotel']
+    search_fields = ['hotel__name', 'full_name', 'email', 'subject', 'message']
+    list_editable = ['status']
+
+
+@admin.register(Wishlist)
+class WishlistAdmin(admin.ModelAdmin):
+    list_display = ['user', 'hotel', 'created_at']
+    list_filter = ['created_at', 'hotel']
+    search_fields = ['user__username', 'hotel__name']
+
+
+@admin.register(HotelStaff)
+class HotelStaffAdmin(admin.ModelAdmin):
+    list_display = ['hotel', 'user', 'role', 'job_title', 'is_active', 'updated_at']
+    list_filter = ['role', 'is_active', 'hotel']
+    search_fields = ['hotel__name', 'user__username', 'user__email', 'user__first_name', 'user__last_name', 'job_title']
+    list_editable = ['role', 'is_active']
+
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
     list_display = ['id', 'provider', 'amount', 'currency', 'status', 'booking', 'created_at']
@@ -73,9 +103,9 @@ class PaymentAdmin(admin.ModelAdmin):
 
 @admin.register(TeamMember)
 class TeamMemberAdmin(admin.ModelAdmin):
-    list_display = ['name', 'role', 'display_order', 'is_active', 'updated_at']
+    list_display = ['name', 'role', 'account', 'display_order', 'is_active', 'updated_at']
     list_filter = ['is_active']
-    search_fields = ['name', 'role', 'bio']
+    search_fields = ['name', 'role', 'bio', 'account__username', 'account__email']
     list_editable = ['display_order', 'is_active']
 
 

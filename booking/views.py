@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
-from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse, Http404
 from django.core.validators import validate_email
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
@@ -47,6 +47,10 @@ from .models import (
     ContactMessage,
     Payment,
     Review,
+    HotelReview,
+    HotelComplaint,
+    Wishlist,
+    HotelStaff,
     UserProfile,
     PasswordResetCode,
     Hotel,
@@ -108,6 +112,14 @@ def _marketing_tables_ready():
     return required_tables.issubset(existing_tables)
 
 
+def _hotel_staff_table_ready():
+    try:
+        existing_tables = set(connection.introspection.table_names())
+    except (ProgrammingError, OperationalError):
+        return False
+    return HotelStaff._meta.db_table in existing_tables
+
+
 def _get_or_create_profile(user):
     if not user or not user.is_authenticated:
         return None
@@ -121,6 +133,101 @@ def _ensure_owner_profile(user):
         profile.user_type = 'OWNER'
         profile.save(update_fields=['user_type'])
     return profile
+
+
+def _get_active_hotel_staff(user):
+    if not user or not user.is_authenticated:
+        return None
+    if not _hotel_staff_table_ready():
+        return None
+    return (
+        HotelStaff.objects.select_related('hotel', 'hotel__owner', 'user')
+        .filter(user=user, is_active=True, hotel__is_active=True)
+        .first()
+    )
+
+
+def _get_owner_workspace(user):
+    owned_hotels = Hotel.objects.filter(owner=user).order_by('-id')
+    staff_profile = _get_active_hotel_staff(user)
+    if owned_hotels.exists():
+        return owned_hotels, owned_hotels.first(), None
+    if staff_profile:
+        hotel = staff_profile.hotel
+        return Hotel.objects.filter(id=hotel.id), hotel, staff_profile
+    return owned_hotels, None, None
+
+
+def _can_manage_hotel_staff(user, hotel):
+    if not user or not user.is_authenticated or not hotel:
+        return False
+    if not _hotel_staff_table_ready():
+        return False
+    if hotel.owner_id == user.id:
+        return True
+    staff_profile = _get_active_hotel_staff(user)
+    return bool(staff_profile and staff_profile.hotel_id == hotel.id and staff_profile.can_manage_staff)
+
+
+def _split_full_name(full_name):
+    parts = (full_name or '').strip().split()
+    if not parts:
+        return '', ''
+    if len(parts) == 1:
+        return parts[0], ''
+    return parts[0], ' '.join(parts[1:])
+
+
+def _unique_username_from_email(email):
+    base = (email.split('@')[0] or 'staff').strip().lower()
+    base = ''.join(char for char in base if char.isalnum() or char in ('_', '-')) or 'staff'
+    username = base
+    counter = 1
+    while User.objects.filter(username__iexact=username).exists():
+        counter += 1
+        username = f"{base}{counter}"
+    return username
+
+
+def _sync_staff_user_account(email, password, full_name, existing_user=None):
+    email = (email or '').strip().lower()
+    password = password or ''
+
+    if not email and not existing_user:
+        return None, None
+
+    if email:
+        try:
+            validate_email(email)
+        except ValidationError:
+            return None, "Enter a valid account email address."
+
+    user = existing_user
+    if email:
+        matched_user = User.objects.filter(email__iexact=email).first()
+        if matched_user and existing_user and matched_user.id != existing_user.id:
+            return None, "That email address is already used by another account."
+        if matched_user and not existing_user:
+            return None, "That email address is already used by another account."
+        if not user:
+            if not password:
+                return None, "Enter a password for the new staff account."
+            user = User(username=_unique_username_from_email(email), email=email)
+        user.email = email
+
+    if password:
+        try:
+            validate_password(password, user)
+        except ValidationError as exc:
+            return None, " ".join(exc.messages)
+        user.set_password(password)
+
+    first_name, last_name = _split_full_name(full_name)
+    user.first_name = first_name
+    user.last_name = last_name
+    user.save()
+    UserProfile.objects.update_or_create(user=user, defaults={'user_type': 'STAFF'})
+    return user, None
 
 
 def _owner_has_hotel(user):
@@ -162,7 +269,7 @@ def owner_required(view_func):
         if not request.user.is_authenticated:
             return redirect(f"{reverse('login')}?next={request.path}")
         profile = _get_or_create_profile(request.user)
-        if not profile or profile.user_type != 'OWNER':
+        if (not profile or profile.user_type != 'OWNER') and not _get_active_hotel_staff(request.user):
             messages.info(request, "Please complete the partnership form to access the owner dashboard.")
             return redirect('hotel_partner_apply')
         return view_func(request, *args, **kwargs)
@@ -257,6 +364,10 @@ def home(request):
                 'hotels': [],
                 'home_hotels': [],
                 'hotels_count': 0,
+                'rooms_count': 0,
+                'reviews_count': 0,
+                'cities_count': 0,
+                'lowest_price': None,
                 'map_query': 'Kenya',
                 'star_filter_options': [],
             },
@@ -281,6 +392,21 @@ def home(request):
     )[:6]
 
     hotels_count = base_hotels.count()
+    approved_rooms = Room.objects.filter(
+        hotel__is_active=True,
+        hotel__is_approved=True,
+        available=True,
+        is_approved=True,
+    )
+    rooms_count = approved_rooms.count()
+    reviews_count = Review.objects.filter(room__hotel__in=base_hotels).count()
+    cities_count = (
+        base_hotels.exclude(city='')
+        .values('city')
+        .distinct()
+        .count()
+    )
+    lowest_price = approved_rooms.aggregate(lowest=Min('price'))['lowest']
     star_counts = {
         row['star_rating']: row['count']
         for row in (
@@ -305,6 +431,10 @@ def home(request):
             'hotels': hotels,
             'home_hotels': home_hotels,
             'hotels_count': hotels_count,
+            'rooms_count': rooms_count,
+            'reviews_count': reviews_count,
+            'cities_count': cities_count,
+            'lowest_price': lowest_price,
             'map_query': map_query,
             'star_filter_options': star_filter_options,
         },
@@ -532,6 +662,284 @@ def about(request):
         },
     )
 
+
+def _footer_info_pages():
+    return {
+        "manage-your-trips": {
+            "section": _("Support"),
+            "title": _("Manage your trips"),
+            "intro": _("Use your Royal Hotel account to review upcoming stays, booking status, payments, and completed reservations."),
+            "items": [
+                _("Sign in before booking so your reservations are saved automatically."),
+                _("Open My Bookings to check payment status, invoices, and booking details."),
+                _("Contact support with your booking reference if a reservation needs attention."),
+            ],
+            "primary_label": _("Open My Bookings"),
+            "primary_url": "my_bookings",
+        },
+        "contact-customer-service": {
+            "section": _("Support"),
+            "title": _("Contact Customer Service"),
+            "intro": _("Reach the Royal Hotel support team for booking questions, payment help, account access, or hotel information."),
+            "items": [
+                _("Use the contact form for written support and clear follow-up."),
+                _("Call +254799091016 for urgent guest or partner assistance."),
+                _("Include your booking ID, hotel name, and travel dates when available."),
+            ],
+            "primary_label": _("Contact support"),
+            "primary_url": "contact",
+        },
+        "safety-resource-center": {
+            "section": _("Support"),
+            "title": _("Safety Resource Center"),
+            "intro": _("Royal Hotel helps guests choose trusted stays by showing approved hotels, clear booking records, and support channels."),
+            "items": [
+                _("Book through Royal Hotel pages so your reservation and payment records are protected."),
+                _("Check property details, location, room information, and booking terms before confirming."),
+                _("Report suspicious messages, unsafe listings, or payment concerns to Customer Service."),
+            ],
+            "primary_label": _("Report a concern"),
+            "primary_url": "contact",
+        },
+        "seasonal-and-holiday-deals": {
+            "section": _("Discover"),
+            "title": _("Seasonal and holiday deals"),
+            "intro": _("Explore approved hotels and rooms for holiday stays, weekend trips, and seasonal travel plans."),
+            "items": [
+                _("Compare available properties by city, price, and room details."),
+                _("Look for recently approved hotels and rooms with current availability."),
+                _("Book early for busy travel periods around holidays and local events."),
+            ],
+            "primary_label": _("Browse deals"),
+            "primary_url": "hotel_list",
+        },
+        "travel-articles": {
+            "section": _("Discover"),
+            "title": _("Travel articles"),
+            "intro": _("Find guidance about Royal Hotel, trusted stays, partner standards, and smoother booking experiences."),
+            "items": [
+                _("Learn how Royal Hotel connects guests with approved hospitality partners."),
+                _("Review booking tips before choosing a room or property."),
+                _("Understand how support, payments, and account workflows fit together."),
+            ],
+            "primary_label": _("Read about Royal Hotel"),
+            "primary_url": "about",
+        },
+        "royal-hotel-for-business": {
+            "section": _("Discover"),
+            "title": _("Royal Hotel for Business"),
+            "intro": _("Royal Hotel supports business travel by making approved hotels, booking records, and local pricing easy to access."),
+            "items": [
+                _("Search properties that fit work trips, short stays, and longer assignments."),
+                _("Keep reservation history available from your account."),
+                _("Contact support when teams need help with booking coordination."),
+            ],
+            "primary_label": _("Find business stays"),
+            "primary_url": "hotel_list",
+        },
+        "traveller-review-awards": {
+            "section": _("Discover"),
+            "title": _("Traveller Review Awards"),
+            "intro": _("Guest reviews help highlight reliable stays and encourage hotel partners to keep improving service quality."),
+            "items": [
+                _("Reviews are connected to completed bookings where available."),
+                _("Ratings help future travelers compare properties more confidently."),
+                _("Partners can use guest feedback to improve rooms, communication, and service."),
+            ],
+            "primary_label": _("View hotels"),
+            "primary_url": "hotel_list",
+        },
+        "long-stay-hotel-deals": {
+            "section": _("Discover"),
+            "title": _("Long-stay hotel deals"),
+            "intro": _("Search Royal Hotel partners for longer stays, work assignments, relocations, and extended visits."),
+            "items": [
+                _("Compare room details, location, and available amenities before booking."),
+                _("Contact support or the property when a longer stay needs special arrangements."),
+                _("Use your account to keep booking records organized."),
+            ],
+            "primary_label": _("Browse long stays"),
+            "primary_url": "hotel_list",
+        },
+        "verified-places-to-stay": {
+            "section": _("Discover"),
+            "title": _("Verified places to stay"),
+            "intro": _("Royal Hotel displays active and approved partner hotels so guests can focus on trusted accommodation options."),
+            "items": [
+                _("Hotel partners go through an approval workflow before appearing publicly."),
+                _("Rooms can be reviewed for availability and approval status."),
+                _("Guests can contact support when listing details need clarification."),
+            ],
+            "primary_label": _("View verified hotels"),
+            "primary_url": "hotel_list",
+        },
+        "privacy-notice": {
+            "section": _("Terms and settings"),
+            "title": _("Privacy Notice"),
+            "intro": _("Royal Hotel uses account, booking, and contact details to provide reservations, support, payments, and partner services."),
+            "items": [
+                _("We use guest details to process bookings and help with account support."),
+                _("Partner information is used for applications, hotel management, and payout records."),
+                _("Contact support if you need help with account or data questions."),
+            ],
+            "primary_label": _("Contact privacy support"),
+            "primary_url": "contact",
+        },
+        "terms-of-service": {
+            "section": _("Terms and settings"),
+            "title": _("Terms of Service"),
+            "intro": _("Royal Hotel provides a booking platform for guests and approved hospitality partners."),
+            "items": [
+                _("Guests are responsible for accurate booking and contact information."),
+                _("Partners are responsible for accurate property, room, availability, and payout details."),
+                _("Support can assist when a booking, payment, or property issue needs review."),
+            ],
+            "primary_label": _("Ask about terms"),
+            "primary_url": "contact",
+        },
+        "accessibility-statement": {
+            "section": _("Terms and settings"),
+            "title": _("Accessibility Statement"),
+            "intro": _("Royal Hotel aims to keep booking, account, and partner workflows clear and usable across devices."),
+            "items": [
+                _("Contact support if you have trouble using a form, account page, or booking workflow."),
+                _("Include the page name, device, and issue so the team can investigate."),
+                _("We continue improving navigation, labels, contrast, and mobile access."),
+            ],
+            "primary_label": _("Report accessibility issue"),
+            "primary_url": "contact",
+        },
+        "partner-dispute": {
+            "section": _("Terms and settings"),
+            "title": _("Partner dispute"),
+            "intro": _("Partners can contact Royal Hotel when booking, payout, listing, or guest communication issues need review."),
+            "items": [
+                _("Include the hotel name, booking ID, and a short description of the dispute."),
+                _("Attach payment or communication details where relevant."),
+                _("The team reviews submitted information and follows up through the available contact details."),
+            ],
+            "primary_label": _("Contact partner support"),
+            "primary_url": "contact",
+        },
+        "human-rights-statement": {
+            "section": _("Terms and settings"),
+            "title": _("Human Rights Statement"),
+            "intro": _("Royal Hotel expects respectful, lawful, and fair treatment across guest, partner, and staff interactions."),
+            "items": [
+                _("We encourage partners to provide safe and respectful hospitality environments."),
+                _("Guests and partners can report concerning conduct to support."),
+                _("Royal Hotel can review reports connected to listings, bookings, and platform use."),
+            ],
+            "primary_label": _("Report a concern"),
+            "primary_url": "contact",
+        },
+        "partner-help": {
+            "section": _("Partners"),
+            "title": _("Partner help"),
+            "intro": _("Partner help supports hotel owners with onboarding, applications, room listings, dashboards, and booking questions."),
+            "items": [
+                _("Use the Partner Extranet to sign in or create your partner account."),
+                _("Complete the partnership application before listing hotel rooms."),
+                _("Contact support if your application, dashboard, or listing needs help."),
+            ],
+            "primary_label": _("Open partner help"),
+            "primary_url": "contact",
+        },
+        "about-royal-hotel": {
+            "section": _("About"),
+            "title": _("About Royal Hotel"),
+            "intro": _("Royal Hotel connects guests with trusted hotel partners through a booking platform built for local hospitality needs."),
+            "items": [
+                _("Guests can search hotels, book rooms, and manage reservations."),
+                _("Partners can apply, list properties, and manage rooms from owner tools."),
+                _("Admins review hotels, rooms, bookings, users, and partner applications."),
+            ],
+            "primary_label": _("Learn more"),
+            "primary_url": "about",
+        },
+        "how-we-work": {
+            "section": _("About"),
+            "title": _("How We Work"),
+            "intro": _("Royal Hotel combines guest booking tools, partner workflows, and admin review processes in one platform."),
+            "items": [
+                _("Hotels and rooms are approved before being promoted to travelers."),
+                _("Guests book rooms and receive booking records for their stay."),
+                _("Partners and admins use dashboards to keep operations organized."),
+            ],
+            "primary_label": _("See how we work"),
+            "primary_url": "about",
+        },
+        "press-center": {
+            "section": _("About"),
+            "title": _("Press center"),
+            "intro": _("For media, partnership, or platform questions, contact Royal Hotel with a clear request and contact details."),
+            "items": [
+                _("Share your organization, topic, and deadline when contacting the team."),
+                _("Use the contact page for official communication."),
+                _("Royal Hotel can respond to relevant hospitality, platform, or partnership inquiries."),
+            ],
+            "primary_label": _("Contact press team"),
+            "primary_url": "contact",
+        },
+        "careers": {
+            "section": _("About"),
+            "title": _("Careers"),
+            "intro": _("Royal Hotel is built around hospitality, platform operations, customer support, and partner success."),
+            "items": [
+                _("Contact the team to ask about available roles or future opportunities."),
+                _("Include your area of interest, experience, and contact information."),
+                _("Relevant inquiries can be routed to the right team member."),
+            ],
+            "primary_label": _("Contact careers"),
+            "primary_url": "contact",
+        },
+        "corporate-contact": {
+            "section": _("About"),
+            "title": _("Corporate contact"),
+            "intro": _("Use corporate contact for business, partnership, supplier, or organization-level questions."),
+            "items": [
+                _("Include your company or organization name."),
+                _("Describe the partnership, support, or business request clearly."),
+                _("Royal Hotel will use your submitted contact details for follow-up."),
+            ],
+            "primary_label": _("Contact Royal Hotel"),
+            "primary_url": "contact",
+        },
+        "content-guidelines-and-reporting": {
+            "section": _("About"),
+            "title": _("Content guidelines and reporting"),
+            "intro": _("Royal Hotel expects hotel, room, and account content to be accurate, respectful, and useful for guests."),
+            "items": [
+                _("Report inaccurate hotel details, misleading descriptions, or inappropriate content."),
+                _("Include the page, hotel, or room name so the team can review it."),
+                _("Admins can review reported content and update or disable listings when needed."),
+            ],
+            "primary_label": _("Report content"),
+            "primary_url": "contact",
+        },
+    }
+
+
+def footer_info(request, slug):
+    pages = _footer_info_pages()
+    page = pages.get(slug)
+    if page is None:
+        raise Http404("Information page not found")
+    related_pages = [
+        {"slug": page_slug, "title": info["title"]}
+        for page_slug, info in pages.items()
+        if page_slug != slug and info["section"] == page["section"]
+    ]
+    return render(
+        request,
+        "footer_info.html",
+        {
+            "page": page,
+            "related_pages": related_pages,
+        },
+    )
+
+
 def amenities(request):
     return render(request, 'amenities.html')
 
@@ -683,6 +1091,14 @@ def hotel_detail(request, hotel_id):
     rooms = _with_booking_status(
         Room.objects.filter(hotel=hotel, available=True, is_approved=True)
     )
+    hotel_reviews = hotel.hotel_reviews.select_related('user')[:8]
+    hotel_review_count = hotel.hotel_reviews.count()
+    hotel_average_rating = hotel.hotel_reviews.aggregate(avg=Avg('rating')).get('avg') or 0
+    is_wishlisted = False
+    user_hotel_review = None
+    if request.user.is_authenticated:
+        is_wishlisted = Wishlist.objects.filter(user=request.user, hotel=hotel).exists()
+        user_hotel_review = HotelReview.objects.filter(user=request.user, hotel=hotel).first()
     location_parts = [hotel.address, hotel.city, hotel.country]
     map_query = ", ".join([part for part in location_parts if part]) or (hotel.name or "")
     return render(
@@ -692,8 +1108,102 @@ def hotel_detail(request, hotel_id):
             'hotel': hotel,
             'rooms': rooms,
             'map_query': map_query,
+            'hotel_reviews': hotel_reviews,
+            'hotel_review_count': hotel_review_count,
+            'hotel_average_rating': hotel_average_rating,
+            'is_wishlisted': is_wishlisted,
+            'user_hotel_review': user_hotel_review,
         },
     )
+
+
+@login_required(login_url='login')
+def toggle_wishlist(request, hotel_id):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required."}, status=405)
+    hotel = get_object_or_404(Hotel, id=hotel_id, is_active=True, is_approved=True)
+    wishlist, created = Wishlist.objects.get_or_create(user=request.user, hotel=hotel)
+    if not created:
+        wishlist.delete()
+    saved = created
+    count = hotel.wishlisted_by.count()
+    return JsonResponse({"saved": saved, "count": count})
+
+
+@login_required(login_url='login')
+def submit_hotel_review(request, hotel_id):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required."}, status=405)
+    hotel = get_object_or_404(Hotel, id=hotel_id, is_active=True, is_approved=True)
+    try:
+        rating = int(request.POST.get('rating') or 0)
+    except (TypeError, ValueError):
+        rating = 0
+    title = (request.POST.get('title') or '').strip()
+    comment = (request.POST.get('comment') or '').strip()
+    if rating < 1 or rating > 5 or not title or not comment:
+        return JsonResponse({"error": "Please add a rating, title, and review."}, status=400)
+
+    review, created = HotelReview.objects.update_or_create(
+        hotel=hotel,
+        user=request.user,
+        defaults={
+            'rating': rating,
+            'title': title,
+            'comment': comment,
+        },
+    )
+    avg = hotel.hotel_reviews.aggregate(avg=Avg('rating')).get('avg') or 0
+    count = hotel.hotel_reviews.count()
+    return JsonResponse(
+        {
+            "created": created,
+            "rating": review.rating,
+            "title": review.title,
+            "comment": review.comment,
+            "reviewer": request.user.first_name or request.user.username,
+            "average": round(float(avg), 1),
+            "count": count,
+        }
+    )
+
+
+def submit_hotel_complaint(request, hotel_id):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required."}, status=405)
+    hotel = get_object_or_404(Hotel, id=hotel_id, is_active=True, is_approved=True)
+    full_name = (request.POST.get('full_name') or '').strip()
+    email = (request.POST.get('email') or '').strip()
+    subject = (request.POST.get('subject') or '').strip()
+    message_text = (request.POST.get('message') or '').strip()
+    if not all([full_name, email, subject, message_text]):
+        return JsonResponse({"error": "Please complete all complaint fields."}, status=400)
+
+    complaint = HotelComplaint.objects.create(
+        hotel=hotel,
+        user=request.user if request.user.is_authenticated else None,
+        full_name=full_name,
+        email=email,
+        subject=subject,
+        message=message_text,
+    )
+    return JsonResponse(
+        {
+            "message": "Complaint received. The hotel admin can review it now.",
+            "subject": complaint.subject,
+            "status": complaint.get_status_display(),
+        }
+    )
+
+
+@login_required(login_url='login')
+def wishlist_view(request):
+    saved_hotels = (
+        Wishlist.objects.filter(user=request.user)
+        .select_related('hotel')
+        .order_by('-created_at')
+    )
+    return render(request, 'wishlist.html', {'saved_hotels': saved_hotels})
 
 # Contact view with form handling
 def contact(request):
@@ -1872,6 +2382,27 @@ def _safe_next_url(request, next_url: str) -> str:
     return ""
 
 
+def _dashboard_url_name_for_user(user):
+    if not user or not user.is_authenticated:
+        return "index"
+    if user.is_staff or user.is_superuser:
+        return "admin_dashboard"
+    profile = _get_or_create_profile(user)
+    if profile and profile.user_type == "OWNER":
+        return "owner_dashboard"
+    if _get_active_hotel_staff(user):
+        return "owner_dashboard"
+    return "index"
+
+
+def _post_login_redirect(request, user, next_url=""):
+    dashboard_url_name = _dashboard_url_name_for_user(user)
+    if dashboard_url_name != "index":
+        return redirect(dashboard_url_name)
+    safe_next = _safe_next_url(request, next_url)
+    return redirect(safe_next or dashboard_url_name)
+
+
 def google_login(request):
     client_id, client_secret = _google_oauth_config()
     if not client_id or not client_secret:
@@ -1996,7 +2527,7 @@ def google_callback(request):
 
     messages.success(request, f"Welcome, {user.first_name or user.username}!")
     next_url = (request.session.pop("google_oauth_next", "") or "").strip()
-    return redirect(next_url or "index")
+    return _post_login_redirect(request, user, next_url)
 
 
 PASSWORD_RESET_CODE_TTL = timedelta(minutes=10)
@@ -2180,7 +2711,16 @@ def password_reset_verify(request):
 
 
 # Login view
+def login_options_view(request):
+    if request.user.is_authenticated:
+        return redirect(_dashboard_url_name_for_user(request.user))
+    return render(request, 'auth_options.html', {'mode': 'login'})
+
+
 def login_view(request):
+    if request.user.is_authenticated:
+        return redirect(_dashboard_url_name_for_user(request.user))
+
     if request.method == "POST":
         identifier = (request.POST.get('login_email') or '').strip()
         password = request.POST.get('login_password')
@@ -2197,14 +2737,19 @@ def login_view(request):
             _get_or_create_profile(user)
             messages.success(request, f"Welcome back, {user.first_name or user.username}!")
 
-            next_page = request.GET.get('next', 'index')
-            return redirect(next_page)
+            return _post_login_redirect(request, user, request.GET.get('next'))
 
         messages.error(request, "Invalid email or password.")
 
     return render(request, 'login.html')
 
 # Register view
+def register_options_view(request):
+    if request.user.is_authenticated:
+        return redirect(_dashboard_url_name_for_user(request.user))
+    return render(request, 'auth_options.html', {'mode': 'register'})
+
+
 def register_view(request):
     if request.method == "POST":
         name = (request.POST.get('name') or '').strip()
@@ -2257,6 +2802,161 @@ def register_view(request):
 
     return render(request, 'register.html')
 
+
+def _partner_flow_data(request):
+    return request.session.setdefault('partner_onboarding', {})
+
+
+def _render_partner_onboarding(request, step, **context):
+    defaults = {
+        'step': step,
+        'brand_name': 'Royal Hotel',
+    }
+    defaults.update(context)
+    return render(request, 'partner_onboarding.html', defaults)
+
+
+def partner_signin_view(request):
+    if request.user.is_authenticated:
+        return redirect(_dashboard_url_name_for_user(request.user))
+
+    if request.method == "POST":
+        identifier = (request.POST.get('identifier') or '').strip()
+        if not identifier:
+            messages.error(request, "Enter your username or email address.")
+            return redirect('partner_signin')
+
+        request.session['partner_login_identifier'] = identifier
+        user_exists = (
+            User.objects.filter(username__iexact=identifier).exists()
+            or User.objects.filter(email__iexact=identifier).exists()
+        )
+        if user_exists:
+            messages.info(request, "Enter your password to manage your property.")
+            return redirect(f"{reverse('login')}?next={reverse('owner_dashboard')}")
+
+        messages.info(request, "No partner account found. Create one to list your property.")
+        flow = _partner_flow_data(request)
+        if "@" in identifier:
+            flow['email'] = identifier
+            request.session.modified = True
+        return redirect('partner_register_email')
+
+    return _render_partner_onboarding(request, 'signin')
+
+
+def partner_register_email_view(request):
+    if request.user.is_authenticated:
+        return redirect(_dashboard_url_name_for_user(request.user))
+
+    flow = _partner_flow_data(request)
+    if request.method == "POST":
+        email = (request.POST.get('email') or '').strip().lower()
+        if not email:
+            messages.error(request, "Enter your email address.")
+            return redirect('partner_register_email')
+        try:
+            validate_email(email)
+        except ValidationError:
+            messages.error(request, "Enter a valid email address.")
+            return redirect('partner_register_email')
+        if User.objects.filter(Q(username__iexact=email) | Q(email__iexact=email)).exists():
+            messages.info(request, "This email already has an account. Sign in to continue.")
+            return redirect(f"{reverse('login')}?next={reverse('hotel_partner_apply')}")
+        flow['email'] = email
+        request.session.modified = True
+        return redirect('partner_contact_details')
+
+    return _render_partner_onboarding(
+        request,
+        'email',
+        email=flow.get('email', ''),
+    )
+
+
+def partner_contact_details_view(request):
+    if request.user.is_authenticated:
+        return redirect(_dashboard_url_name_for_user(request.user))
+
+    flow = _partner_flow_data(request)
+    if not flow.get('email'):
+        return redirect('partner_register_email')
+
+    if request.method == "POST":
+        first_name = (request.POST.get('first_name') or '').strip()
+        last_name = (request.POST.get('last_name') or '').strip()
+        phone_code = (request.POST.get('phone_code') or '+254').strip()
+        phone = (request.POST.get('phone') or '').strip()
+        if not first_name or not last_name or not phone:
+            messages.error(request, "Enter your full name and phone number.")
+            return redirect('partner_contact_details')
+        flow.update({
+            'first_name': first_name,
+            'last_name': last_name,
+            'phone_code': phone_code,
+            'phone': phone,
+        })
+        request.session.modified = True
+        return redirect('partner_create_password')
+
+    return _render_partner_onboarding(
+        request,
+        'contact',
+        first_name=flow.get('first_name', ''),
+        last_name=flow.get('last_name', ''),
+        phone_code=flow.get('phone_code', '+254'),
+        phone=flow.get('phone', ''),
+    )
+
+
+def partner_create_password_view(request):
+    if request.user.is_authenticated:
+        return redirect(_dashboard_url_name_for_user(request.user))
+
+    flow = _partner_flow_data(request)
+    required = ['email', 'first_name', 'last_name', 'phone']
+    if not all(flow.get(key) for key in required):
+        return redirect('partner_register_email')
+
+    if request.method == "POST":
+        password = request.POST.get('password') or ''
+        repeat_password = request.POST.get('repeat_password') or ''
+        if password != repeat_password:
+            messages.error(request, "Passwords do not match.")
+            return redirect('partner_create_password')
+        if len(password) < 10:
+            messages.error(request, "Password must be at least 10 characters long.")
+            return redirect('partner_create_password')
+        if not any(ch.isupper() for ch in password) or not any(ch.islower() for ch in password) or not any(ch.isdigit() for ch in password):
+            messages.error(request, "Password must include uppercase letters, lowercase letters, and numbers.")
+            return redirect('partner_create_password')
+
+        email = flow['email']
+        if User.objects.filter(Q(username__iexact=email) | Q(email__iexact=email)).exists():
+            messages.info(request, "This email already has an account. Sign in to continue.")
+            return redirect(f"{reverse('login')}?next={reverse('hotel_partner_apply')}")
+
+        user = User.objects.create_user(
+            username=email,
+            email=email,
+            password=password,
+            first_name=flow['first_name'],
+            last_name=flow['last_name'],
+        )
+        UserProfile.objects.update_or_create(
+            user=user,
+            defaults={
+                'user_type': 'OWNER',
+                'mobile': f"{flow.get('phone_code', '+254')} {flow['phone']}",
+            },
+        )
+        login(request, user)
+        request.session.pop('partner_onboarding', None)
+        messages.success(request, "Partner account created. Welcome to your dashboard.")
+        return redirect('owner_dashboard')
+
+    return _render_partner_onboarding(request, 'password')
+
 # Logout view
 def logout_view(request):
     logout(request)
@@ -2264,49 +2964,138 @@ def logout_view(request):
     return redirect('index')
 
 
+def _update_user_profile_from_request(request, redirect_name):
+    profile = _get_or_create_profile(request.user)
+    action = request.POST.get('action') or request.POST.get('profile_action') or 'update'
+    if action == "reset_profile":
+        request.user.first_name = ""
+        request.user.last_name = ""
+        if profile:
+            profile.mobile = ""
+            profile.save(update_fields=['mobile'])
+        request.user.save(update_fields=['first_name', 'last_name'])
+        messages.success(request, "Your profile has been reset.")
+        return redirect(redirect_name)
+
+    first_name = (request.POST.get('first_name') or '').strip()
+    last_name = (request.POST.get('last_name') or '').strip()
+    email = (request.POST.get('email') or '').strip()
+    mobile = (request.POST.get('mobile') or '').strip()
+
+    if not email:
+        messages.error(request, "Email is required.")
+        return redirect(redirect_name)
+
+    try:
+        validate_email(email)
+    except ValidationError:
+        messages.error(request, "Enter a valid email address.")
+        return redirect(redirect_name)
+
+    if (
+        User.objects.filter(username__iexact=email).exclude(id=request.user.id).exists()
+        or User.objects.filter(email__iexact=email).exclude(id=request.user.id).exists()
+    ):
+        messages.error(request, "That email is already in use.")
+        return redirect(redirect_name)
+
+    request.user.first_name = first_name
+    request.user.last_name = last_name
+    request.user.email = email
+    request.user.username = email
+    request.user.save(update_fields=['first_name', 'last_name', 'email', 'username'])
+
+    if profile is not None:
+        profile.mobile = mobile
+        profile.save(update_fields=['mobile'])
+
+    messages.success(request, "Profile updated successfully.")
+    return redirect(redirect_name)
+
+
+def _dashboard_item(label, detail, count, url, icon='fa-bell-o'):
+    return {
+        'label': label,
+        'detail': detail,
+        'count': count,
+        'url': url,
+        'icon': icon,
+    }
+
+
+def _can_see_owner_metric(staff_profile, permission_name):
+    if not staff_profile:
+        return True
+    return bool(getattr(staff_profile, permission_name, False) or staff_profile.role in {'OWNER', 'MANAGER'})
+
+
+def _admin_dashboard_notification_context():
+    pending_applications = HotelApplication.objects.filter(status='PENDING').count()
+    pending_rooms = Room.objects.filter(is_approved=False).count()
+    pending_bookings = Booking.objects.filter(status='PENDING').count()
+    pending_payments = Payment.objects.filter(status='PENDING').count()
+    open_complaints = HotelComplaint.objects.filter(status__in=['OPEN', 'REVIEWING']).count()
+    unread_messages = ContactMessage.objects.filter(is_resolved=False).count()
+
+    notifications = [
+        _dashboard_item(
+            _("Hotel applications"),
+            _("Partner requests waiting for admin review."),
+            pending_applications,
+            reverse('admin_hotel_applications'),
+            'fa-file-text-o',
+        ),
+        _dashboard_item(
+            _("Rooms pending review"),
+            _("Room listings that need approval before guests see them."),
+            pending_rooms,
+            reverse('admin_rooms'),
+            'fa-bed',
+        ),
+        _dashboard_item(
+            _("Pending bookings"),
+            _("Reservations still waiting for payment or confirmation."),
+            pending_bookings,
+            reverse('admin_booked_rooms'),
+            'fa-calendar-check-o',
+        ),
+        _dashboard_item(
+            _("Pending payments"),
+            _("Payment records still not settled."),
+            pending_payments,
+            reverse('admin_payments'),
+            'fa-credit-card',
+        ),
+    ]
+    messages_list = [
+        _dashboard_item(
+            _("Customer messages"),
+            _("Unresolved contact form messages."),
+            unread_messages,
+            reverse('contact'),
+            'fa-envelope-o',
+        ),
+        _dashboard_item(
+            _("Hotel complaints"),
+            _("Guest complaints open or under review."),
+            open_complaints,
+            reverse('admin_dashboard') + '#operations',
+            'fa-exclamation-circle',
+        ),
+    ]
+    return {
+        'dashboard_notifications': notifications,
+        'dashboard_messages': messages_list,
+        'notification_count': sum(item['count'] for item in notifications),
+        'message_count': sum(item['count'] for item in messages_list),
+    }
+
+
 @login_required(login_url='login')
 def profile_view(request):
     profile = _get_or_create_profile(request.user)
     if request.method == "POST":
-        action = request.POST.get('action', 'update')
-        if action == "reset_profile":
-            request.user.first_name = ""
-            request.user.last_name = ""
-            if profile:
-                profile.mobile = ""
-                profile.save(update_fields=['mobile'])
-            request.user.save(update_fields=['first_name', 'last_name'])
-            messages.success(request, "Your profile has been reset.")
-            return redirect('profile')
-
-        first_name = (request.POST.get('first_name') or '').strip()
-        last_name = (request.POST.get('last_name') or '').strip()
-        email = (request.POST.get('email') or '').strip()
-        mobile = (request.POST.get('mobile') or '').strip()
-
-        if not email:
-            messages.error(request, "Email is required.")
-            return redirect('profile')
-
-        if (
-            User.objects.filter(username__iexact=email).exclude(id=request.user.id).exists()
-            or User.objects.filter(email__iexact=email).exclude(id=request.user.id).exists()
-        ):
-            messages.error(request, "That email is already in use.")
-            return redirect('profile')
-
-        request.user.first_name = first_name
-        request.user.last_name = last_name
-        request.user.email = email
-        request.user.username = email
-        request.user.save(update_fields=['first_name', 'last_name', 'email', 'username'])
-
-        if profile is not None:
-            profile.mobile = mobile
-            profile.save(update_fields=['mobile'])
-
-        messages.success(request, "Profile updated successfully.")
-        return redirect('profile')
+        return _update_user_profile_from_request(request, 'profile')
 
     return render(request, 'profile.html', {'profile': profile})
 
@@ -2418,8 +3207,7 @@ def submit_review(request, booking_id):
 
 @owner_required
 def owner_dashboard(request):
-    hotels = Hotel.objects.filter(owner=request.user).order_by('-id')
-    hotel = hotels.first()
+    hotels, hotel, staff_profile = _get_owner_workspace(request.user)
     if hotels.count() > 1:
         messages.warning(
             request,
@@ -2427,6 +3215,23 @@ def owner_dashboard(request):
         )
 
     if request.method == "POST":
+        if request.POST.get('profile_action') == 'update_profile_details':
+            return _update_user_profile_from_request(request, 'owner_dashboard')
+
+        if request.POST.get('profile_action') == 'reset_profile':
+            return _update_user_profile_from_request(request, 'owner_dashboard')
+
+        if request.POST.get('profile_action') == 'update_profile_photo':
+            profile = _get_or_create_profile(request.user)
+            profile_image = request.FILES.get('profile_image')
+            if not profile_image:
+                messages.error(request, "Please choose a profile picture.")
+                return redirect('owner_dashboard')
+            profile.profile_image = profile_image
+            profile.save(update_fields=['profile_image'])
+            messages.success(request, "Profile picture updated successfully.")
+            return redirect('owner_dashboard')
+
         if not hotel:
             messages.error(request, "No hotel profile found to update.")
             return redirect('owner_dashboard')
@@ -2440,20 +3245,28 @@ def owner_dashboard(request):
         return redirect('owner_dashboard')
 
     if hotel:
-        rooms = Room.objects.filter(owner=request.user, hotel=hotel).order_by('-id')
+        rooms = Room.objects.filter(hotel=hotel).order_by('-id')
+        owner_bookings_qs = Booking.objects.filter(
+            room__hotel=hotel,
+        )
+        today = timezone.localdate()
+        today_checkins = owner_bookings_qs.filter(check_in=today).count()
+        today_checkouts = owner_bookings_qs.filter(check_out=today).count()
+        current_stays = owner_bookings_qs.filter(
+            status='CONFIRMED',
+            check_in__lte=today,
+            check_out__gt=today,
+        ).count()
         confirmed_bookings = Booking.objects.filter(
-            room__owner=request.user,
             room__hotel=hotel,
             status='CONFIRMED',
         ).count()
         pending_bookings = Booking.objects.filter(
-            room__owner=request.user,
             room__hotel=hotel,
             status='PENDING',
         ).count()
         revenue_total = (
             Payment.objects.filter(
-                booking__room__owner=request.user,
                 booking__room__hotel=hotel,
                 status='SUCCEEDED',
             )
@@ -2461,20 +3274,215 @@ def owner_dashboard(request):
             .get('total')
             or Decimal('0.00')
         )
+        pending_revenue = (
+            Payment.objects.filter(
+                booking__room__hotel=hotel,
+                status='PENDING',
+            )
+            .aggregate(total=Sum('amount'))
+            .get('total')
+            or Decimal('0.00')
+        )
+        completed_bookings = owner_bookings_qs.filter(status='COMPLETED').count()
+        cancelled_bookings = owner_bookings_qs.filter(status='CANCELLED').count()
+        available_rooms = rooms.filter(available=True, is_approved=True).count()
+        inactive_rooms = rooms.filter(available=False).count()
+        room_approval_pending = rooms.filter(is_approved=False).count()
+        room_reviews_qs = Review.objects.filter(room__hotel=hotel)
+        hotel_reviews_qs = HotelReview.objects.filter(hotel=hotel)
+        reviews_count = room_reviews_qs.count() + hotel_reviews_qs.count()
+        average_rating = (
+            hotel_reviews_qs.aggregate(avg=Avg('rating')).get('avg')
+            or room_reviews_qs.aggregate(avg=Avg('rating')).get('avg')
+            or 0
+        )
+        complaints_count = HotelComplaint.objects.filter(hotel=hotel, status__in=['OPEN', 'REVIEWING']).count()
+        recent_hotel_reviews = hotel_reviews_qs.select_related('user').order_by('-created_at')[:5]
+        recent_complaints = HotelComplaint.objects.filter(hotel=hotel).select_related('user').order_by('-created_at')[:5]
         recent_bookings = (
-            Booking.objects.filter(room__owner=request.user, room__hotel=hotel)
-            .select_related('room', 'user')
+            owner_bookings_qs.select_related('room', 'user')
             .order_by('-created_at')[:10]
         )
+        recent_payments = (
+            Payment.objects.filter(booking__room__hotel=hotel)
+            .select_related('booking', 'booking__room')
+            .order_by('-created_at')[:6]
+        )
+        total_bookings = owner_bookings_qs.count()
+        active_guests = confirmed_bookings
+        portfolio_countries = hotels.exclude(country__isnull=True).exclude(country='').values('country').distinct().count()
+        staff_members_count = HotelStaff.objects.filter(hotel=hotel, is_active=True).count() if _hotel_staff_table_ready() else 0
+        current_year = timezone.localdate().year
+        monthly_revenue_totals = {month: Decimal('0.00') for month in range(1, 7)}
+        monthly_rows = (
+            Payment.objects.filter(
+                booking__room__hotel=hotel,
+                status='SUCCEEDED',
+                created_at__year=current_year,
+                created_at__month__lte=6,
+            )
+            .values('created_at__month')
+            .annotate(total=Sum('amount'))
+        )
+        for row in monthly_rows:
+            monthly_revenue_totals[row['created_at__month']] = row['total'] or Decimal('0.00')
+        max_monthly_revenue = max(monthly_revenue_totals.values()) if monthly_revenue_totals else Decimal('0.00')
+        month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
+        revenue_chart = []
+        for index, label in enumerate(month_names, start=1):
+            total = monthly_revenue_totals[index]
+            height = 8
+            if max_monthly_revenue:
+                height = max(12, round((total / max_monthly_revenue) * 100))
+            revenue_chart.append({'label': label, 'total': total, 'height': height})
+        action_items = [
+            {
+                'label': _("Pending bookings"),
+                'count': pending_bookings,
+                'detail': _("Reservations waiting for payment or confirmation."),
+                'url': '#recent-bookings',
+                'icon': 'fa-calendar-check-o',
+            },
+            {
+                'label': _("Rooms needing approval"),
+                'count': room_approval_pending,
+                'detail': _("Rooms not yet visible to guests."),
+                'url': '#hotel-profile',
+                'icon': 'fa-bed',
+            },
+            {
+                'label': _("Open complaints"),
+                'count': complaints_count,
+                'detail': _("Guest issues that need owner attention."),
+                'url': '#guest-care',
+                'icon': 'fa-exclamation-circle',
+            },
+            {
+                'label': _("Team accounts"),
+                'count': staff_members_count,
+                'detail': _("Owners, managers, and staff with access."),
+                'url': '/owner/team/',
+                'icon': 'fa-id-badge',
+            },
+        ]
+        dashboard_notifications = []
+        dashboard_messages = []
+        if _can_see_owner_metric(staff_profile, 'can_manage_bookings'):
+            dashboard_notifications.extend([
+                _dashboard_item(
+                    _("Pending bookings"),
+                    _("Reservations waiting for payment or confirmation."),
+                    pending_bookings,
+                    '#recent-bookings',
+                    'fa-calendar-check-o',
+                ),
+                _dashboard_item(
+                    _("Today's check-ins"),
+                    _("Guests expected to arrive today."),
+                    today_checkins,
+                    '#recent-bookings',
+                    'fa-sign-in',
+                ),
+            ])
+        if _can_see_owner_metric(staff_profile, 'can_manage_rooms'):
+            dashboard_notifications.append(
+                _dashboard_item(
+                    _("Rooms needing approval"),
+                    _("Rooms not visible to guests yet."),
+                    room_approval_pending,
+                    '#hotel-profile',
+                    'fa-bed',
+                )
+            )
+        if _can_see_owner_metric(staff_profile, 'can_manage_payments'):
+            dashboard_notifications.append(
+                _dashboard_item(
+                    _("Pending revenue"),
+                    _("Payments still waiting to settle."),
+                    int(pending_revenue or 0),
+                    '#revenue-overview',
+                    'fa-credit-card',
+                )
+            )
+        if _can_see_owner_metric(staff_profile, 'can_manage_staff'):
+            dashboard_notifications.append(
+                _dashboard_item(
+                    _("Team accounts"),
+                    _("Active hotel staff with dashboard access."),
+                    staff_members_count,
+                    '/owner/team/',
+                    'fa-id-badge',
+                )
+            )
+        dashboard_messages.extend([
+            _dashboard_item(
+                _("Guest complaints"),
+                _("Complaints open or recently submitted for this hotel."),
+                complaints_count,
+                '#guest-care',
+                'fa-exclamation-circle',
+            ),
+            _dashboard_item(
+                _("Guest reviews"),
+                _("Recent hotel feedback from guests."),
+                reviews_count,
+                '#guest-care',
+                'fa-comments-o',
+            ),
+        ])
     else:
         rooms = Room.objects.none()
         confirmed_bookings = 0
         pending_bookings = 0
+        completed_bookings = 0
+        cancelled_bookings = 0
+        available_rooms = 0
+        inactive_rooms = 0
+        room_approval_pending = 0
+        reviews_count = 0
+        average_rating = 0
+        complaints_count = 0
         revenue_total = Decimal('0.00')
+        pending_revenue = Decimal('0.00')
         recent_bookings = []
+        recent_payments = []
+        recent_hotel_reviews = []
+        recent_complaints = []
+        total_bookings = 0
+        active_guests = 0
+        portfolio_countries = 0
+        staff_members_count = 0
+        current_year = timezone.localdate().year
+        revenue_chart = [
+            {'label': label, 'total': Decimal('0.00'), 'height': 8}
+            for label in ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
+        ]
+        today_checkins = 0
+        today_checkouts = 0
+        current_stays = 0
+        action_items = []
+        latest_application = HotelApplication.objects.filter(user=request.user).order_by('-created_at').first()
+        dashboard_notifications = [
+            _dashboard_item(
+                _("Hotel setup"),
+                _("Complete or track your partner application."),
+                1 if latest_application else 0,
+                reverse('hotel_application_status') if latest_application else reverse('hotel_partner_apply'),
+                'fa-building-o',
+            )
+        ]
+        dashboard_messages = []
 
     total_rooms = rooms.count()
-    total_hotels = 1 if hotel else 0
+    total_hotels = hotels.count()
+    occupancy_rate = round((confirmed_bookings / total_rooms) * 100) if total_rooms else 0
+    hour = timezone.localtime().hour
+    if hour < 12:
+        greeting = _("Good morning")
+    elif hour < 18:
+        greeting = _("Good afternoon")
+    else:
+        greeting = _("Good evening")
     return render(
         request,
         'owner_dashboard.html',
@@ -2484,10 +3492,41 @@ def owner_dashboard(request):
             'hotel': hotel,
             'total_hotels': total_hotels,
             'total_rooms': total_rooms,
+            'available_rooms': available_rooms,
+            'inactive_rooms': inactive_rooms,
+            'room_approval_pending': room_approval_pending,
             'confirmed_bookings': confirmed_bookings,
             'pending_bookings': pending_bookings,
+            'completed_bookings': completed_bookings,
+            'cancelled_bookings': cancelled_bookings,
+            'total_bookings': total_bookings,
+            'active_guests': active_guests,
+            'portfolio_countries': portfolio_countries,
             'revenue_total': revenue_total,
+            'pending_revenue': pending_revenue,
+            'occupancy_rate': occupancy_rate,
+            'reviews_count': reviews_count,
+            'average_rating': average_rating,
+            'complaints_count': complaints_count,
+            'recent_hotel_reviews': recent_hotel_reviews,
+            'recent_complaints': recent_complaints,
             'recent_bookings': recent_bookings,
+            'recent_payments': recent_payments,
+            'dashboard_greeting': greeting,
+            'staff_profile': staff_profile,
+            'staff_members_count': staff_members_count,
+            'can_manage_staff': _can_manage_hotel_staff(request.user, hotel),
+            'current_year': current_year,
+            'revenue_chart': revenue_chart,
+            'user_profile': _get_or_create_profile(request.user),
+            'today_checkins': today_checkins,
+            'today_checkouts': today_checkouts,
+            'current_stays': current_stays,
+            'action_items': action_items,
+            'dashboard_notifications': dashboard_notifications,
+            'dashboard_messages': dashboard_messages,
+            'notification_count': sum(item['count'] for item in dashboard_notifications),
+            'message_count': sum(item['count'] for item in dashboard_messages),
         },
     )
 
@@ -2495,16 +3534,23 @@ def owner_dashboard(request):
 @owner_required
 def owner_add_hotel(request):
     if _owner_has_hotel(request.user):
-        messages.info(request, "You already have a hotel on the platform.")
+        messages.warning(request, "You already have a hotel on the platform.")
         return redirect('owner_dashboard')
 
-    messages.info(request, "Please complete the partnership form to list your hotel.")
+    messages.warning(request, "Please complete the partnership form to list your hotel.")
     return redirect('hotel_partner_apply')
 
 
 @owner_required
 def owner_add_room(request):
+    staff_profile = _get_active_hotel_staff(request.user)
+    if staff_profile and not staff_profile.can_manage_rooms:
+        messages.error(request, "Your staff account does not have permission to manage rooms.")
+        return redirect('owner_dashboard')
+
     owner_hotels = Hotel.objects.filter(owner=request.user, is_approved=True, is_active=True).order_by('name')
+    if not owner_hotels.exists() and staff_profile:
+        owner_hotels = Hotel.objects.filter(id=staff_profile.hotel_id, is_approved=True, is_active=True)
     if not owner_hotels.exists():
         latest_application = (
             HotelApplication.objects.filter(user=request.user)
@@ -2512,9 +3558,9 @@ def owner_add_room(request):
             .first()
         )
         if latest_application and latest_application.status == 'PENDING':
-            messages.info(request, "Your partnership application is still under review.")
+            messages.warning(request, "Your partnership application is still under review.")
             return redirect('hotel_application_status')
-        messages.info(request, "Please complete the partnership form before creating rooms.")
+        messages.warning(request, "Please complete the partnership form before creating rooms.")
         return redirect('hotel_partner_apply')
 
     if owner_hotels.count() > 1:
@@ -2562,7 +3608,7 @@ def owner_add_room(request):
             beds=beds,
             capacity=capacity_value,
             image=image,
-            owner=request.user,
+            owner=hotel.owner or request.user,
             hotel=hotel,
             available=True,
             is_approved=True,
@@ -2600,8 +3646,227 @@ def owner_add_room(request):
     )
 
 
-@login_required(login_url='login')
+def _hotel_staff_form_values(staff_member=None, post_data=None):
+    if post_data is not None:
+        return {
+            'full_name': (post_data.get('full_name') or '').strip(),
+            'email': (post_data.get('email') or '').strip(),
+            'password': '',
+            'phone': (post_data.get('phone') or '').strip(),
+            'role': post_data.get('role') or 'STAFF',
+            'job_title': (post_data.get('job_title') or '').strip(),
+            'can_manage_rooms': bool(post_data.get('can_manage_rooms')),
+            'can_manage_bookings': bool(post_data.get('can_manage_bookings')),
+            'can_manage_payments': bool(post_data.get('can_manage_payments')),
+            'can_manage_staff': bool(post_data.get('can_manage_staff')),
+            'is_active': bool(post_data.get('is_active')),
+        }
+
+    if staff_member is not None:
+        return {
+            'full_name': staff_member.user.get_full_name() or staff_member.user.username,
+            'email': staff_member.user.email,
+            'password': '',
+            'phone': staff_member.phone,
+            'role': staff_member.role,
+            'job_title': staff_member.job_title,
+            'can_manage_rooms': staff_member.can_manage_rooms,
+            'can_manage_bookings': staff_member.can_manage_bookings,
+            'can_manage_payments': staff_member.can_manage_payments,
+            'can_manage_staff': staff_member.can_manage_staff,
+            'is_active': staff_member.is_active,
+        }
+
+    return {
+        'full_name': '',
+        'email': '',
+        'password': '',
+        'phone': '',
+        'role': 'STAFF',
+        'job_title': '',
+        'can_manage_rooms': False,
+        'can_manage_bookings': False,
+        'can_manage_payments': False,
+        'can_manage_staff': False,
+        'is_active': True,
+    }
+
+
+@owner_required
+def owner_team(request):
+    hotels, hotel, staff_profile = _get_owner_workspace(request.user)
+    if not _hotel_staff_table_ready():
+        messages.error(request, "Run migrations to enable hotel team management.")
+        return redirect('owner_dashboard')
+    if not hotel:
+        messages.info(request, "Create or approve a hotel before adding a team.")
+        return redirect('owner_dashboard')
+    if not _can_manage_hotel_staff(request.user, hotel):
+        messages.error(request, "You do not have permission to manage this hotel team.")
+        return redirect('owner_dashboard')
+
+    staff_members = (
+        HotelStaff.objects.select_related('user', 'added_by')
+        .filter(hotel=hotel)
+        .order_by('role', 'user__first_name', 'user__username')
+    )
+    return render(
+        request,
+        'owner_team.html',
+        {
+            'hotel': hotel,
+            'hotels': hotels,
+            'staff_profile': staff_profile,
+            'staff_members': staff_members,
+        },
+    )
+
+
+@owner_required
+def owner_team_create(request):
+    hotels, hotel, staff_profile = _get_owner_workspace(request.user)
+    if not _hotel_staff_table_ready():
+        messages.error(request, "Run migrations to enable hotel team management.")
+        return redirect('owner_dashboard')
+    if not hotel:
+        messages.info(request, "Create or approve a hotel before adding a team.")
+        return redirect('owner_dashboard')
+    if not _can_manage_hotel_staff(request.user, hotel):
+        messages.error(request, "You do not have permission to manage this hotel team.")
+        return redirect('owner_dashboard')
+
+    if request.method == "POST":
+        form_values = _hotel_staff_form_values(post_data=request.POST)
+        role_values = {value for value, _ in HotelStaff.ROLE_CHOICES}
+        if not form_values['full_name'] or not form_values['email']:
+            messages.error(request, "Full name and email are required.")
+            return render(request, 'owner_staff_form.html', {'hotel': hotel, 'staff_member': None, 'form_values': form_values, 'role_choices': HotelStaff.ROLE_CHOICES})
+        if form_values['role'] not in role_values:
+            messages.error(request, "Choose a valid staff role.")
+            return render(request, 'owner_staff_form.html', {'hotel': hotel, 'staff_member': None, 'form_values': form_values, 'role_choices': HotelStaff.ROLE_CHOICES})
+
+        account, account_error = _sync_staff_user_account(
+            form_values['email'],
+            request.POST.get('password') or '',
+            form_values['full_name'],
+        )
+        if account_error:
+            messages.error(request, account_error)
+            return render(request, 'owner_staff_form.html', {'hotel': hotel, 'staff_member': None, 'form_values': form_values, 'role_choices': HotelStaff.ROLE_CHOICES})
+        if HotelStaff.objects.filter(hotel=hotel, user=account).exists():
+            messages.error(request, "This account is already part of your hotel team.")
+            return render(request, 'owner_staff_form.html', {'hotel': hotel, 'staff_member': None, 'form_values': form_values, 'role_choices': HotelStaff.ROLE_CHOICES})
+
+        HotelStaff.objects.create(
+            hotel=hotel,
+            user=account,
+            added_by=request.user,
+            role=form_values['role'],
+            job_title=form_values['job_title'],
+            phone=form_values['phone'],
+            can_manage_rooms=form_values['can_manage_rooms'],
+            can_manage_bookings=form_values['can_manage_bookings'],
+            can_manage_payments=form_values['can_manage_payments'],
+            can_manage_staff=form_values['can_manage_staff'],
+            is_active=form_values['is_active'],
+        )
+        messages.success(request, "Hotel team member account created successfully.")
+        return redirect('owner_team')
+
+    return render(
+        request,
+        'owner_staff_form.html',
+        {
+            'hotel': hotel,
+            'staff_member': None,
+            'form_values': _hotel_staff_form_values(),
+            'role_choices': HotelStaff.ROLE_CHOICES,
+        },
+    )
+
+
+@owner_required
+def owner_team_edit(request, staff_id):
+    hotels, hotel, staff_profile = _get_owner_workspace(request.user)
+    if not _hotel_staff_table_ready():
+        messages.error(request, "Run migrations to enable hotel team management.")
+        return redirect('owner_dashboard')
+    if not hotel:
+        return redirect('owner_dashboard')
+    if not _can_manage_hotel_staff(request.user, hotel):
+        messages.error(request, "You do not have permission to manage this hotel team.")
+        return redirect('owner_dashboard')
+
+    staff_member = get_object_or_404(HotelStaff.objects.select_related('user'), id=staff_id, hotel=hotel)
+
+    if request.method == "POST":
+        form_values = _hotel_staff_form_values(staff_member=staff_member, post_data=request.POST)
+        role_values = {value for value, _ in HotelStaff.ROLE_CHOICES}
+        if not form_values['full_name'] or not form_values['email']:
+            messages.error(request, "Full name and email are required.")
+            return render(request, 'owner_staff_form.html', {'hotel': hotel, 'staff_member': staff_member, 'form_values': form_values, 'role_choices': HotelStaff.ROLE_CHOICES})
+        if form_values['role'] not in role_values:
+            messages.error(request, "Choose a valid staff role.")
+            return render(request, 'owner_staff_form.html', {'hotel': hotel, 'staff_member': staff_member, 'form_values': form_values, 'role_choices': HotelStaff.ROLE_CHOICES})
+
+        account, account_error = _sync_staff_user_account(
+            form_values['email'],
+            request.POST.get('password') or '',
+            form_values['full_name'],
+            existing_user=staff_member.user,
+        )
+        if account_error:
+            messages.error(request, account_error)
+            return render(request, 'owner_staff_form.html', {'hotel': hotel, 'staff_member': staff_member, 'form_values': form_values, 'role_choices': HotelStaff.ROLE_CHOICES})
+
+        staff_member.user = account
+        staff_member.role = form_values['role']
+        staff_member.job_title = form_values['job_title']
+        staff_member.phone = form_values['phone']
+        staff_member.can_manage_rooms = form_values['can_manage_rooms']
+        staff_member.can_manage_bookings = form_values['can_manage_bookings']
+        staff_member.can_manage_payments = form_values['can_manage_payments']
+        staff_member.can_manage_staff = form_values['can_manage_staff']
+        staff_member.is_active = form_values['is_active']
+        staff_member.save()
+        messages.success(request, "Hotel team member updated successfully.")
+        return redirect('owner_team')
+
+    return render(
+        request,
+        'owner_staff_form.html',
+        {
+            'hotel': hotel,
+            'staff_member': staff_member,
+            'form_values': _hotel_staff_form_values(staff_member=staff_member),
+            'role_choices': HotelStaff.ROLE_CHOICES,
+        },
+    )
+
+
+@owner_required
+def owner_team_delete(request, staff_id):
+    hotels, hotel, staff_profile = _get_owner_workspace(request.user)
+    if not _hotel_staff_table_ready():
+        messages.error(request, "Run migrations to enable hotel team management.")
+        return redirect('owner_dashboard')
+    if not hotel:
+        return redirect('owner_dashboard')
+    if not _can_manage_hotel_staff(request.user, hotel):
+        messages.error(request, "You do not have permission to manage this hotel team.")
+        return redirect('owner_dashboard')
+    if request.method != "POST":
+        return redirect('owner_team')
+
+    staff_member = get_object_or_404(HotelStaff, id=staff_id, hotel=hotel)
+    staff_member.delete()
+    messages.success(request, "Hotel team member removed successfully.")
+    return redirect('owner_team')
+
+
 def hotel_partner_apply(request):
+    if not request.user.is_authenticated:
+        return redirect('partner_signin')
     if request.user.is_staff or request.user.is_superuser:
         messages.info(request, "Admin accounts do not submit partnership applications.")
         return redirect('admin_dashboard')
@@ -2982,6 +4247,48 @@ def admin_dashboard(request):
             | Q(quote__icontains=query)
         )
 
+    system_revenue_total = (
+        Payment.objects.filter(status='SUCCEEDED')
+        .aggregate(total=Sum('amount'))
+        .get('total')
+        or Decimal('0.00')
+    )
+    pending_revenue_total = (
+        Payment.objects.filter(status='PENDING')
+        .aggregate(total=Sum('amount'))
+        .get('total')
+        or Decimal('0.00')
+    )
+    active_hotels_count = Hotel.objects.filter(is_active=True, is_approved=True).count()
+    pending_hotels_count = Hotel.objects.filter(is_approved=False).count()
+    available_rooms_count = Room.objects.filter(available=True, is_approved=True).count()
+    pending_rooms_count = Room.objects.filter(is_approved=False).count()
+    pending_applications_count = HotelApplication.objects.filter(status='PENDING').count()
+    confirmed_bookings_count = Booking.objects.filter(status='CONFIRMED').count()
+    pending_bookings_count = Booking.objects.filter(status='PENDING').count()
+    completed_bookings_count = Booking.objects.filter(status='COMPLETED').count()
+    cancelled_bookings_count = Booking.objects.filter(status='CANCELLED').count()
+    hotel_owner_count = UserProfile.objects.filter(user_type='OWNER').count()
+    room_review_count = Review.objects.count()
+    hotel_review_count = HotelReview.objects.count()
+    review_count = room_review_count + hotel_review_count
+    average_review = (
+        HotelReview.objects.aggregate(avg=Avg('rating')).get('avg')
+        or Review.objects.aggregate(avg=Avg('rating')).get('avg')
+        or 0
+    )
+    open_complaints_count = HotelComplaint.objects.filter(status__in=['OPEN', 'REVIEWING']).count()
+    top_hotels = (
+        Hotel.objects.filter(is_active=True, is_approved=True)
+        .annotate(
+            total_rooms=Count('rooms', distinct=True),
+            total_bookings=Count('rooms__booking', distinct=True),
+            total_reviews=Count('rooms__reviews', distinct=True),
+            avg_rating=Avg('rooms__reviews__rating'),
+        )
+        .order_by('-total_bookings', '-created_at')[:5]
+    )
+
     context = {
         'query': query,
         'users': users_qs[:10],
@@ -3002,7 +4309,26 @@ def admin_dashboard(request):
             'team_members': team_members_qs.count(),
             'testimonials': testimonials_qs.count(),
         },
+        'admin_metrics': {
+            'revenue_total': system_revenue_total,
+            'pending_revenue': pending_revenue_total,
+            'active_hotels': active_hotels_count,
+            'pending_hotels': pending_hotels_count,
+            'available_rooms': available_rooms_count,
+            'pending_rooms': pending_rooms_count,
+            'pending_applications': pending_applications_count,
+            'confirmed_bookings': confirmed_bookings_count,
+            'pending_bookings': pending_bookings_count,
+            'completed_bookings': completed_bookings_count,
+            'cancelled_bookings': cancelled_bookings_count,
+            'hotel_owners': hotel_owner_count,
+            'reviews': review_count,
+            'average_review': average_review,
+            'complaints': open_complaints_count,
+        },
+        'top_hotels': top_hotels,
     }
+    context.update(_admin_dashboard_notification_context())
     return render(request, 'admin_dashboard.html', context)
 
 
@@ -3032,6 +4358,8 @@ def _team_member_form_values(team_member=None, post_data=None):
             'twitter_url': (post_data.get('twitter_url') or '').strip(),
             'instagram_url': (post_data.get('instagram_url') or '').strip(),
             'linkedin_url': (post_data.get('linkedin_url') or '').strip(),
+            'account_email': (post_data.get('account_email') or '').strip(),
+            'account_password': '',
         }
 
     if team_member is not None:
@@ -3045,6 +4373,8 @@ def _team_member_form_values(team_member=None, post_data=None):
             'twitter_url': team_member.twitter_url,
             'instagram_url': team_member.instagram_url,
             'linkedin_url': team_member.linkedin_url,
+            'account_email': team_member.account.email if team_member.account else '',
+            'account_password': '',
         }
 
     return {
@@ -3057,6 +4387,8 @@ def _team_member_form_values(team_member=None, post_data=None):
         'twitter_url': '',
         'instagram_url': '',
         'linkedin_url': '',
+        'account_email': '',
+        'account_password': '',
     }
 
 
@@ -3092,7 +4424,17 @@ def admin_team_member_create(request):
             messages.error(request, "Display order must be a valid number.")
             return render(request, 'admin_team_member_form.html', {'team_member': None, 'form_values': form_values})
 
+        account, account_error = _sync_staff_user_account(
+            form_values['account_email'],
+            request.POST.get('account_password') or '',
+            name,
+        )
+        if account_error:
+            messages.error(request, account_error)
+            return render(request, 'admin_team_member_form.html', {'team_member': None, 'form_values': form_values})
+
         TeamMember.objects.create(
+            account=account,
             name=name,
             role=role,
             bio=bio,
@@ -3136,6 +4478,17 @@ def admin_team_member_edit(request, team_member_id):
             messages.error(request, "Display order must be a valid number.")
             return render(request, 'admin_team_member_form.html', {'team_member': team_member, 'form_values': form_values})
 
+        account, account_error = _sync_staff_user_account(
+            form_values['account_email'],
+            request.POST.get('account_password') or '',
+            name,
+            existing_user=team_member.account,
+        )
+        if account_error:
+            messages.error(request, account_error)
+            return render(request, 'admin_team_member_form.html', {'team_member': team_member, 'form_values': form_values})
+
+        team_member.account = account
         team_member.name = name
         team_member.role = role
         team_member.bio = bio
@@ -3419,7 +4772,18 @@ def admin_hotel_detail(request, hotel_id):
 
     hotel = get_object_or_404(Hotel.objects.select_related('owner'), id=hotel_id)
     rooms = Room.objects.filter(hotel=hotel).select_related('owner').order_by('-id')
-    return render(request, 'admin_hotel_detail.html', {'hotel': hotel, 'rooms': rooms})
+    hotel_reviews = HotelReview.objects.filter(hotel=hotel).select_related('user').order_by('-created_at')[:20]
+    complaints = HotelComplaint.objects.filter(hotel=hotel).select_related('user').order_by('-created_at')[:20]
+    return render(
+        request,
+        'admin_hotel_detail.html',
+        {
+            'hotel': hotel,
+            'rooms': rooms,
+            'hotel_reviews': hotel_reviews,
+            'complaints': complaints,
+        },
+    )
 
 
 @login_required(login_url='login')

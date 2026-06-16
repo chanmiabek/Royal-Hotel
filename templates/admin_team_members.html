@@ -20,6 +20,7 @@
                             <th>{% trans "Image" %}</th>
                             <th>{% trans "Name" %}</th>
                             <th>{% trans "Role" %}</th>
+                            <th>{% trans "Account" %}</th>
                             <th>{% trans "Order" %}</th>
                             <th>{% trans "Status" %}</th>
                             <th>{% trans "Social Links" %}</th>
@@ -40,6 +41,7 @@
                             </td>
                             <td>{{ member.name }}</td>
                             <td>{{ member.role }}</td>
+                            <td>{% if member.account %}{{ member.account.email|default:member.account.username }}{% else %}-{% endif %}</td>
                             <td>{{ member.display_order }}</td>
                             <td>{% if member.is_active %}{% trans "Active" %}{% else %}{% trans "Hidden" %}{% endif %}</td>
                             <td>
@@ -62,7 +64,7 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="7" class="text-center py-4">
+                            <td colspan="8" class="text-center py-4">
                                 <p class="mb-3">{% trans "No team members added yet." %}</p>
                                 <a href="{% url 'admin_team_member_create' %}" class="btn btn-primary btn-sm">{% trans "Add Team Member" %}</a>
                             </td>

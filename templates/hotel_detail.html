@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static i18n %}
 {% block extra_css %}
-<link href="{% static 'css/hotel-cards.css' %}" rel="stylesheet">
+<link href="{% static 'css/hotel-cards.css' %}?v=20260615-4" rel="stylesheet">
 {% endblock %}
 {% block content %}
 <section class="premium-shell">
@@ -19,9 +19,15 @@
                         {% if hotel.image %}
                             <img src="{{ hotel.image.url }}" alt="{{ hotel.name }}">
                         {% endif %}
-                        <span class="hotel-card__fav">
-                            <i class="fa fa-heart-o"></i>
-                        </span>
+                        <button
+                            type="button"
+                            class="hotel-card__fav js-wishlist-toggle"
+                            data-url="/hotels/{{ hotel.id }}/wishlist/"
+                            aria-label="{% trans 'Save hotel' %}"
+                            aria-pressed="{% if is_wishlisted %}true{% else %}false{% endif %}"
+                        >
+                            <i class="fa {% if is_wishlisted %}fa-heart{% else %}fa-heart-o{% endif %}"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -60,6 +66,10 @@
                     <span>{% trans "Rating" %}</span>
                 </div>
                 {% endif %}
+                <div class="hotel-card__rating">
+                    <span class="hotel-card__score" id="hotelAverageRating">{{ hotel_average_rating|floatformat:1 }}</span>
+                    <span><span id="hotelReviewCount">{{ hotel_review_count }}</span> {% trans "guest reviews" %}</span>
+                </div>
                 {% if hotel.description %}
                 <p class="mb-2">{{ hotel.description }}</p>
                 {% endif %}
@@ -122,7 +132,189 @@
             <p class="text-center">{% trans "No rooms available for this hotel yet." %}</p>
             {% endfor %}
         </div>
+
+        <div class="section-header mt-5">
+            <h2>{% trans "Guest reviews and complaints" %}</h2>
+            <p>{% trans "Share your experience or report an issue. Hotel admins see new feedback immediately in their dashboard after submission." %}</p>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="hotel-card">
+                    <div class="hotel-card__body">
+                        <h3 class="hotel-card__title">{% trans "Rate this hotel" %}</h3>
+                        {% if request.user.is_authenticated %}
+                        <form id="hotelReviewForm" data-url="/hotels/{{ hotel.id }}/review/">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label>{% trans "Stars" %}</label>
+                                <select name="rating" class="form-control" required>
+                                    <option value="">{% trans "Select rating" %}</option>
+                                    {% for value in "12345" %}
+                                    <option value="{{ value }}" {% if user_hotel_review and user_hotel_review.rating|stringformat:"s" == value %}selected{% endif %}>{{ value }} {% trans "stars" %}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>{% trans "Review title" %}</label>
+                                <input type="text" name="title" class="form-control" value="{{ user_hotel_review.title|default:'' }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>{% trans "Your review" %}</label>
+                                <textarea name="comment" class="form-control" rows="4" required>{{ user_hotel_review.comment|default:'' }}</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">{% trans "Submit review" %}</button>
+                            <div class="small mt-2" id="hotelReviewStatus" aria-live="polite"></div>
+                        </form>
+                        {% else %}
+                        <p>{% trans "Please sign in to leave a star rating and review." %}</p>
+                        <a class="btn btn-primary" href="{% url 'login' %}?next={{ request.path|urlencode }}">{% trans "Sign in" %}</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="hotel-card">
+                    <div class="hotel-card__body">
+                        <h3 class="hotel-card__title">{% trans "Send a complaint" %}</h3>
+                        <form id="hotelComplaintForm" data-url="/hotels/{{ hotel.id }}/complaint/">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label>{% trans "Full name" %}</label>
+                                <input type="text" name="full_name" class="form-control" value="{% if request.user.is_authenticated %}{{ request.user.get_full_name|default:request.user.username }}{% endif %}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>{% trans "Email" %}</label>
+                                <input type="email" name="email" class="form-control" value="{% if request.user.is_authenticated %}{{ request.user.email }}{% endif %}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>{% trans "Subject" %}</label>
+                                <input type="text" name="subject" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label>{% trans "Complaint details" %}</label>
+                                <textarea name="message" class="form-control" rows="4" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-outline-primary">{% trans "Submit complaint" %}</button>
+                            <div class="small mt-2" id="hotelComplaintStatus" aria-live="polite"></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hotel-card">
+            <div class="hotel-card__body">
+                <h3 class="hotel-card__title">{% trans "Latest hotel reviews" %}</h3>
+                <div id="hotelReviewList">
+                    {% for review in hotel_reviews %}
+                    <div class="review-card mb-3">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ review.title }}</strong>
+                            <span class="text-warning">
+                                {% for star in "12345" %}
+                                    {% if forloop.counter <= review.rating %}<i class="fa fa-star"></i>{% else %}<i class="fa fa-star-o"></i>{% endif %}
+                                {% endfor %}
+                            </span>
+                        </div>
+                        <p class="mb-1">{{ review.comment }}</p>
+                        <small class="text-muted">{{ review.user.first_name|default:review.user.username }}</small>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted" id="noHotelReviews">{% trans "No hotel reviews yet." %}</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        function postForm(url, form) {
+            return fetch(url, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(function (response) {
+                return response.json().then(function (data) {
+                    if (!response.ok) {
+                        throw data;
+                    }
+                    return data;
+                });
+            });
+        }
+
+        var wishlistBtn = document.querySelector('.js-wishlist-toggle');
+        if (wishlistBtn) {
+            wishlistBtn.addEventListener('click', function () {
+                var formData = new FormData();
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+                fetch(wishlistBtn.dataset.url, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                }).then(function (response) {
+                    if (response.status === 403 || response.redirected) {
+                        window.location.href = "{% url 'login' %}?next={{ request.path|urlencode }}";
+                        return null;
+                    }
+                    return response.json();
+                }).then(function (data) {
+                    if (!data) return;
+                    wishlistBtn.setAttribute('aria-pressed', data.saved ? 'true' : 'false');
+                    wishlistBtn.querySelector('i').className = 'fa ' + (data.saved ? 'fa-heart' : 'fa-heart-o');
+                });
+            });
+        }
+
+        var reviewForm = document.getElementById('hotelReviewForm');
+        if (reviewForm) {
+            reviewForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+                var status = document.getElementById('hotelReviewStatus');
+                postForm(reviewForm.dataset.url, reviewForm).then(function (data) {
+                    status.textContent = data.created ? "{% trans 'Review submitted.' %}" : "{% trans 'Review updated.' %}";
+                    document.getElementById('hotelAverageRating').textContent = data.average;
+                    document.getElementById('hotelReviewCount').textContent = data.count;
+                    var empty = document.getElementById('noHotelReviews');
+                    if (empty) empty.remove();
+                    var list = document.getElementById('hotelReviewList');
+                    var stars = '';
+                    for (var i = 1; i <= 5; i++) {
+                        stars += '<i class="fa ' + (i <= data.rating ? 'fa-star' : 'fa-star-o') + '"></i>';
+                    }
+                    list.insertAdjacentHTML('afterbegin',
+                        '<div class="review-card mb-3"><div class="d-flex justify-content-between"><strong></strong><span class="text-warning">' +
+                        stars + '</span></div><p class="mb-1"></p><small class="text-muted"></small></div>'
+                    );
+                    var card = list.firstElementChild;
+                    card.querySelector('strong').textContent = data.title;
+                    card.querySelector('p').textContent = data.comment;
+                    card.querySelector('small').textContent = data.reviewer;
+                }).catch(function (error) {
+                    status.textContent = error.error || "{% trans 'Could not submit review.' %}";
+                });
+            });
+        }
+
+        var complaintForm = document.getElementById('hotelComplaintForm');
+        if (complaintForm) {
+            complaintForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+                var status = document.getElementById('hotelComplaintStatus');
+                postForm(complaintForm.dataset.url, complaintForm).then(function (data) {
+                    status.textContent = data.message;
+                    complaintForm.reset();
+                }).catch(function (error) {
+                    status.textContent = error.error || "{% trans 'Could not submit complaint.' %}";
+                });
+            });
+        }
+    })();
+</script>
 {% endblock %}

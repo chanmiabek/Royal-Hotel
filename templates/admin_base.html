@@ -89,6 +89,47 @@
         object-fit: cover;
         display: block;
     }
+    @media (max-width: 991px) {
+        .admin-sidebar {
+            position: static;
+        }
+        .admin-sidebar .list-group {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+        .admin-sidebar .list-group-item {
+            margin-bottom: 0;
+            min-width: 0;
+        }
+    }
+    @media (max-width: 575px) {
+        .admin-shell {
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+        .admin-sidebar {
+            border-radius: 14px;
+        }
+        .admin-sidebar .card-body {
+            padding: 14px;
+        }
+        .admin-profile {
+            align-items: flex-start;
+        }
+        .admin-profile__actions {
+            width: 100%;
+        }
+        .admin-profile__actions .btn {
+            flex: 1 1 120px;
+        }
+        .admin-sidebar .list-group {
+            grid-template-columns: 1fr;
+        }
+        .admin-sidebar .list-group-item {
+            padding: 9px 10px;
+        }
+    }
 </style>
 {% block admin_extra_css %}{% endblock %}
 {% endblock %}
@@ -106,8 +147,8 @@
                             <p class="admin-profile__name">{{ request.user.first_name|default:request.user.username }}</p>
                             <p class="admin-profile__email">{{ request.user.email|default:"-" }}</p>
                             <div class="admin-profile__actions mt-2">
-                                <a href="{% url 'admin_user_detail' request.user.id %}" class="btn btn-sm btn-outline-primary">
-                                    {% trans "My Profile" %}
+                                <a href="{% url 'admin_user_edit' request.user.id %}" class="btn btn-sm btn-outline-primary">
+                                    {% trans "Profile Settings" %}
                                 </a>
                                 <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-danger">
                                     {% trans "Logout" %}

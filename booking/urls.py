@@ -13,6 +13,7 @@ urlpatterns = [
     
     # About
     path('about/', views.about, name='about'),
+    path('info/<slug:slug>/', views.footer_info, name='footer_info'),
     
     # Rooms
     path('room/', views.room, name='room'),
@@ -20,6 +21,10 @@ urlpatterns = [
     path('room/<int:room_id>/', views.room_detail, name='room_detail'),
     path('hotels/', views.hotel_list, name='hotel_list'),
     path('hotels/<int:hotel_id>/', views.hotel_detail, name='hotel_detail'),
+    path('hotels/<int:hotel_id>/wishlist/', views.toggle_wishlist, name='toggle_wishlist'),
+    path('hotels/<int:hotel_id>/review/', views.submit_hotel_review, name='submit_hotel_review'),
+    path('hotels/<int:hotel_id>/complaint/', views.submit_hotel_complaint, name='submit_hotel_complaint'),
+    path('wishlist/', views.wishlist_view, name='wishlist'),
     
     # Amenities
     path('amenities/', views.amenities, name='amenities'),
@@ -43,9 +48,11 @@ urlpatterns = [
     path('payments/mpesa/callback/', views.mpesa_callback, name='mpesa_callback'),
     
     # Authentication
+    path('sign-in/', views.login_options_view, name='login_options'),
     path('login/', views.login_view, name='login'),
     path('auth/google/', views.google_login, name='google_login'),
     path('auth/google/callback/', views.google_callback, name='google_callback'),
+    path('create-account/', views.register_options_view, name='register_options'),
     path('register/', views.register_view, name='register'),
     path('logout/', views.logout_view, name='logout'),
     path('profile/', views.profile_view, name='profile'),
@@ -56,6 +63,14 @@ urlpatterns = [
     path('owner/dashboard/', views.owner_dashboard, name='owner_dashboard'),
     path('owner/hotels/add/', views.owner_add_hotel, name='owner_add_hotel'),
     path('owner/rooms/add/', views.owner_add_room, name='owner_add_room'),
+    path('owner/team/', views.owner_team, name='owner_team'),
+    path('owner/team/add/', views.owner_team_create, name='owner_team_create'),
+    path('owner/team/<int:staff_id>/edit/', views.owner_team_edit, name='owner_team_edit'),
+    path('owner/team/<int:staff_id>/delete/', views.owner_team_delete, name='owner_team_delete'),
+    path('partner/signin/', views.partner_signin_view, name='partner_signin'),
+    path('partner/create-account/', views.partner_register_email_view, name='partner_register_email'),
+    path('partner/contact-details/', views.partner_contact_details_view, name='partner_contact_details'),
+    path('partner/create-password/', views.partner_create_password_view, name='partner_create_password'),
     path('owner/hotel-apply/', views.hotel_partner_apply, name='hotel_partner_apply'),
     path('owner/hotel-application/', views.hotel_application_status, name='hotel_application_status'),
     path('admin-users/', views.admin_users_view, name='admin_users'),

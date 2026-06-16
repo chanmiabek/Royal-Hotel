@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 32" role="img" aria-label="Kenya flag">
+  <defs>
+    <clipPath id="r">
+      <rect width="48" height="32" rx="4"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#r)">
+    <rect width="48" height="32" fill="#006b3f"/>
+    <rect width="48" height="21.33" fill="#bb121a"/>
+    <rect width="48" height="10.67" fill="#111"/>
+    <rect y="10.2" width="48" height="1.45" fill="#fff"/>
+    <rect y="20.35" width="48" height="1.45" fill="#fff"/>
+    <ellipse cx="24" cy="16" rx="5.8" ry="10.5" fill="#bb121a" stroke="#fff" stroke-width="1.2"/>
+    <ellipse cx="24" cy="16" rx="2.4" ry="8.3" fill="#111"/>
+    <path d="M24 5.8c1.2 2.9 1.8 6.3 1.8 10.2S25.2 23.3 24 26.2c-1.2-2.9-1.8-6.3-1.8-10.2S22.8 8.7 24 5.8Z" fill="#fff"/>
+    <path d="M13.6 6.2 34.4 25.8M34.4 6.2 13.6 25.8" stroke="#fff" stroke-width="1.15" stroke-linecap="round"/>
+    <path d="M14.4 6.9 33.6 25.1M33.6 6.9 14.4 25.1" stroke="#111" stroke-width=".55" stroke-linecap="round"/>
+  </g>
+  <rect x=".5" y=".5" width="47" height="31" rx="4" fill="none" stroke="rgba(0,0,0,.18)"/>
+</svg>

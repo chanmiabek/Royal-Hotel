@@ -177,7 +177,7 @@
                         <p>
                             {% blocktrans %}Our mission is simple: deliver smooth guest experiences, reliable booking operations, and practical tools that help hotel owners manage rooms, availability, and reservations without stress.{% endblocktrans %}
                         </p>
-                        <a href="{% url 'hotel_partner_apply' %}">{% trans "Partner With Us" %}</a>
+                        <a href="{% if request.user.is_authenticated %}{% url 'hotel_partner_apply' %}{% else %}{% url 'partner_signin' %}{% endif %}">{% trans "Partner With Us" %}</a>
                     </div>
                 </div>
             </div>

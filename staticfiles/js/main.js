@@ -4,11 +4,73 @@
     // Initiate the wowjs animation library
     new WOW().init();
     
-    // Initiate menu
-    $('#header').after('<div class="mobile-menu d-xl-none">');
-    $('.top-menu').clone().appendTo('.mobile-menu');
-    $('.mobile-menu-btn').click(function () {
-        $('.mobile-menu').stop().slideToggle();
+    // Initiate responsive menu
+    var $menuToggle = $('.mobile-menu-btn');
+    var $mobileMenu = $('#mobile-menu-panel');
+    var $desktopMenu = $('#header .top-menu').first();
+
+    function setMobileMenuState(isOpen) {
+        if (!$mobileMenu.length || !$menuToggle.length) {
+            return;
+        }
+
+        $mobileMenu.toggleClass('is-open', isOpen).attr('aria-hidden', String(!isOpen));
+        $menuToggle.attr('aria-expanded', String(isOpen));
+        $menuToggle
+            .find('i')
+            .toggleClass('fa-bars', !isOpen)
+            .toggleClass('fa-times', isOpen);
+        $('body').toggleClass('mobile-nav-open', isOpen);
+
+        if (!isOpen) {
+            $mobileMenu.find('.dropdown').removeClass('show');
+            $mobileMenu.find('.dropdown-menu').removeClass('show');
+            $mobileMenu.find('.dropdown-toggle').attr('aria-expanded', 'false');
+        }
+    }
+
+    if ($mobileMenu.length) {
+        $mobileMenu.find('.dropdown').removeClass('show');
+        $mobileMenu.find('.dropdown-menu').removeClass('show');
+    }
+
+    $menuToggle.on('click', function () {
+        setMobileMenuState(!$mobileMenu.hasClass('is-open'));
+    });
+
+    $(document).on('click', '.mobile-menu-close', function () {
+        setMobileMenuState(false);
+    });
+
+    $(document).on('click', '#mobile-menu-panel a', function () {
+        if (!$(this).hasClass('dropdown-toggle')) {
+            setMobileMenuState(false);
+        }
+    });
+
+    $(document).on('click', '#mobile-menu-panel .dropdown-toggle', function (event) {
+        event.preventDefault();
+        var $dropdown = $(this).closest('.dropdown');
+        var isOpen = !$dropdown.hasClass('show');
+
+        $dropdown
+            .toggleClass('show', isOpen)
+            .find('.dropdown-menu')
+            .first()
+            .toggleClass('show', isOpen);
+        $(this).attr('aria-expanded', String(isOpen));
+    });
+
+    $(document).on('keyup', function (event) {
+        if (event.key === 'Escape') {
+            setMobileMenuState(false);
+        }
+    });
+
+    $(window).on('resize', function () {
+        if (window.innerWidth >= 1200) {
+            setMobileMenuState(false);
+        }
     });
     
     // Back to top button

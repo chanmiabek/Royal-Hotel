@@ -114,6 +114,63 @@
             </tbody>
         </table>
     </div>
+
+    <h4 class="mb-3">{% trans "Hotel Reviews" %}</h4>
+    <div class="table-responsive mb-4">
+        <table class="table table-bordered table-hover bg-white">
+            <thead class="thead-light">
+                <tr>
+                    <th>{% trans "Guest" %}</th>
+                    <th>{% trans "Rating" %}</th>
+                    <th>{% trans "Title" %}</th>
+                    <th>{% trans "Review" %}</th>
+                    <th>{% trans "Date" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for review in hotel_reviews %}
+                <tr>
+                    <td>{{ review.user.first_name|default:review.user.username }}</td>
+                    <td>{{ review.rating }}/5</td>
+                    <td>{{ review.title }}</td>
+                    <td>{{ review.comment|truncatewords:18 }}</td>
+                    <td>{{ review.created_at|date:"Y-m-d H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center py-3">{% trans "No hotel reviews yet." %}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <h4 class="mb-3">{% trans "Complaints" %}</h4>
+    <div class="table-responsive mb-4">
+        <table class="table table-bordered table-hover bg-white">
+            <thead class="thead-light">
+                <tr>
+                    <th>{% trans "Guest" %}</th>
+                    <th>{% trans "Email" %}</th>
+                    <th>{% trans "Subject" %}</th>
+                    <th>{% trans "Message" %}</th>
+                    <th>{% trans "Status" %}</th>
+                    <th>{% trans "Date" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for complaint in complaints %}
+                <tr>
+                    <td>{{ complaint.full_name }}</td>
+                    <td>{{ complaint.email }}</td>
+                    <td>{{ complaint.subject }}</td>
+                    <td>{{ complaint.message|truncatewords:18 }}</td>
+                    <td><span class="badge badge-warning">{{ complaint.get_status_display }}</span></td>
+                    <td>{{ complaint.created_at|date:"Y-m-d H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center py-3">{% trans "No complaints submitted." %}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}
-

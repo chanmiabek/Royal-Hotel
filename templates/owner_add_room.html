@@ -9,6 +9,7 @@
     </div>
     <div class="row">
         <div class="col-md-8 mx-auto">
+            {% include 'includes/local_messages.html' %}
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="form-group">

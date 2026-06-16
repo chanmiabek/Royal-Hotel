@@ -1,7 +1,7 @@
 {% extends "admin/base.html" %}
 {% load static %}
 
-{% block title %}Royal Hotel Admin{% endblock %}
+{% block title %}Royal Admin Portal{% endblock %}
 
 {% block extrastyle %}
 {{ block.super }}
@@ -12,7 +12,7 @@
 <h1 id="site-name" class="admin-brand">
     <a href="{% url 'admin:index' %}">
         <img src="{% static 'img/logo.jpg' %}" alt="Royal Hotel" class="admin-brand__logo">
-        <span>Royal Hotel Admin</span>
+        <span>Royal Hotel Booking Administration Portal</span>
     </a>
 </h1>
 {% endblock %}

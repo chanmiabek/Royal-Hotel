@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: #ffffff;
+    }
+    #header,
+    #mobile-menu-panel,
+    #messages,
+    .back-to-top {
+        display: none !important;
+    }
+    .partner-flow {
+        min-height: 100vh;
+        background: #ffffff;
+    }
+    .partner-flow__bar {
+        height: 86px;
+        background: #222222;
+    }
+    .partner-flow__bar-inner {
+        max-width: 1364px;
+        height: 100%;
+        margin: 0 auto;
+        padding: 0 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .partner-flow__brand {
+        color: #FFD700;
+        font-size: 23px;
+        font-weight: 900;
+    }
+    .partner-flow__brand:hover {
+        color: #ffffff;
+    }
+    .partner-flow__tools {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+    }
+    .partner-flow__flag,
+    .partner-flow__help {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        color: #FFD700;
+        font-weight: 900;
+    }
+    .partner-flow__flag {
+        border: 1px solid rgba(255, 215, 0, .55);
+        font-size: 12px;
+    }
+    .partner-flow__help {
+        border: 2px solid #FFD700;
+        font-size: 17px;
+    }
+    .partner-flow__panel {
+        width: 100%;
+        max-width: 540px;
+        margin: 82px auto 0;
+        padding: 0 20px 48px;
+    }
+    .partner-flow h1 {
+        color: #111111;
+        font-size: 27px;
+        line-height: 1.25;
+        font-weight: 900;
+        margin-bottom: 22px;
+    }
+    .partner-flow p {
+        color: #111111;
+        font-size: 16px;
+        line-height: 1.55;
+        margin-bottom: 24px;
+    }
+    .partner-flow label {
+        display: block;
+        color: #111111;
+        font-size: 15px;
+        font-weight: 900;
+        margin-bottom: 7px;
+    }
+    .partner-flow .form-group {
+        margin-bottom: 16px;
+    }
+    .partner-flow .form-control {
+        width: 100%;
+        min-height: 50px;
+        border: 1px solid #6b7280;
+        border-radius: 6px;
+        color: #111111;
+        font-size: 16px;
+        padding: 10px 12px;
+        box-shadow: none;
+    }
+    .partner-flow .form-control:focus {
+        border-color: #222222;
+        box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.4);
+    }
+    .partner-flow__primary,
+    .partner-flow__secondary {
+        width: 100%;
+        min-height: 60px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        font-size: 20px;
+        font-weight: 900;
+        text-align: center;
+    }
+    .partner-flow__primary {
+        border: 1px solid #222222;
+        background: #222222;
+        color: #FFD700;
+    }
+    .partner-flow__primary:hover {
+        background: #111111;
+        color: #ffffff;
+    }
+    .partner-flow__secondary {
+        border: 1px solid #222222;
+        background: #ffffff;
+        color: #222222;
+    }
+    .partner-flow__secondary:hover {
+        background: #FFD700;
+        color: #222222;
+        border-color: #FFD700;
+    }
+    .partner-flow__link {
+        display: block;
+        margin: 48px 0;
+        color: #222222;
+        font-size: 18px;
+        font-weight: 800;
+        text-align: center;
+    }
+    .partner-flow__divider {
+        margin: 40px 0 24px;
+        border-top: 1px solid #e5e7eb;
+    }
+    .partner-flow__help-text {
+        margin-bottom: 24px;
+        font-size: 15px;
+    }
+    .partner-flow__help-text a,
+    .partner-flow__legal a {
+        color: #222222;
+        font-weight: 800;
+        text-decoration: underline;
+        text-decoration-color: #FFD700;
+        text-underline-offset: 3px;
+    }
+    .partner-flow__legal {
+        margin-top: 40px;
+        padding-top: 24px;
+        border-top: 1px solid #e5e7eb;
+        text-align: center;
+    }
+    .partner-flow__legal p {
+        margin-bottom: 10px;
+        font-size: 14px;
+    }
+    .partner-flow__phone {
+        display: grid;
+        grid-template-columns: 94px minmax(0, 1fr);
+        gap: 8px;
+    }
+    .partner-flow__note {
+        margin-top: 7px;
+        color: #4b5563;
+        font-size: 14px;
+    }
+    .partner-flow__password {
+        position: relative;
+    }
+    .partner-flow__password .form-control {
+        padding-right: 48px;
+    }
+    .partner-flow__password i {
+        position: absolute;
+        right: 14px;
+        bottom: 16px;
+        color: #222222;
+    }
+    @media (max-width: 575px) {
+        .partner-flow__bar {
+            height: 76px;
+        }
+        .partner-flow__panel {
+            margin-top: 44px;
+        }
+        .partner-flow h1 {
+            font-size: 24px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="partner-flow">
+    <header class="partner-flow__bar">
+        <div class="partner-flow__bar-inner">
+            <a href="{% url 'index' %}" class="partner-flow__brand">Royal Hotel</a>
+            <div class="partner-flow__tools">
+                <span class="partner-flow__flag">KE</span>
+                <a href="{% url 'contact' %}" class="partner-flow__help" aria-label="{% trans 'Help' %}">?</a>
+            </div>
+        </div>
+    </header>
+
+    <section class="partner-flow__panel">
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} mb-4">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        {% if step == 'signin' %}
+        <h1>{% trans "Sign in to manage your property" %}</h1>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="partner_identifier">{% trans "Username" %}</label>
+                <input id="partner_identifier" type="text" name="identifier" class="form-control" placeholder="{% trans 'Also known as login name or login ID' %}" autocomplete="username" autofocus required>
+            </div>
+            <button type="submit" class="partner-flow__primary">{% trans "Next" %}</button>
+        </form>
+        <a href="{% url 'contact' %}" class="partner-flow__link">{% trans "Having trouble signing in?" %}</a>
+        <div class="partner-flow__divider"></div>
+        <p class="partner-flow__help-text">{% trans "Do you have questions about your property or the Extranet?" %} <a href="{% url 'contact' %}">{% trans "Visit Partner Help." %}</a></p>
+        <a href="{% url 'partner_register_email' %}" class="partner-flow__secondary">{% trans "Create your partner account" %}</a>
+        <p class="partner-flow__help-text">{% trans "Booking as a guest?" %} <a href="{% url 'login' %}">{% trans "Choose guest sign in" %}</a></p>
+
+        {% elif step == 'email' %}
+        <h1>{% trans "Create your partner account" %}</h1>
+        <p>{% trans "Create an account to list and manage your property." %}</p>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="partner_email">{% trans "Email address" %}</label>
+                <input id="partner_email" type="email" name="email" class="form-control" value="{{ email }}" autocomplete="email" autofocus required>
+            </div>
+            <button type="submit" class="partner-flow__primary">{% trans "Continue" %}</button>
+        </form>
+        <div class="partner-flow__divider"></div>
+        <p class="partner-flow__help-text">{% trans "Do you have questions about your property or the Extranet?" %} <a href="{% url 'contact' %}">{% trans "Visit Partner Help." %}</a></p>
+        <a href="{% url 'partner_signin' %}" class="partner-flow__secondary">{% trans "Sign in" %}</a>
+        <p class="partner-flow__help-text">{% trans "Creating an account to book a stay?" %} <a href="{% url 'register' %}">{% trans "Choose guest registration" %}</a></p>
+
+        {% elif step == 'contact' %}
+        <h1>{% trans "Contact details" %}</h1>
+        <p>{% trans "Your full name and phone number are needed to secure your Royal Hotel partner account." %}</p>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="partner_first_name">{% trans "First name" %}</label>
+                <input id="partner_first_name" type="text" name="first_name" class="form-control" value="{{ first_name }}" autocomplete="given-name" autofocus required>
+            </div>
+            <div class="form-group">
+                <label for="partner_last_name">{% trans "Last name" %}</label>
+                <input id="partner_last_name" type="text" name="last_name" class="form-control" value="{{ last_name }}" autocomplete="family-name" required>
+            </div>
+            <div class="form-group">
+                <label>{% trans "Phone number" %}</label>
+                <div class="partner-flow__phone">
+                    <select name="phone_code" class="form-control" aria-label="{% trans 'Country code' %}">
+                        <option value="+254" {% if phone_code == '+254' %}selected{% endif %}>KE +254</option>
+                        <option value="+255" {% if phone_code == '+255' %}selected{% endif %}>TZ +255</option>
+                        <option value="+256" {% if phone_code == '+256' %}selected{% endif %}>UG +256</option>
+                        <option value="+250" {% if phone_code == '+250' %}selected{% endif %}>RW +250</option>
+                        <option value="+1" {% if phone_code == '+1' %}selected{% endif %}>US +1</option>
+                    </select>
+                    <input type="tel" name="phone" class="form-control" value="{{ phone }}" autocomplete="tel-national" required>
+                </div>
+                <div class="partner-flow__note">{% trans "We'll use this number for account security and partner support." %}</div>
+            </div>
+            <button type="submit" class="partner-flow__primary">{% trans "Next" %}</button>
+        </form>
+
+        {% elif step == 'password' %}
+        <h1>{% trans "Create password" %}</h1>
+        <p>{% trans "Use a minimum of 10 characters, including uppercase letters, lowercase letters, and numbers." %}</p>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group partner-flow__password">
+                <label for="partner_password">{% trans "Password" %} *</label>
+                <input id="partner_password" type="password" name="password" class="form-control" placeholder="{% trans 'Enter a password' %}" autocomplete="new-password" autofocus required>
+                <i class="fa fa-eye" aria-hidden="true"></i>
+            </div>
+            <div class="form-group partner-flow__password">
+                <label for="partner_repeat_password">{% trans "Confirm password" %} *</label>
+                <input id="partner_repeat_password" type="password" name="repeat_password" class="form-control" placeholder="{% trans 'Confirm your password' %}" autocomplete="new-password" required>
+                <i class="fa fa-eye" aria-hidden="true"></i>
+            </div>
+            <button type="submit" class="partner-flow__primary">{% trans "Create account" %}</button>
+        </form>
+        {% endif %}
+
+        <div class="partner-flow__legal">
+            <p>{% trans "By signing in or creating an account, you agree with our" %} <a href="{% url 'about' %}">{% trans "Terms & Conditions" %}</a> {% trans "and" %} <a href="{% url 'about' %}">{% trans "Privacy Statement" %}</a></p>
+            <p>{% trans "All rights reserved." %}</p>
+            <p>{% trans "Copyright © 2006-2026 Royal Hotel. All rights reserved." %}</p>
+        </div>
+    </section>
+</main>
+{% endblock %}

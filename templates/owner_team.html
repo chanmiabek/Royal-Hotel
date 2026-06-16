@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block extra_css %}
+<style>
+    .team-app { min-height: 100vh; background: #f6f7fb; color: #111827; padding: 28px; }
+    .team-shell { max-width: 1180px; margin: 0 auto; }
+    .team-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    .team-header h1 { margin: 0; font-size: 28px; color: #111827; }
+    .team-header p { margin: 5px 0 0; color: #64748b; font-weight: 700; }
+    .team-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .team-btn { display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 10px; padding: 11px 16px; font-weight: 900; background: #FFD700; color: #111827; }
+    .team-btn--light { background: #ffffff; border: 1px solid #e5e7eb; color: #111827; }
+    .team-panel { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden; box-shadow: 0 18px 40px rgba(15, 23, 42, .08); }
+    .team-table { width: 100%; border-collapse: collapse; }
+    .team-table th, .team-table td { padding: 15px 16px; border-bottom: 1px solid #eef2f7; text-align: left; vertical-align: middle; }
+    .team-table th { background: #111827; color: #ffffff; font-size: 12px; text-transform: uppercase; }
+    .team-person { display: flex; align-items: center; gap: 12px; }
+    .team-avatar { width: 42px; height: 42px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; background: #FFD700; color: #111827; font-weight: 900; }
+    .team-person strong { display: block; color: #111827; }
+    .team-person span, .team-muted { color: #64748b; font-size: 13px; }
+    .team-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+    .team-badge { border-radius: 999px; background: #f3f4f6; color: #111827; padding: 5px 9px; font-size: 12px; font-weight: 800; }
+    .team-status { color: #15803d; font-weight: 900; }
+    .team-status--off { color: #b91c1c; }
+    .team-row-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .team-row-actions a, .team-row-actions button { border: 1px solid #e5e7eb; background: #ffffff; color: #111827; border-radius: 8px; padding: 8px 10px; font-weight: 800; cursor: pointer; }
+    .team-empty { padding: 34px; text-align: center; color: #64748b; }
+    @media (max-width: 760px) {
+        .team-app { padding: 18px; }
+        .team-header { align-items: flex-start; flex-direction: column; }
+        .team-table, .team-table tbody, .team-table tr, .team-table td { display: block; width: 100%; }
+        .team-table thead { display: none; }
+        .team-table tr { border-bottom: 1px solid #e5e7eb; padding: 12px; }
+        .team-table td { border-bottom: 0; padding: 8px 4px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="team-app">
+    <div class="team-shell">
+        <div class="team-header">
+            <div>
+                <h1>{% trans "Hotel Team" %}</h1>
+                <p>{{ hotel.name }} - {% trans "owners, managers, staff, and management accounts" %}</p>
+            </div>
+            <div class="team-actions">
+                <a class="team-btn--light team-btn" href="/owner/dashboard/"><i class="fa fa-dashboard"></i>{% trans "Dashboard" %}</a>
+                <a class="team-btn" href="{% url 'owner_team_create' %}"><i class="fa fa-plus"></i>{% trans "Add Team Member" %}</a>
+            </div>
+        </div>
+
+        {% include 'includes/local_messages.html' %}
+
+        <div class="team-panel">
+            <table class="team-table">
+                <thead>
+                    <tr>
+                        <th>{% trans "Account" %}</th>
+                        <th>{% trans "Role" %}</th>
+                        <th>{% trans "Permissions" %}</th>
+                        <th>{% trans "Status" %}</th>
+                        <th>{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for staff in staff_members %}
+                    <tr>
+                        <td>
+                            <div class="team-person">
+                                <span class="team-avatar">{{ staff.user.first_name|default:staff.user.username|first|upper }}</span>
+                                <span><strong>{{ staff.user.get_full_name|default:staff.user.username }}</strong><span>{{ staff.user.email }}{% if staff.phone %} - {{ staff.phone }}{% endif %}</span></span>
+                            </div>
+                        </td>
+                        <td><strong>{{ staff.get_role_display }}</strong><div class="team-muted">{{ staff.job_title|default:"Team member" }}</div></td>
+                        <td>
+                            <div class="team-badges">
+                                {% if staff.can_manage_rooms %}<span class="team-badge">{% trans "Rooms" %}</span>{% endif %}
+                                {% if staff.can_manage_bookings %}<span class="team-badge">{% trans "Bookings" %}</span>{% endif %}
+                                {% if staff.can_manage_payments %}<span class="team-badge">{% trans "Payments" %}</span>{% endif %}
+                                {% if staff.can_manage_staff %}<span class="team-badge">{% trans "Staff" %}</span>{% endif %}
+                                {% if not staff.can_manage_rooms and not staff.can_manage_bookings and not staff.can_manage_payments and not staff.can_manage_staff %}<span class="team-muted">{% trans "View only" %}</span>{% endif %}
+                            </div>
+                        </td>
+                        <td><span class="team-status {% if not staff.is_active %}team-status--off{% endif %}">{% if staff.is_active %}{% trans "Active" %}{% else %}{% trans "Disabled" %}{% endif %}</span></td>
+                        <td>
+                            <div class="team-row-actions">
+                                <a href="{% url 'owner_team_edit' staff.id %}">{% trans "Edit" %}</a>
+                                <form method="post" action="{% url 'owner_team_delete' staff.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" onclick="return confirm('{% trans 'Remove this team member?' %}')">{% trans "Remove" %}</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="team-empty">{% trans "No hotel team members added yet." %}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endblock %}

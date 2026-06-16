@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block extra_css %}
+<style>
+    .info-page {
+        background: #ffffff;
+        padding: 52px 0 70px;
+    }
+    .info-page__wrap {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+    .info-page__eyebrow {
+        display: inline-flex;
+        margin-bottom: 14px;
+        color: #8a6f00;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+    .info-page h1 {
+        color: #111111;
+        font-size: 42px;
+        line-height: 1.15;
+        font-weight: 900;
+        margin-bottom: 14px;
+    }
+    .info-page__intro {
+        max-width: 760px;
+        color: #374151;
+        font-size: 18px;
+        line-height: 1.65;
+        margin-bottom: 28px;
+    }
+    .info-page__card {
+        padding: 26px;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        background: #fafafa;
+    }
+    .info-page__card h2,
+    .info-page__related h2 {
+        color: #111111;
+        font-size: 22px;
+        font-weight: 900;
+        margin-bottom: 16px;
+    }
+    .info-page__card ul {
+        display: grid;
+        gap: 13px;
+        margin: 0;
+        padding-left: 20px;
+    }
+    .info-page__card li {
+        color: #111111;
+        font-size: 16px;
+        line-height: 1.55;
+    }
+    .info-page__actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 26px;
+    }
+    .info-page__btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 10px 16px;
+        border-radius: 6px;
+        background: #222222;
+        color: #FFD700;
+        font-weight: 900;
+    }
+    .info-page__btn:hover {
+        background: #FFD700;
+        color: #222222;
+        text-decoration: none;
+    }
+    .info-page__btn--secondary {
+        border: 1px solid #d7dce3;
+        background: #ffffff;
+        color: #111111;
+    }
+    .info-page__related {
+        margin-top: 34px;
+    }
+    .info-page__related-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+    }
+    .info-page__related-grid a {
+        padding: 13px 14px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        color: #111111;
+        background: #ffffff;
+        font-weight: 700;
+    }
+    .info-page__related-grid a:hover {
+        border-color: #FFD700;
+        color: #111111;
+        background: #fff8d6;
+        text-decoration: none;
+    }
+    @media (max-width: 767px) {
+        .info-page {
+            padding: 34px 0 48px;
+        }
+        .info-page h1 {
+            font-size: 30px;
+        }
+        .info-page__intro {
+            font-size: 16px;
+        }
+        .info-page__card {
+            padding: 20px;
+        }
+        .info-page__related-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="info-page">
+    <div class="info-page__wrap">
+        <span class="info-page__eyebrow">{{ page.section }}</span>
+        <h1>{{ page.title }}</h1>
+        <p class="info-page__intro">{{ page.intro }}</p>
+
+        <div class="info-page__card">
+            <h2>{% trans "What you can do here" %}</h2>
+            <ul>
+                {% for item in page.items %}
+                    <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+            <div class="info-page__actions">
+                <a href="{% url page.primary_url %}" class="info-page__btn">{{ page.primary_label }}</a>
+                <a href="{% url 'contact' %}" class="info-page__btn info-page__btn--secondary">{% trans "Contact support" %}</a>
+            </div>
+        </div>
+
+        {% if related_pages %}
+        <div class="info-page__related">
+            <h2>{% blocktrans with section=page.section %}More in {{ section }}{% endblocktrans %}</h2>
+            <div class="info-page__related-grid">
+                {% for related in related_pages %}
+                    <a href="{% url 'footer_info' related.slug %}">{{ related.title }}</a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

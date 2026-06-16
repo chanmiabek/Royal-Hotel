@@ -141,6 +141,8 @@
                         <h2>{% trans "Hotel Partner Application" %}</h2>
                         <p class="section-intro">{% trans "Apply to list your hotel on our platform. Provide details for review and approval." %}</p>
 
+                        {% include 'includes/local_messages.html' %}
+
                         {% if application and application.status != 'PENDING' %}
                         <div class="alert alert-info">
                             {% trans "You already submitted an application." %}

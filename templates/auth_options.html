@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block extra_css %}
+<style>
+    body {
+        background: #ffffff;
+    }
+    #header,
+    #mobile-menu-panel,
+    .back-to-top {
+        display: none !important;
+    }
+    .auth-choice {
+        min-height: 100vh;
+        background:
+            linear-gradient(180deg, #f7f8fb 0, #ffffff 280px),
+            #ffffff;
+    }
+    .auth-choice__bar {
+        height: 86px;
+        background: #222222;
+    }
+    .auth-choice__bar-inner {
+        max-width: 1180px;
+        height: 100%;
+        margin: 0 auto;
+        padding: 0 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .auth-choice__brand {
+        color: #FFD700;
+        font-size: 22px;
+        font-weight: 900;
+    }
+    .auth-choice__brand:hover {
+        color: #ffffff;
+    }
+    .auth-choice__help {
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #FFD700;
+        border-radius: 50%;
+        color: #FFD700;
+        font-weight: 900;
+    }
+    .auth-choice__wrap {
+        max-width: 900px;
+        margin: 64px auto 0;
+        padding: 0 20px 48px;
+    }
+    .auth-choice__head {
+        max-width: 620px;
+        margin-bottom: 24px;
+    }
+    .auth-choice h1 {
+        color: #111111;
+        font-size: 32px;
+        line-height: 1.2;
+        font-weight: 900;
+        margin-bottom: 10px;
+    }
+    .auth-choice p {
+        color: #4b5563;
+        font-size: 16px;
+        line-height: 1.55;
+        margin: 0;
+    }
+    .auth-choice__grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+    }
+    .auth-choice__card {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-height: 260px;
+        padding: 24px;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        background: #ffffff;
+        color: #111111;
+        box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+    }
+    .auth-choice__card:hover {
+        border-color: #FFD700;
+        color: #111111;
+        transform: translateY(-1px);
+    }
+    .auth-choice__icon {
+        width: 48px;
+        height: 48px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: #FFD700;
+        color: #222222;
+        font-size: 22px;
+    }
+    .auth-choice__card h2 {
+        color: #111111;
+        font-size: 21px;
+        line-height: 1.25;
+        font-weight: 900;
+        margin: 0;
+    }
+    .auth-choice__card p {
+        flex: 1;
+        font-size: 14px;
+    }
+    .auth-choice__cta {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 46px;
+        border-radius: 4px;
+        background: #222222;
+        color: #FFD700;
+        font-weight: 900;
+    }
+    .auth-choice__card:hover .auth-choice__cta {
+        background: #FFD700;
+        color: #222222;
+    }
+    @media (max-width: 767px) {
+        .auth-choice__bar {
+            height: 72px;
+        }
+        .auth-choice__bar-inner {
+            padding: 0 18px;
+        }
+        .auth-choice__wrap {
+            margin-top: 40px;
+            padding: 0 16px 32px;
+        }
+        .auth-choice h1 {
+            font-size: 26px;
+        }
+        .auth-choice__grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="auth-choice">
+    <div class="auth-choice__bar">
+        <div class="auth-choice__bar-inner">
+            <a href="{% url 'index' %}" class="auth-choice__brand">Royal Hotel</a>
+            <a href="{% url 'contact' %}" class="auth-choice__help" aria-label="{% trans 'Help' %}">?</a>
+        </div>
+    </div>
+
+    <div class="auth-choice__wrap">
+        <div class="auth-choice__head">
+            {% if mode == 'register' %}
+                <h1>{% trans "Create the right account" %}</h1>
+                <p>{% trans "Choose a guest account for booking stays, or a partner account to list and manage hotel properties." %}</p>
+            {% else %}
+                <h1>{% trans "Sign in to the right place" %}</h1>
+                <p>{% trans "Choose guest access for bookings, or partner access for hotel listings, applications, and owner tools." %}</p>
+            {% endif %}
+        </div>
+
+        <div class="auth-choice__grid">
+            <a href="{% if mode == 'register' %}{% url 'register' %}{% else %}{% url 'login' %}{% endif %}" class="auth-choice__card">
+                <span class="auth-choice__icon"><i class="fa fa-user-o" aria-hidden="true"></i></span>
+                <h2>{% if mode == 'register' %}{% trans "Guest registration" %}{% else %}{% trans "Guest sign in" %}{% endif %}</h2>
+                <p>{% trans "Book rooms, manage reservations, view payments, and keep your travel details in one account." %}</p>
+                <span class="auth-choice__cta">{% if mode == 'register' %}{% trans "Create guest account" %}{% else %}{% trans "Continue as guest" %}{% endif %}</span>
+            </a>
+
+            <a href="{% if mode == 'register' %}{% url 'partner_register_email' %}{% else %}{% url 'partner_signin' %}{% endif %}" class="auth-choice__card">
+                <span class="auth-choice__icon"><i class="fa fa-building-o" aria-hidden="true"></i></span>
+                <h2>{% if mode == 'register' %}{% trans "Partner registration" %}{% else %}{% trans "Partner sign in" %}{% endif %}</h2>
+                <p>{% trans "List your property, complete partnership onboarding, manage hotels, and access owner dashboard tools." %}</p>
+                <span class="auth-choice__cta">{% if mode == 'register' %}{% trans "Create partner account" %}{% else %}{% trans "Continue as partner" %}{% endif %}</span>
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

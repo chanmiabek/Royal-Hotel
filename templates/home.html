@@ -1,337 +1,179 @@
 {% extends 'base.html' %}
 {% load static i18n booking_extras %}
 {% block extra_css %}
-<link href="{% static 'css/hotel-cards.css' %}" rel="stylesheet">
+<link href="{% static 'css/hotel-cards.css' %}?v=20260615-7" rel="stylesheet">
 {% endblock %}
 {% block content %}
-<!-- Header Slider Start -->
-<div id="headerSlider" class="carousel slide" data-ride="carousel">
-    <ol class="carousel-indicators">
-        <li data-target="#headerSlider" data-slide-to="0" class="active"></li>
-        <li data-target="#headerSlider" data-slide-to="1"></li>
-        <li data-target="#headerSlider" data-slide-to="2"></li>
-    </ol>
-    <div class="carousel-inner">
-        <div class="carousel-item active">
-            <img src="{% static 'img/slider/header-slider-1.jpg' %}" alt="Royal Hotel">
-            <div class="carousel-caption">
-                <h1 class="animated fadeInRight">{% trans "Welcome to Royal Hotel" %}</h1>
-            </div>
-        </div>
-        <div class="carousel-item">
-            <img src="{% static 'img/slider/header-slider-2.jpg' %}" alt="Royal Hotel">
-            <div class="carousel-caption">
-                <h1 class="animated fadeInLeft">{% trans "Luxury & Comfort" %}</h1>
-            </div>
-        </div>
-        <div class="carousel-item">
-            <img src="{% static 'img/slider/header-slider-3.jpg' %}" alt="Royal Hotel">
-            <div class="carousel-caption">
-                <h1 class="animated fadeInRight">{% trans "Your Perfect Stay" %}</h1>
-            </div>
-        </div>
+
+<section class="rh-home-hero">
+    <div class="rh-home-hero__media" aria-hidden="true">
+        <img src="{% static 'img/slider/header-slider-1.jpg' %}" alt="">
     </div>
-    <div class="carousel-search">
-        <div class="container">
-            <div class="search-card">
-                <form method="get" action="{% url 'search' %}">
-                    <div class="form-row">
-                        <div class="control-group col-md-3">
-                            <label>{% trans "Check-In" %}</label>
-                            <div class="form-group">
-                                <div class="input-group date" id="date-3" data-target-input="nearest">
-                                    <input type="text" class="form-control datetimepicker-input" name="check_in" data-target="#date-3"/>
-                                    <div class="input-group-append" data-target="#date-3" data-toggle="datetimepicker">
-                                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="control-group col-md-3">
-                            <label>{% trans "Check-Out" %}</label>
-                            <div class="form-group">
-                                <div class="input-group date" id="date-4" data-target-input="nearest">
-                                    <input type="text" class="form-control datetimepicker-input" name="check_out" data-target="#date-4"/>
-                                    <div class="input-group-append" data-target="#date-4" data-toggle="datetimepicker">
-                                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="control-group col-md-3">
-                            <div class="form-row">
-                                <div class="control-group col-md-6">
-                                    <label>{% trans "Adult" %}</label>
-                                    <select class="custom-select" name="adults">
-                                        <option selected value="0">0</option>
-                                        {% for i in "12345678910"|make_list %}
-                                        <option value="{{ forloop.counter }}">{{ forloop.counter }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="control-group col-md-6 kid">
-                                    <label>{% trans "Kid" %}</label>
-                                    <select class="custom-select" name="kids">
-                                        <option selected value="0">0</option>
-                                        {% for i in "12345678910"|make_list %}
-                                        <option value="{{ forloop.counter }}">{{ forloop.counter }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="control-group col-md-3">
-                            <label>{% trans "Hotel" %}</label>
-                            <select class="custom-select" name="hotel">
-                                <option value="">{% trans "All" %}</option>
-                                {% for hotel in hotels %}
-                                    <option value="{{ hotel.id }}">{{ hotel.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="control-group col-md-3">
-                            <label>{% trans "Search" %}</label>
-                            <input type="text" class="form-control" name="search" placeholder="{% trans 'Hotel or room' %}">
-                        </div>
-                        <div class="control-group col-md-3">
-                            <label>{% trans "Type" %}</label>
-                            <select class="custom-select" name="search_type">
-                                <option value="">{% trans "All" %}</option>
-                                <option value="hotel">{% trans "Hotels" %}</option>
-                                <option value="room">{% trans "Rooms" %}</option>
-                            </select>
-                        </div>
-                        <div class="control-group col-md-3">
-                            <button type="submit" class="btn btn-block">{% trans "Search" %}</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
+    <div class="rh-home-hero__shade"></div>
+    <div class="container rh-home-hero__inner">
+        <div class="rh-home-hero__copy">
+            <p class="rh-home-hero__eyebrow">{% trans "Royal Hotel Booking" %}</p>
+            <h1>{% trans "Find your next stay" %}</h1>
+            <p>{% trans "Search deals on hotels, rooms, and much more..." %}</p>
         </div>
+
+        <form method="get" action="{% url 'search' %}" class="rh-home-search">
+            <label class="rh-home-search__field rh-home-search__field--wide">
+                <i class="fa fa-bed" aria-hidden="true"></i>
+                <span class="sr-only">{% trans "Destination" %}</span>
+                <input type="text" name="search" placeholder="{% trans 'Where are you going?' %}">
+                <button type="button" class="rh-home-search__clear" aria-label="{% trans 'Clear destination' %}">
+                    <i class="fa fa-times" aria-hidden="true"></i>
+                </button>
+            </label>
+            <label class="rh-home-search__field rh-home-search__field--dates">
+                <i class="fa fa-calendar" aria-hidden="true"></i>
+                <span class="sr-only">{% trans "Check-In" %}</span>
+                <input type="text" class="datetimepicker-input" id="date-3" name="check_in" data-target="#date-3" placeholder="{% trans 'Check-in date' %}">
+                <span class="rh-home-search__dash" aria-hidden="true">-</span>
+                <span class="sr-only">{% trans "Check-Out" %}</span>
+                <input type="text" class="datetimepicker-input" id="date-4" name="check_out" data-target="#date-4" placeholder="{% trans 'Check-out date' %}">
+            </label>
+            <label class="rh-home-search__field">
+                <i class="fa fa-user-o" aria-hidden="true"></i>
+                <span class="sr-only">{% trans "Guests" %}</span>
+                <select name="adults">
+                    <option value="1">{% trans "1 adult · 0 children · 1 room" %}</option>
+                    <option value="2" selected>{% trans "2 adults · 0 children · 1 room" %}</option>
+                    <option value="3">{% trans "3 adults · 0 children · 1 room" %}</option>
+                    <option value="4">{% trans "4 adults · 0 children · 2 rooms" %}</option>
+                    <option value="5">{% trans "5 adults · 0 children · 2 rooms" %}</option>
+                    <option value="6">{% trans "6 adults · 0 children · 3 rooms" %}</option>
+                </select>
+            </label>
+            <input type="hidden" name="kids" value="0">
+            <input type="hidden" name="search_type" value="hotel">
+            <button type="submit">{% trans "Search" %}</button>
+        </form>
     </div>
-    <a class="carousel-control-prev" href="#headerSlider" role="button" data-slide="prev">
-        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-        <span class="sr-only">Previous</span>
-    </a>
-    <a class="carousel-control-next" href="#headerSlider" role="button" data-slide="next">
-        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-        <span class="sr-only">Next</span>
-    </a>
-</div>
-<!-- Header Slider End -->
+</section>
+
+<section class="rh-home-main">
+    <div class="container">
+        <div class="rh-home-section-title">
+            <h2>{% trans "Why Royal Hotel?" %}</h2>
+        </div>
+        <div class="rh-home-trust">
+            <article class="rh-home-trust__card">
+                <i class="fa fa-credit-card" aria-hidden="true"></i>
+                <h3>{% trans "Book now, pay at the property" %}</h3>
+                <p>{% trans "Clear booking details on available rooms." %}</p>
+            </article>
+            <article class="rh-home-trust__card">
+                <i class="fa fa-star" aria-hidden="true"></i>
+                <h3>
+                    {% if reviews_count %}{{ reviews_count }}+{% else %}New{% endif %}
+                    {% trans "guest reviews" %}
+                </h3>
+                <p>{% trans "Helpful ratings from travelers who booked stays." %}</p>
+            </article>
+            <article class="rh-home-trust__card">
+                <i class="fa fa-building-o" aria-hidden="true"></i>
+                <h3>{{ hotels_count }} {% trans "approved properties" %}</h3>
+                <p>{% trans "Hotels and rooms listed for easy browsing." %}</p>
+            </article>
+            <article class="rh-home-trust__card">
+                <i class="fa fa-headphones" aria-hidden="true"></i>
+                <h3>{% trans "Trusted customer support" %}</h3>
+                <p>{% trans "Reach the Royal Hotel team when your trip needs help." %}</p>
+            </article>
+        </div>
+
+        <div class="rh-home-section-title rh-home-section-title--offers">
+            <h2>{% trans "Offers" %}</h2>
+            <p>{% trans "Promotions, deals, and special offers for you" %}</p>
+        </div>
+        <section class="rh-home-offer">
+            <div class="rh-home-offer__copy">
+                <span>{% trans "Escape for less with Royal Hotel deals" %}</span>
+                <h2>{% trans "No catch. Just comfortable stays." %}</h2>
+                <p>
+                    {% if lowest_price %}
+                        {% trans "Rooms available from" %} KES {{ lowest_price|floatformat:0 }} {% trans "per night, with trusted hotel partners." %}
+                    {% else %}
+                        {% trans "Browse fresh hotel offers and choose a stay that fits your plans." %}
+                    {% endif %}
+                </p>
+                <a href="{% url 'hotel_list' %}" class="btn">{% trans "Explore stays" %}</a>
+            </div>
+            <img src="{% static 'img/slider/header-slider-2.jpg' %}" alt="{% trans 'Hotel stay offer' %}">
+        </section>
+
+    </div>
+</section>
 
 {% if home_hotels %}
-<!-- Hotels Section Start -->
-<section id="home-hotels" class="hotel-collection hotel-search mt-5 pt-4">
-    <div class="container-fluid">
-        <div class="hotel-search-layout">
-            <aside class="hotel-search-sidebar">
-                <div class="search-panel search-panel--map">
-                    <div class="search-map">
-                        <iframe
-                            title="{% trans 'Hotels map' %}"
-                            src="https://www.google.com/maps?q={{ map_query|urlencode }}&output=embed"
-                            loading="lazy"
-                            referrerpolicy="no-referrer-when-downgrade"
-                        ></iframe>
-                        <a
-                            class="search-map__btn btn btn-primary btn-sm"
-                            href="https://www.google.com/maps/search/?api=1&query={{ map_query|urlencode }}"
-                            target="_blank"
-                            rel="noopener"
-                        >
-                            <i class="fa fa-map-marker" aria-hidden="true"></i> {% trans "Show on map" %}
-                        </a>
+<section id="home-hotels" class="hotel-collection hotel-search rh-featured-stays">
+    <div class="container">
+        <div class="rh-featured-head">
+            <div>
+                <h2>{% trans "Featured stays" %}</h2>
+                <p>{{ hotels_count }} {% trans "approved properties ready for booking." %}</p>
+            </div>
+            <a href="{% url 'hotel_list' %}" class="btn">{% trans "View all hotels" %}</a>
+        </div>
+
+        <div class="rh-featured-grid">
+            {% for hotel in home_hotels %}
+            <article class="rh-featured-card">
+                <a href="{% url 'hotel_detail' hotel.id %}" class="rh-featured-card__media">
+                    {% if hotel.image %}
+                        <img src="{{ hotel.image.url }}" alt="{{ hotel.name }}">
+                    {% else %}
+                        <img src="{% static 'img/slider/header-slider-3.jpg' %}" alt="{{ hotel.name }}">
+                    {% endif %}
+                </a>
+                <div class="rh-featured-card__body">
+                    <div class="rh-featured-card__top">
+                        <a href="{% url 'hotel_detail' hotel.id %}" class="rh-featured-card__title">{{ hotel.name }}</a>
+                        {% if hotel.review_count %}
+                            <span class="rh-featured-card__score">{{ hotel.review_score|floatformat:1 }}</span>
+                        {% elif hotel.star_rating %}
+                            <span class="rh-featured-card__score">{{ hotel.star_rating|floatformat:1 }}</span>
+                        {% endif %}
                     </div>
-                </div>
-
-                <div class="search-panel mt-3">
-                    <div class="search-panel__body">
-                        <h5 class="mb-2">{% trans "Find your perfect stay" %}</h5>
-                        <form method="get" action="{% url 'hotel_list' %}">
-                            <div class="form-group">
-                                <label for="q">{% trans "Location" %}</label>
-                                <input id="q" type="text" name="q" class="form-control" placeholder="{% trans 'City, country, or hotel name' %}">
-                            </div>
-
-                            <div class="form-group">
-                                <label>{% trans "Your budget (per night)" %}</label>
-                                <div class="form-row">
-                                    <div class="col-6">
-                                        <input type="number" name="min_price" class="form-control" placeholder="{% trans 'Min' %}">
-                                    </div>
-                                    <div class="col-6">
-                                        <input type="number" name="max_price" class="form-control" placeholder="{% trans 'Max' %}">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-group mb-0">
-                                <label class="d-block">{% trans "Property rating" %}</label>
-                                {% for option in star_filter_options %}
-                                <div class="custom-control custom-checkbox mb-1">
-                                    <input
-                                        type="checkbox"
-                                        class="custom-control-input"
-                                        id="stars{{ option.stars }}"
-                                        name="stars"
-                                        value="{{ option.stars }}"
-                                    >
-                                    <label class="custom-control-label" for="stars{{ option.stars }}">
-                                        {{ option.stars }} {% trans "stars" %}
-                                        <span class="text-muted ml-2">
-                                            {{ option.count }}
-                                        </span>
-                                    </label>
-                                </div>
-                                {% endfor %}
-                            </div>
-
-                            <input type="hidden" name="sort" value="top">
-                            <input type="hidden" name="view" value="list">
-
-                            <button type="submit" class="btn btn-primary btn-block mt-3">{% trans "Search" %}</button>
-                        </form>
+                    <div class="rh-featured-card__meta">
+                        {% if hotel.city %}{{ hotel.city|trim }}{% if hotel.country %}, {{ hotel.country|trim }}{% endif %}{% elif hotel.country %}{{ hotel.country|trim }}{% else %}{% trans "Royal Hotel partner" %}{% endif %}
                     </div>
-                </div>
-            </aside>
-
-            <main class="hotel-search-results">
-                <div class="results-head">
-                    <div>
-                        <h2 class="results-title">{% trans "Our Hotels" %}: {{ hotels_count }} {% trans "properties found" %}</h2>
-                        <div class="results-subtitle">{% trans "Explore hotels recently added to Royal Hotel Booking." %}</div>
-                    </div>
-
-                    <div class="results-controls">
-                        <a href="{% url 'hotel_list' %}" class="btn btn-outline-secondary btn-sm">{% trans "View all" %}</a>
-                    </div>
-                </div>
-
-                <div class="results-list">
-                    {% for hotel in home_hotels %}
-                    <div class="result-card">
-                        <a href="{% url 'hotel_detail' hotel.id %}" class="result-card__image">
-                            {% if hotel.image %}
-                                <img src="{{ hotel.image.url }}" alt="{{ hotel.name }}">
-                            {% else %}
-                                <div class="result-card__image-fallback">
-                                    <i class="fa fa-building" aria-hidden="true"></i>
-                                </div>
+                    {% if hotel.star_rating %}
+                    <div class="rh-featured-card__stars" aria-label="{{ hotel.star_rating }} {% trans 'stars' %}">
+                        {% for i in "12345"|make_list %}
+                            {% if forloop.counter <= hotel.star_rating %}
+                                <i class="fa fa-star" aria-hidden="true"></i>
                             {% endif %}
-                            <span class="result-card__fav" aria-hidden="true">
-                                <i class="fa fa-heart-o" aria-hidden="true"></i>
-                            </span>
-                        </a>
-
-                        <div class="result-card__body">
-                            <div class="result-card__title-row">
-                                <a href="{% url 'hotel_detail' hotel.id %}" class="result-card__title">{{ hotel.name }}</a>
-                                {% if hotel.star_rating %}
-                                <span class="result-card__stars" aria-label="{{ hotel.star_rating }} {% trans 'stars' %}">
-                                    {% for i in "12345"|make_list %}
-                                        {% if forloop.counter <= hotel.star_rating %}
-                                            <i class="fa fa-star" aria-hidden="true"></i>
-                                        {% else %}
-                                            <i class="fa fa-star-o" aria-hidden="true"></i>
-                                        {% endif %}
-                                    {% endfor %}
-                                </span>
-                                {% endif %}
-                            </div>
-                            <div class="result-card__meta">
-                                {% if hotel.city %}
-                                    <a class="result-card__city" href="{% url 'hotel_list' %}?q={{ hotel.city|trim|urlencode }}&view=list&sort=top">{{ hotel.city|trim }}</a>{% if hotel.country %}<span class="text-muted">, {{ hotel.country|trim }}</span>{% endif %}
-                                {% elif hotel.country %}
-                                    <span class="text-muted">{{ hotel.country|trim }}</span>
-                                {% endif %}
-                                {% if hotel.address or hotel.city or hotel.country %}
-                                <span class="result-card__dot" aria-hidden="true">&bull;</span>
-                                {% with addr=hotel.address|default:''|trim city=hotel.city|default:''|trim country=hotel.country|default:''|trim %}
-                                {% with hotel_map_query=addr|add:' '|add:city|add:' '|add:country %}
-                                <a href="https://www.google.com/maps/search/?api=1&query={{ hotel_map_query|urlencode }}" target="_blank" rel="noopener">
-                                    {% trans "Show on map" %}
-                                </a>
-                                {% endwith %}
-                                {% endwith %}
-                                {% endif %}
-                            </div>
-
-                            {% if hotel.description %}
-                                <div class="result-card__desc">{{ hotel.description|truncatewords:26 }}</div>
-                            {% endif %}
-                        </div>
-
-                        <div class="result-card__aside">
-                            <div class="result-card__rating">
-                                {% if hotel.review_count %}
-                                    <div class="result-card__rating-text">
-                                        <div class="result-card__rating-label">
-                                            {% if hotel.review_score >= 9 %}
-                                                {% trans "Exceptional" %}
-                                            {% elif hotel.review_score >= 8 %}
-                                                {% trans "Excellent" %}
-                                            {% elif hotel.review_score >= 7 %}
-                                                {% trans "Very Good" %}
-                                            {% elif hotel.review_score >= 6 %}
-                                                {% trans "Good" %}
-                                            {% else %}
-                                                {% trans "Pleasant" %}
-                                            {% endif %}
-                                        </div>
-                                        <div class="result-card__rating-sub">{{ hotel.review_count }} {% trans "reviews" %}</div>
-                                    </div>
-                                    <div class="result-card__rating-score">{{ hotel.review_score|floatformat:1 }}</div>
-                                {% elif hotel.star_rating %}
-                                    <div class="result-card__rating-text">
-                                        <div class="result-card__rating-label">
-                                            {% if hotel.star_rating >= 5 %}
-                                                {% trans "Excellent" %}
-                                            {% elif hotel.star_rating >= 4 %}
-                                                {% trans "Very Good" %}
-                                            {% elif hotel.star_rating >= 3 %}
-                                                {% trans "Good" %}
-                                            {% else %}
-                                                {% trans "Rating" %}
-                                            {% endif %}
-                                        </div>
-                                        <div class="result-card__rating-sub">{{ hotel.star_rating }}/5 {% trans "stars" %}</div>
-                                    </div>
-                                    <div class="result-card__rating-score">{{ hotel.star_rating|floatformat:1 }}</div>
-                                {% else %}
-                                    <div class="result-card__rating-text">
-                                        <div class="result-card__rating-label">{% trans "New" %}</div>
-                                        <div class="result-card__rating-sub">{% trans "No reviews yet" %}</div>
-                                    </div>
-                                    <div class="result-card__rating-score">--</div>
-                                {% endif %}
-                            </div>
-                            <a href="{% url 'hotel_detail' hotel.id %}" class="btn btn-primary result-card__cta">
-                                {% trans "See availability" %} <i class="fa fa-chevron-right" aria-hidden="true"></i>
-                            </a>
-                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
+                    {% endif %}
+                    {% if hotel.description %}
+                        <p>{{ hotel.description|truncatewords:18 }}</p>
+                    {% endif %}
+                    <div class="rh-featured-card__foot">
+                        {% if hotel.starting_price %}
+                            <span>{% trans "From" %} <strong>KES {{ hotel.starting_price|floatformat:0 }}</strong></span>
+                        {% else %}
+                            <span>{% trans "Check latest availability" %}</span>
+                        {% endif %}
+                        <a href="{% url 'hotel_detail' hotel.id %}">{% trans "See availability" %}</a>
+                    </div>
                 </div>
-
-                <div class="text-center mt-4">
-                    <a href="{% url 'hotel_list' %}" class="btn btn-outline-primary">{% trans "View All Hotels" %}</a>
-                </div>
-            </main>
+            </article>
+            {% endfor %}
         </div>
     </div>
 </section>
-<!-- Hotels Section End -->
 {% endif %}
 
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Initialize date pickers
     $(function () {
-        $('#date-3, #date-4, #date-1, #date-2').datetimepicker({
-            format: 'L',
+        $('#date-3, #date-4').datetimepicker({
             format: 'MM/DD/YYYY'
         });
     });

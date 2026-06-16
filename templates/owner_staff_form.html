@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block extra_css %}
+<style>
+    .staff-app { min-height: 100vh; background: #f6f7fb; color: #111827; padding: 28px; }
+    .staff-shell { max-width: 920px; margin: 0 auto; }
+    .staff-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    .staff-header h1 { margin: 0; font-size: 28px; color: #111827; }
+    .staff-header p { margin: 5px 0 0; color: #64748b; font-weight: 700; }
+    .staff-card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 22px; box-shadow: 0 18px 40px rgba(15, 23, 42, .08); }
+    .staff-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .staff-field { display: grid; gap: 7px; }
+    .staff-field label { color: #111827; font-weight: 900; }
+    .staff-field input, .staff-field select { width: 100%; border: 1px solid #d1d5db; border-radius: 10px; padding: 12px 13px; color: #111827; background: #ffffff; }
+    .staff-field--full { grid-column: 1 / -1; }
+    .staff-permissions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 6px; }
+    .staff-check { display: flex; align-items: center; gap: 10px; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; font-weight: 800; }
+    .staff-check input { width: auto; }
+    .staff-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+    .staff-btn { display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 10px; padding: 11px 16px; font-weight: 900; background: #FFD700; color: #111827; }
+    .staff-btn--light { background: #ffffff; border: 1px solid #e5e7eb; color: #111827; }
+    @media (max-width: 720px) {
+        .staff-app { padding: 18px; }
+        .staff-header { align-items: flex-start; flex-direction: column; }
+        .staff-grid, .staff-permissions { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="staff-app">
+    <div class="staff-shell">
+        <div class="staff-header">
+            <div>
+                <h1>{% if staff_member %}{% trans "Edit Team Account" %}{% else %}{% trans "Add Team Account" %}{% endif %}</h1>
+                <p>{{ hotel.name }} - {% trans "create owners, managers, staff, and management access" %}</p>
+            </div>
+            <a class="staff-btn staff-btn--light" href="{% url 'owner_team' %}"><i class="fa fa-arrow-left"></i>{% trans "Back" %}</a>
+        </div>
+
+        {% include 'includes/local_messages.html' %}
+
+        <form class="staff-card" method="post">
+            {% csrf_token %}
+            <div class="staff-grid">
+                <div class="staff-field">
+                    <label>{% trans "Full name" %}</label>
+                    <input type="text" name="full_name" value="{{ form_values.full_name }}" required>
+                </div>
+                <div class="staff-field">
+                    <label>{% trans "Email login" %}</label>
+                    <input type="email" name="email" value="{{ form_values.email }}" required>
+                </div>
+                <div class="staff-field">
+                    <label>{% if staff_member %}{% trans "New password" %}{% else %}{% trans "Password" %}{% endif %}</label>
+                    <input type="password" name="password" {% if not staff_member %}required{% endif %}>
+                </div>
+                <div class="staff-field">
+                    <label>{% trans "Phone" %}</label>
+                    <input type="text" name="phone" value="{{ form_values.phone }}">
+                </div>
+                <div class="staff-field">
+                    <label>{% trans "Role" %}</label>
+                    <select name="role">
+                        {% for value, label in role_choices %}
+                        <option value="{{ value }}" {% if form_values.role == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="staff-field">
+                    <label>{% trans "Job title" %}</label>
+                    <input type="text" name="job_title" value="{{ form_values.job_title }}">
+                </div>
+                <div class="staff-field staff-field--full">
+                    <label>{% trans "Management permissions" %}</label>
+                    <div class="staff-permissions">
+                        <label class="staff-check"><input type="checkbox" name="can_manage_rooms" {% if form_values.can_manage_rooms %}checked{% endif %}>{% trans "Manage rooms" %}</label>
+                        <label class="staff-check"><input type="checkbox" name="can_manage_bookings" {% if form_values.can_manage_bookings %}checked{% endif %}>{% trans "Manage bookings" %}</label>
+                        <label class="staff-check"><input type="checkbox" name="can_manage_payments" {% if form_values.can_manage_payments %}checked{% endif %}>{% trans "Manage payments" %}</label>
+                        <label class="staff-check"><input type="checkbox" name="can_manage_staff" {% if form_values.can_manage_staff %}checked{% endif %}>{% trans "Manage staff" %}</label>
+                        <label class="staff-check"><input type="checkbox" name="is_active" {% if form_values.is_active %}checked{% endif %}>{% trans "Active account" %}</label>
+                    </div>
+                </div>
+            </div>
+            <div class="staff-actions">
+                <a class="staff-btn staff-btn--light" href="{% url 'owner_team' %}">{% trans "Cancel" %}</a>
+                <button class="staff-btn" type="submit">{% if staff_member %}{% trans "Save Account" %}{% else %}{% trans "Create Account" %}{% endif %}</button>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

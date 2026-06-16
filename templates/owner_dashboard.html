@@ -2,438 +2,1317 @@
 {% load i18n %}
 {% block extra_css %}
 <style>
-    .owner-shell {
+    .hm-app {
         min-height: 100vh;
-        padding: 36px 0 48px;
-        background: linear-gradient(135deg, #f8f1d1 0%, #ffffff 42%, #eef2f7 100%);
+        background: #f6f7fb;
+        color: #111827;
+        overflow-x: hidden;
     }
-    .owner-topbar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        flex-wrap: wrap;
-        margin-bottom: 24px;
+    .hm-layout {
+        display: grid;
+        grid-template-columns: 84px minmax(0, 1fr);
+        min-height: 100vh;
     }
-    .owner-home-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 18px;
-        border-radius: 999px;
+    .hm-sidebar {
         background: #111827;
-        color: #FFD700;
-        font-weight: 700;
-        text-decoration: none;
-    }
-    .owner-home-link:hover {
         color: #ffffff;
-    }
-    .owner-top-actions {
+        padding: 18px 12px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 84px;
+        height: 100vh;
+        max-height: 100dvh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        overscroll-behavior: contain;
         display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
+        flex-direction: column;
+        z-index: 1040;
+        transition: width .22s ease, box-shadow .22s ease;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255,255,255,.28) transparent;
     }
-    .owner-top-actions .btn {
+    .hm-sidebar:hover,
+    .hm-sidebar:focus-within {
+        width: 280px;
+        box-shadow: 18px 0 40px rgba(15, 23, 42, .22);
+    }
+    .hm-sidebar::-webkit-scrollbar {
+        width: 7px;
+    }
+    .hm-sidebar::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,.28);
         border-radius: 999px;
-        font-weight: 700;
-        padding: 10px 18px;
     }
-    .owner-hero {
-        background: linear-gradient(120deg, #111827 0%, #1f2937 55%, #4b3200 100%);
-        border-radius: 26px;
-        color: #fff8e7;
-        padding: 28px;
-        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.24);
-        margin-bottom: 24px;
-        display: grid;
-        grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
-        gap: 24px;
-    }
-    .owner-chip {
-        display: inline-flex;
+    .hm-brand {
+        display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 6px 14px;
-        border-radius: 999px;
-        background: rgba(255, 215, 0, 0.18);
-        color: #ffdf7a;
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
+        gap: 12px;
+        color: #FFD700;
+        font-size: 20px;
+        font-weight: 900;
+        margin-bottom: 4px;
+        min-height: 48px;
+        padding: 0 6px;
+        white-space: nowrap;
     }
-    .owner-title {
-        font-size: 32px;
-        font-weight: 800;
-        margin: 14px 0 8px;
+    .hm-brand > span,
+    .hm-owner-card,
+    .hm-nav-label {
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity .16s ease, visibility .16s ease;
     }
-    .owner-subtitle {
-        margin: 0 0 16px;
-        color: rgba(255, 248, 231, 0.82);
-        max-width: 640px;
+    .hm-owner-card {
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        margin-top: 0;
+        margin-bottom: 12px;
+        overflow: hidden;
+        transition: opacity .16s ease, visibility .16s ease, max-height .22s ease, padding .22s ease, margin .22s ease;
     }
-    .owner-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 16px;
-        color: rgba(255, 248, 231, 0.78);
-        font-size: 14px;
+    .hm-sidebar:hover .hm-brand > span,
+    .hm-sidebar:focus-within .hm-brand > span,
+    .hm-sidebar:hover .hm-owner-card,
+    .hm-sidebar:focus-within .hm-owner-card,
+    .hm-sidebar:hover .hm-nav-label,
+    .hm-sidebar:focus-within .hm-nav-label {
+        opacity: 1;
+        visibility: visible;
     }
-    .owner-hero-stats {
-        display: grid;
-        gap: 14px;
+    .hm-sidebar:hover .hm-owner-card,
+    .hm-sidebar:focus-within .hm-owner-card {
+        max-height: 220px;
+        padding-top: 16px;
+        padding-bottom: 16px;
+        margin-top: 22px;
+        margin-bottom: 20px;
     }
-    .owner-hero-stat {
-        border-radius: 18px;
-        padding: 16px;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    .owner-hero-stat span {
+    .hm-brand small {
         display: block;
-        margin-bottom: 6px;
-        font-size: 12px;
-        font-weight: 700;
+        color: rgba(255,255,255,.55);
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: .12em;
         text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: rgba(255, 248, 231, 0.72);
     }
-    .owner-hero-stat strong {
-        font-size: 26px;
+    .hm-brand:hover {
         color: #ffffff;
     }
-    .owner-grid {
-        display: grid;
-        grid-template-columns: 290px minmax(0, 1fr);
-        gap: 24px;
+    .hm-owner-card {
+        border-radius: 16px;
+        background: rgba(255,255,255,.08);
+        min-width: 244px;
     }
-    .owner-sidebar,
-    .owner-panel {
-        background: #ffffff;
-        border-radius: 22px;
-        box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
-    }
-    .owner-sidebar {
-        padding: 22px;
-        height: fit-content;
-        position: sticky;
-        top: 24px;
-    }
-    .owner-avatar {
-        width: 76px;
-        height: 76px;
-        border-radius: 20px;
+    .hm-owner-card__icon {
+        width: 48px;
+        height: 48px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        background: #fff8dc;
-        color: #b8860b;
-        font-size: 30px;
-        margin-bottom: 14px;
-    }
-    .owner-sidebar h4 {
-        margin-bottom: 6px;
+        border-radius: 14px;
+        background: #FFD700;
         color: #111827;
+        font-size: 20px;
+        margin-bottom: 12px;
     }
-    .owner-sidebar p {
-        color: #64748b;
-        margin-bottom: 18px;
+    .hm-owner-card h3 {
+        color: #ffffff;
+        font-size: 16px;
+        margin-bottom: 5px;
     }
-    .owner-nav {
+    .hm-owner-card p {
+        color: rgba(255,255,255,.68);
+        font-size: 12px;
+        line-height: 1.45;
+        margin: 0;
+    }
+    .hm-nav {
         display: grid;
-        gap: 10px;
+        gap: 8px;
     }
-    .owner-nav a {
+    .hm-nav a {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        min-height: 44px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        color: rgba(255,255,255,.76);
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .hm-nav a i {
+        width: 28px;
+        min-width: 28px;
+        text-align: center;
+        font-size: 18px;
+    }
+    .hm-nav a:hover,
+    .hm-nav a.active {
+        color: #111827;
+        background: #FFD700;
+    }
+    .hm-nav-spacer {
+        flex: 1;
+        min-height: 20px;
+    }
+    .hm-main {
+        padding: 26px;
+        min-width: 0;
+        grid-column: 2;
+        width: 100%;
+    }
+    .hm-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        margin: -26px -26px 20px;
+        padding: 18px 26px;
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        background: rgba(246, 247, 251, .96);
+        border-bottom: 1px solid #e5e7eb;
+        backdrop-filter: blur(10px);
+    }
+    .hm-page-kicker {
+        color: #64748b;
+        font-size: 13px;
+        font-weight: 800;
+        margin: 0 0 3px;
+    }
+    .hm-topbar h1 {
+        color: #111827;
+        font-size: 28px;
+        line-height: 1.2;
+        margin-bottom: 5px;
+    }
+    .hm-topbar p {
+        color: #64748b;
+        margin: 0;
+    }
+    .hm-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        min-width: 0;
+    }
+    .hm-search {
+        position: relative;
+        min-width: 280px;
+        flex: 1 1 280px;
+    }
+    .hm-search input {
+        width: 100%;
+        min-height: 44px;
+        padding: 10px 52px 10px 38px;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        background: #ffffff;
+        color: #111827;
+        font-weight: 700;
+    }
+    .hm-search i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #64748b;
+    }
+    .hm-search kbd {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 4px 7px;
+        border-radius: 8px;
+        background: #f3f4f6;
+        color: #64748b;
+        font-size: 11px;
+        box-shadow: none;
+    }
+    .hm-profile-pill {
         display: flex;
         align-items: center;
         gap: 10px;
-        padding: 12px 14px;
+        padding: 8px 10px;
         border: 1px solid #e5e7eb;
         border-radius: 16px;
         background: #ffffff;
         color: #111827;
-        font-weight: 600;
-        text-decoration: none;
+        cursor: pointer;
+        width: 100%;
+        text-align: left;
     }
-    .owner-nav a:hover {
-        background: #fff8dc;
-        border-color: rgba(255, 215, 0, 0.5);
+    .hm-profile-menu-wrap {
+        position: relative;
+        min-width: 210px;
+        flex: 0 1 260px;
     }
-    .owner-main {
-        display: grid;
-        gap: 24px;
+    .hm-avatar {
+        width: 40px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: #111827;
+        color: #FFD700;
+        font-weight: 900;
+        overflow: hidden;
+        flex: 0 0 auto;
     }
-    .owner-panel {
-        padding: 24px;
+    .hm-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
-    .owner-panel h4 {
-        margin-bottom: 18px;
-        color: #111827;
-        font-size: 20px;
-    }
-    .owner-overview {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 14px;
-    }
-    .owner-overview-card {
-        padding: 18px;
-        border-radius: 18px;
-        background: #f8fafc;
-        border: 1px solid #e5e7eb;
-    }
-    .owner-overview-card span {
+    .hm-profile-pill strong {
         display: block;
-        margin-bottom: 8px;
+        color: #111827;
+        line-height: 1.1;
+    }
+    .hm-profile-pill span {
+        color: #64748b;
         font-size: 12px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
+    }
+    .hm-profile-caret {
+        margin-left: auto;
         color: #64748b;
     }
-    .owner-overview-card strong {
-        color: #111827;
-        font-size: 20px;
+    .hm-profile-menu {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        width: 280px;
+        padding: 10px;
+        border-radius: 14px;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, .16);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-6px);
+        transition: opacity .16s ease, visibility .16s ease, transform .16s ease;
+        z-index: 40;
     }
-    .owner-hotel-image {
-        border-radius: 16px;
-        max-height: 220px;
-        object-fit: cover;
+    .hm-profile-menu-wrap:hover .hm-profile-menu,
+    .hm-profile-menu-wrap:focus-within .hm-profile-menu {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+    .hm-profile-menu__head {
+        padding: 10px;
+        border-bottom: 1px solid #edf0f4;
+        margin-bottom: 8px;
+    }
+    .hm-profile-menu__head strong {
+        display: block;
+        color: #111827;
+    }
+    .hm-profile-menu__head span {
+        color: #64748b;
+        font-size: 12px;
+    }
+    .hm-profile-menu a,
+    .hm-profile-menu label,
+    .hm-profile-menu button {
         width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 40px;
+        padding: 9px 10px;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        color: #111827;
+        font-weight: 800;
+        cursor: pointer;
+    }
+    .hm-profile-menu a:hover,
+    .hm-profile-menu label:hover,
+    .hm-profile-menu button:hover {
+        background: #fff8d6;
+    }
+    .hm-profile-upload input {
+        display: none;
+    }
+    .hm-btn {
+        min-height: 42px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 14px;
+        border-radius: 10px;
+        background: #111827;
+        color: #FFD700;
+        font-weight: 900;
+        border: 1px solid #111827;
+    }
+    .hm-btn:hover {
+        color: #111827;
+        background: #FFD700;
+        border-color: #FFD700;
+    }
+    .hm-btn--light {
+        background: #ffffff;
+        color: #111827;
+        border-color: #e5e7eb;
+    }
+    .hm-welcome {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 18px;
+    }
+    .hm-welcome h2 {
+        color: #111827;
+        font-size: 30px;
+        line-height: 1.15;
+        margin-bottom: 6px;
+    }
+    .hm-welcome p {
+        color: #64748b;
+        margin: 0;
+    }
+    .hm-hero-card,
+    .hm-card,
+    .hm-kpi {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+    }
+    .hm-hero-card {
+        padding: 24px;
+        background: linear-gradient(135deg, #111827 0%, #1f2937 58%, #4d4100 100%);
+        color: #ffffff;
+    }
+    .hm-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(255,215,0,.16);
+        color: #FFD700;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        margin-bottom: 18px;
+    }
+    .hm-hero-card h2 {
+        color: #ffffff;
+        font-size: 26px;
+        margin-bottom: 8px;
+    }
+    .hm-hero-card p,
+    .hm-hero-meta {
+        color: rgba(255,255,255,.72);
+    }
+    .hm-hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-top: 16px;
+        font-size: 13px;
+    }
+    .hm-score {
+        padding: 22px;
+        display: grid;
+        gap: 14px;
+    }
+    .hm-score-item span {
+        display: block;
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        margin-bottom: 6px;
+    }
+    .hm-score-item strong {
+        color: #111827;
+        font-size: 26px;
+    }
+    .hm-kpis {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 16px;
+        margin-bottom: 18px;
+    }
+    .hm-kpi {
+        padding: 18px;
+        min-height: 140px;
+    }
+    .hm-kpi__top {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    .hm-kpi__icon {
+        width: 42px;
+        height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        background: #fff8d6;
+        color: #111827;
+        margin-bottom: 16px;
+    }
+    .hm-kpi span {
+        display: block;
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        margin-bottom: 5px;
+    }
+    .hm-kpi strong {
+        color: #111827;
+        font-size: 24px;
+    }
+    .hm-trend {
+        color: #16a34a;
+        font-size: 12px;
+        font-weight: 900;
+    }
+    .hm-trend--down {
+        color: #dc2626;
+    }
+    .hm-chart {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        align-items: end;
+        gap: 12px;
+        height: 210px;
+        padding-top: 18px;
+    }
+    .hm-bar {
+        display: grid;
+        align-items: end;
+        gap: 8px;
+        height: 100%;
+        color: #64748b;
+        text-align: center;
+        font-size: 12px;
+        font-weight: 800;
+    }
+    .hm-bar span {
+        display: block;
+        width: 100%;
+        min-height: 24px;
+        border-radius: 999px 999px 8px 8px;
+        background: linear-gradient(180deg, #FFD700, #b39400);
+    }
+    .hm-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 360px;
+        gap: 18px;
+    }
+    .hm-card {
+        overflow: hidden;
+        margin-bottom: 18px;
+        min-width: 0;
+    }
+    .hm-card__head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 18px 18px 0;
+        margin-bottom: 12px;
+    }
+    .hm-card__head h3 {
+        color: #111827;
+        font-size: 18px;
+        margin: 0;
+    }
+    .hm-card__body {
+        padding: 0 18px 18px;
+    }
+    .hm-room-list {
+        display: grid;
+        gap: 10px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    .hm-room-list li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid #edf0f4;
+        background: #fafafa;
+        min-width: 0;
+    }
+    .hm-room-list strong {
+        color: #111827;
+    }
+    .hm-room-list span {
+        color: #64748b;
+        font-size: 12px;
+    }
+    .hm-badge {
+        padding: 6px 9px;
+        border-radius: 999px;
+        background: #111827;
+        color: #FFD700;
+        font-size: 12px;
+        font-weight: 900;
+        white-space: nowrap;
+        max-width: 100%;
+    }
+    .hm-table {
+        margin: 0;
+        min-width: 680px;
+    }
+    .hm-table th {
+        border-top: 0;
+        color: #64748b;
+        font-size: 12px;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+    }
+    .hm-table td {
+        color: #111827;
+        vertical-align: middle;
+    }
+    .hm-profile-img {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+        border-radius: 14px;
+        margin-bottom: 14px;
+        background: #edf0f4;
+    }
+    .hm-upload .btn {
+        border-radius: 10px;
+        background: #111827;
+        color: #FFD700;
+        font-weight: 800;
+    }
+    .local-messages {
+        margin: 0 0 18px;
+    }
+    .local-messages .alert {
+        border-radius: 14px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 14px 26px rgba(15, 23, 42, .08);
+    }
+    [data-animate] {
+        opacity: 0;
+        transform: translateY(18px);
+        transition: opacity .55s ease, transform .55s ease;
+        transition-delay: var(--delay, 0ms);
+    }
+    [data-animate].is-visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    [data-animate="slide-left"] {
+        transform: translateX(22px);
+    }
+    [data-animate="slide-right"] {
+        transform: translateX(-22px);
+    }
+    [data-animate="slide-left"].is-visible,
+    [data-animate="slide-right"].is-visible {
+        transform: translateX(0);
+    }
+    .hm-action-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 12px;
+    }
+    .hm-action-feedback .local-messages {
         margin-bottom: 14px;
     }
-    .owner-upload .btn,
-    .owner-panel .btn {
-        border-radius: 999px;
-        font-weight: 700;
+    .hm-action-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 14px;
+        border: 1px solid #edf0f4;
+        border-radius: 14px;
+        background: #fafafa;
+        color: #111827;
+        min-width: 0;
     }
-    .owner-table-wrap {
-        overflow-x: auto;
+    .hm-action-card:hover {
+        border-color: #FFD700;
+        box-shadow: 0 14px 26px rgba(15, 23, 42, .08);
+        transform: translateY(-2px);
     }
-    .owner-table-wrap table {
+    .hm-action-card__icon {
+        width: 42px;
+        height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 13px;
+        background: #111827;
+        color: #FFD700;
+        flex: 0 0 auto;
+    }
+    .hm-action-card strong {
+        display: block;
+        color: #111827;
+        font-size: 24px;
+        line-height: 1;
+        margin-bottom: 5px;
+    }
+    .hm-action-card span {
+        display: block;
+        color: #111827;
+        font-weight: 900;
+    }
+    .hm-action-card p {
+        color: #64748b;
+        font-size: 12px;
+        line-height: 1.45;
+        margin: 4px 0 0;
+    }
+    .hm-ops-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+    }
+    .hm-op {
+        padding: 13px;
+        border-radius: 12px;
+        background: #fafafa;
+        border: 1px solid #edf0f4;
+    }
+    .hm-op span {
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+    }
+    .hm-op strong {
+        display: block;
+        color: #111827;
+        font-size: 24px;
+        margin-top: 4px;
+    }
+    .hm-quick-links {
+        display: grid;
+        gap: 9px;
+    }
+    .hm-quick-links a {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 42px;
+        padding: 10px 12px;
+        border-radius: 11px;
+        background: #fafafa;
+        border: 1px solid #edf0f4;
+        color: #111827;
+        font-weight: 900;
+        min-width: 0;
+    }
+    .hm-quick-links a:hover {
+        border-color: #FFD700;
+        background: #fff8d6;
+    }
+    .hm-settings-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+    .hm-settings-grid .form-group {
         margin-bottom: 0;
     }
-    @media (max-width: 1199px) {
-        .owner-overview {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+    .hm-settings-grid .form-control {
+        min-height: 44px;
+        border-radius: 12px;
+        border-color: #dbe2ea;
+        box-shadow: none;
+    }
+    .hm-settings-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+    }
+    .hm-settings-actions .hm-btn {
+        border: 0;
+    }
+    .hm-settings-actions form {
+        margin: 0;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        [data-animate],
+        [data-animate].is-visible,
+        .hm-action-card {
+            opacity: 1;
+            transform: none;
+            transition: none;
         }
     }
-    @media (max-width: 991px) {
-        .owner-hero,
-        .owner-grid {
+    @media (max-width: 1199px) {
+        .hm-layout {
             grid-template-columns: 1fr;
         }
-        .owner-sidebar {
+        .hm-sidebar {
+            position: sticky;
+            top: 0;
+            left: auto;
+            width: 100%;
+            height: auto;
+            max-height: none;
+            padding: 16px;
+            border-bottom: 1px solid rgba(255,255,255,.12);
+            box-shadow: none;
+            overflow-x: auto;
+        }
+        .hm-sidebar:hover,
+        .hm-sidebar:focus-within {
+            width: 100%;
+            box-shadow: none;
+        }
+        .hm-brand > span,
+        .hm-nav-label {
+            opacity: 1;
+            visibility: visible;
+        }
+        .hm-brand {
+            margin-bottom: 12px;
+        }
+        .hm-owner-card {
+            display: none;
+        }
+        .hm-nav {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,.28) transparent;
+        }
+        .hm-nav a {
+            flex: 0 0 auto;
+            min-height: 40px;
+            white-space: nowrap;
+        }
+        .hm-nav-spacer,
+        .hm-sidebar > .hm-nav:last-child {
+            display: none;
+        }
+        .hm-main {
+            grid-column: 1;
+        }
+        .hm-topbar {
+            align-items: flex-start;
+        }
+        .hm-actions {
+            flex: 1 1 360px;
+        }
+        .hm-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+    @media (max-width: 767px) {
+        .hm-main {
+            padding: 18px 14px;
+        }
+        .hm-topbar,
+        .hm-welcome,
+        .hm-grid {
+            grid-template-columns: 1fr;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .hm-topbar {
+            margin: -18px -14px 18px;
+            padding: 14px;
             position: static;
         }
-    }
-    @media (max-width: 575px) {
-        .owner-shell {
-            padding: 24px 0 36px;
-        }
-        .owner-hero,
-        .owner-sidebar,
-        .owner-panel {
-            padding: 20px;
-        }
-        .owner-title {
-            font-size: 28px;
-        }
-        .owner-overview {
+        .hm-kpis {
             grid-template-columns: 1fr;
+        }
+        .hm-sidebar {
+            padding: 14px 12px;
+        }
+        .hm-brand {
+            font-size: 18px;
+        }
+        .hm-nav a {
+            border-radius: 999px;
+            min-height: 38px;
+            padding: 9px 12px;
+            font-size: 13px;
+        }
+        .hm-actions {
+            justify-content: flex-start;
+            width: 100%;
+        }
+        .hm-search,
+        .hm-profile-menu-wrap,
+        .hm-profile-pill {
+            min-width: 0;
+            width: 100%;
+        }
+        .hm-profile-menu {
+            left: 0;
+            right: auto;
+            width: min(100%, 320px);
+        }
+        .hm-welcome h2 {
+            font-size: 24px;
+        }
+        .hm-kpi {
+            min-height: auto;
+        }
+        .hm-chart {
+            gap: 8px;
+            height: 170px;
+        }
+        .hm-room-list li {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+        .hm-badge {
+            white-space: normal;
+        }
+        .hm-ops-grid {
+            grid-template-columns: 1fr;
+        }
+        .hm-settings-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    @media (max-width: 420px) {
+        .hm-main {
+            padding: 14px 10px;
+        }
+        .hm-topbar {
+            margin: -14px -10px 16px;
+            padding: 12px 10px;
+        }
+        .hm-topbar h1,
+        .hm-welcome h2 {
+            font-size: 22px;
+        }
+        .hm-sidebar {
+            padding: 12px 10px;
+        }
+        .hm-nav a {
+            min-height: 36px;
+            padding: 8px 10px;
+        }
+        .hm-card__head,
+        .hm-card__body {
+            padding-left: 14px;
+            padding-right: 14px;
+        }
+        .hm-action-grid {
+            grid-template-columns: 1fr;
+        }
+        .hm-chart {
+            gap: 6px;
         }
     }
 </style>
 {% endblock %}
 {% block content %}
-<section class="owner-shell">
-    <div class="container">
-        <div class="owner-topbar">
-            <a class="owner-home-link" href="{% url 'index' %}">
-                <i class="fa fa-home" aria-hidden="true"></i>
-                {% trans "Back to Home" %}
+<section class="hm-app">
+    <div class="hm-layout">
+        <aside class="hm-sidebar">
+            <a href="{% url 'index' %}" class="hm-brand">
+                <i class="fa fa-building"></i>
+                <span>Royal Hotel<small>{% trans "Hotel Management" %}</small></span>
             </a>
-            <div class="owner-top-actions">
-                <a href="{% url 'owner_add_room' %}" class="btn btn-dark">{% trans "Add New Room" %}</a>
-                {% if hotel %}
-                <a href="{% url 'hotel_detail' hotel.id %}" class="btn btn-outline-dark">{% trans "View Public Listing" %}</a>
-                {% endif %}
+            <div class="hm-owner-card">
+                <span class="hm-owner-card__icon"><i class="fa fa-user"></i></span>
+                <h3>{{ request.user.first_name|default:request.user.username }}</h3>
+                <p>{% if hotel %}{{ hotel.name }} - {{ total_hotels }} {% trans "properties" %}{% else %}{% trans "Hotel owner workspace" %}{% endif %}</p>
             </div>
-        </div>
+            <nav class="hm-nav">
+                <a class="active" href="{% url 'owner_dashboard' %}"><i class="fa fa-dashboard"></i><span class="hm-nav-label">{% trans "Dashboard" %}</span></a>
+                <a href="#hotel-profile"><i class="fa fa-building-o"></i><span class="hm-nav-label">{% trans "Hotels" %}</span></a>
+                <a href="{% url 'owner_add_room' %}"><i class="fa fa-bed"></i><span class="hm-nav-label">{% trans "Rooms" %}</span></a>
+                <a href="#recent-bookings"><i class="fa fa-calendar-check-o"></i><span class="hm-nav-label">{% trans "Bookings" %}</span></a>
+                <a href="#recent-bookings"><i class="fa fa-users"></i><span class="hm-nav-label">{% trans "Guests" %}</span></a>
+                <a href="/owner/team/"><i class="fa fa-id-badge"></i><span class="hm-nav-label">{% trans "Team" %}</span></a>
+                <a href="#revenue-overview"><i class="fa fa-line-chart"></i><span class="hm-nav-label">{% trans "Analytics" %}</span></a>
+                <a href="#hotel-profile"><i class="fa fa-bell-o"></i><span class="hm-nav-label">{% trans "Notifications" %}</span></a>
+                <a href="#profile-settings"><i class="fa fa-cog"></i><span class="hm-nav-label">{% trans "Settings" %}</span></a>
+            </nav>
+            <div class="hm-nav-spacer"></div>
+            <nav class="hm-nav">
+                <a href="{% url 'logout' %}"><i class="fa fa-sign-out"></i><span class="hm-nav-label">{% trans "Sign Out" %}</span></a>
+            </nav>
+        </aside>
 
-        <div class="owner-hero">
-            <div>
-                <span class="owner-chip">{% trans "Partner Dashboard" %}</span>
-                <h2 class="owner-title">{% if hotel %}{{ hotel.name }}{% else %}{% trans "Owner Dashboard" %}{% endif %}</h2>
-                <p class="owner-subtitle">{% trans "Manage your hotel profile, rooms, bookings, and business activity from one organized workspace." %}</p>
-                <div class="owner-meta">
-                    {% if hotel %}
-                        <span><i class="fa fa-map-marker"></i> {{ hotel.city }}{% if hotel.city and hotel.country %}, {% endif %}{{ hotel.country }}</span>
-                        <span><i class="fa fa-envelope"></i> {{ hotel.email|default:"-" }}</span>
-                        <span><i class="fa fa-phone"></i> {{ hotel.phone|default:"-" }}</span>
-                    {% else %}
-                        <span><i class="fa fa-info-circle"></i> {% trans "Hotel profile not linked yet." %}</span>
-                    {% endif %}
+        <main class="hm-main">
+            <div class="hm-topbar">
+                <div>
+                    <p class="hm-page-kicker">{% trans "Dashboard" %}</p>
+                    <h1>{% if hotel %}{{ hotel.name }}{% else %}{% trans "Royal Hotel Partner" %}{% endif %}</h1>
+                    <p>{% trans "Royal Hotel Group" %} - {{ total_hotels }} {% trans "properties" %}</p>
                 </div>
-            </div>
-            <div class="owner-hero-stats">
-                <div class="owner-hero-stat">
-                    <span>{% trans "Total Rooms" %}</span>
-                    <strong>{{ total_rooms }}</strong>
-                </div>
-                <div class="owner-hero-stat">
-                    <span>{% trans "Confirmed Bookings" %}</span>
-                    <strong>{{ confirmed_bookings }}</strong>
-                </div>
-                <div class="owner-hero-stat">
-                    <span>{% trans "Pending Bookings" %}</span>
-                    <strong>{{ pending_bookings }}</strong>
-                </div>
-                <div class="owner-hero-stat">
-                    <span>{% trans "Total Revenue" %}</span>
-                    <strong>{{ revenue_total }}</strong>
-                </div>
-            </div>
-        </div>
-
-        <div class="owner-grid">
-            <aside class="owner-sidebar">
-                <div class="owner-avatar">
-                    <i class="fa fa-building" aria-hidden="true"></i>
-                </div>
-                <h4>{% if hotel %}{{ hotel.name }}{% else %}{% trans "Partner Account" %}{% endif %}</h4>
-                <p>{% trans "Quick navigation for your hotel management workspace." %}</p>
-                <div class="owner-nav">
-                    <a href="{% url 'owner_dashboard' %}"><i class="fa fa-dashboard"></i>{% trans "Dashboard Overview" %}</a>
-                    <a href="{% url 'owner_add_room' %}"><i class="fa fa-plus-square"></i>{% trans "Add Room" %}</a>
-                    {% if hotel %}
-                    <a href="{% url 'hotel_detail' hotel.id %}"><i class="fa fa-eye"></i>{% trans "Public Hotel Page" %}</a>
-                    {% endif %}
-                    <a href="{% url 'index' %}"><i class="fa fa-home"></i>{% trans "Home Page" %}</a>
-                </div>
-            </aside>
-
-            <div class="owner-main">
-                <div class="owner-panel">
-                    <h4>{% trans "Business Snapshot" %}</h4>
-                    <div class="owner-overview">
-                        <div class="owner-overview-card">
-                            <span>{% trans "Hotel Status" %}</span>
-                            <strong>{% if hotel %}{% trans "Active" %}{% else %}{% trans "Pending" %}{% endif %}</strong>
-                        </div>
-                        <div class="owner-overview-card">
-                            <span>{% trans "Rooms" %}</span>
-                            <strong>{{ total_rooms }}</strong>
-                        </div>
-                        <div class="owner-overview-card">
-                            <span>{% trans "Confirmed" %}</span>
-                            <strong>{{ confirmed_bookings }}</strong>
-                        </div>
-                        <div class="owner-overview-card">
-                            <span>{% trans "Revenue" %}</span>
-                            <strong>{{ revenue_total }}</strong>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="owner-panel">
-                    <h4>{% trans "Hotel Profile" %}</h4>
-                    {% if hotel %}
-                        <div class="row">
-                            <div class="col-lg-5 mb-4 mb-lg-0">
-                                {% if hotel.image %}
-                                    <img src="{{ hotel.image.url }}" alt="{{ hotel.name }}" class="owner-hotel-image">
+                <div class="hm-actions">
+                    <label class="hm-search">
+                        <i class="fa fa-search"></i>
+                        <input type="search" placeholder="{% trans 'Quick search...' %}">
+                        <kbd>Ctrl K</kbd>
+                    </label>
+                    <div class="hm-profile-menu-wrap">
+                        <button type="button" class="hm-profile-pill" aria-haspopup="true">
+                            <span class="hm-avatar">
+                                {% if user_profile and user_profile.profile_image %}
+                                <img src="{{ user_profile.profile_image.url }}" alt="{{ request.user.first_name|default:request.user.username }}">
+                                {% else %}
+                                {{ request.user.first_name|default:request.user.username|first|upper }}{{ request.user.last_name|first|upper }}
                                 {% endif %}
-                                <div class="owner-upload">
-                                    <form method="post" enctype="multipart/form-data">
-                                        {% csrf_token %}
-                                        <div class="form-group mb-2">
-                                            <input type="file" name="image" class="form-control-file" accept="image/*" required>
-                                        </div>
-                                        <button type="submit" class="btn btn-primary btn-sm">{% trans "Update Image" %}</button>
-                                    </form>
-                                </div>
+                            </span>
+                            <span><strong>{{ request.user.first_name|default:request.user.username }}</strong><span>{% if staff_profile %}{{ staff_profile.get_role_display }}{% else %}{% trans "Owner & CEO" %}{% endif %}</span></span>
+                            <i class="fa fa-angle-down hm-profile-caret"></i>
+                        </button>
+                        <div class="hm-profile-menu">
+                            <div class="hm-profile-menu__head">
+                                <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+                                <span>{{ request.user.email|default:"Owner account" }}</span>
                             </div>
-                            <div class="col-lg-7">
-                                <p class="mb-2"><strong>{% trans "Address:" %}</strong> {{ hotel.address|default:"-" }}</p>
-                                <p class="mb-2"><strong>{% trans "Location:" %}</strong> {{ hotel.city }}{% if hotel.city and hotel.country %}, {% endif %}{{ hotel.country }}</p>
-                                <p class="mb-2"><strong>{% trans "Contact:" %}</strong> {{ hotel.phone|default:"-" }}</p>
-                                <p class="mb-0"><strong>{% trans "Email:" %}</strong> {{ hotel.email|default:"-" }}</p>
-                            </div>
+                            <a href="#profile-settings"><i class="fa fa-user-o"></i>{% trans "Profile settings" %}</a>
+                            <a href="{% url 'owner_dashboard' %}"><i class="fa fa-dashboard"></i>{% trans "Dashboard overview" %}</a>
+                            <a href="/owner/team/"><i class="fa fa-id-badge"></i>{% trans "Team management" %}</a>
+                            {% if hotel %}
+                            <a href="{% url 'hotel_detail' hotel.id %}"><i class="fa fa-building-o"></i>{% trans "Public hotel page" %}</a>
+                            {% endif %}
+                            <form method="post" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <input type="hidden" name="profile_action" value="update_profile_photo">
+                                <label class="hm-profile-upload">
+                                    <i class="fa fa-camera"></i>{% trans "Upload profile picture" %}
+                                    <input type="file" name="profile_image" accept="image/*" onchange="this.form.submit()">
+                                </label>
+                            </form>
+                            <a href="{% url 'logout' %}"><i class="fa fa-sign-out"></i>{% trans "Sign out" %}</a>
                         </div>
-                    {% else %}
-                        <p class="mb-0">{% trans "Your hotel profile will appear here after approval." %}</p>
-                    {% endif %}
-                </div>
-
-                <div class="owner-panel">
-                    <h4>{% trans "Recent Bookings" %}</h4>
-                    <div class="owner-table-wrap">
-                        <table class="table table-bordered table-hover bg-white">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th>{% trans "Room" %}</th>
-                                    <th>{% trans "Guest" %}</th>
-                                    <th>{% trans "Check-In" %}</th>
-                                    <th>{% trans "Check-Out" %}</th>
-                                    <th>{% trans "Status" %}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for booking in recent_bookings %}
-                                <tr>
-                                    <td>{{ booking.room.title }}</td>
-                                    <td>{{ booking.first_name }} {{ booking.last_name }}</td>
-                                    <td>{{ booking.check_in }}</td>
-                                    <td>{{ booking.check_out }}</td>
-                                    <td>{{ booking.status }}</td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="5" class="text-center py-4">{% trans "No bookings yet." %}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="owner-panel">
-                    <h4>{% trans "Your Rooms" %}</h4>
-                    <div class="owner-table-wrap">
-                        <table class="table table-bordered table-hover bg-white">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th>{% trans "Room" %}</th>
-                                    <th>{% trans "Hotel" %}</th>
-                                    <th>{% trans "Category" %}</th>
-                                    <th>{% trans "Price" %}</th>
-                                    <th>{% trans "Approved" %}</th>
-                                    <th>{% trans "Available" %}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for room in rooms %}
-                                <tr>
-                                    <td>{{ room.title }}</td>
-                                    <td>{{ room.hotel.name|default:"-" }}</td>
-                                    <td>{{ room.get_category_display }}</td>
-                                    <td>{{ room.price }}</td>
-                                    <td>{% if room.is_approved %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
-                                    <td>{% if room.available %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="6" class="text-center py-4">{% trans "No rooms submitted yet." %}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
                     </div>
                 </div>
             </div>
-        </div>
+
+            <div class="hm-welcome" data-animate>
+                <div>
+                    <h2>{{ dashboard_greeting }}, {{ request.user.first_name|default:request.user.username }}</h2>
+                    <p>{% trans "Here's an overview of your portfolio" %} - {{ total_hotels }} {% trans "properties" %}, {{ portfolio_countries }} {% trans "countries" %}.</p>
+                </div>
+                <a href="{% url 'owner_add_room' %}" class="hm-btn"><i class="fa fa-plus"></i>{% trans "New Booking" %}</a>
+            </div>
+
+            <section class="hm-card" data-animate>
+                <div class="hm-card__head">
+                    <h3>{% trans "Management Action Center" %}</h3>
+                    <span class="hm-badge">{% trans "Live" %}</span>
+                </div>
+                <div class="hm-card__body">
+                    <div class="hm-action-feedback">
+                        {% include 'includes/local_messages.html' %}
+                    </div>
+                    <div class="hm-action-grid">
+                        {% for item in action_items %}
+                        <a href="{{ item.url }}" class="hm-action-card" data-animate {% if forloop.counter == 2 %}style="--delay: 80ms;"{% elif forloop.counter == 3 %}style="--delay: 160ms;"{% elif forloop.counter == 4 %}style="--delay: 240ms;"{% endif %}>
+                            <span class="hm-action-card__icon"><i class="fa {{ item.icon }}"></i></span>
+                            <span>
+                                <strong>{{ item.count }}</strong>
+                                <span>{{ item.label }}</span>
+                                <p>{{ item.detail }}</p>
+                            </span>
+                        </a>
+                        {% empty %}
+                        <div class="hm-action-card">
+                            <span class="hm-action-card__icon"><i class="fa fa-building-o"></i></span>
+                            <span><strong>0</strong><span>{% trans "No active hotel yet" %}</span><p>{% trans "Complete your hotel setup to unlock management actions." %}</p></span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+            <section id="profile-settings" class="hm-card" data-animate>
+                <div class="hm-card__head">
+                    <h3>{% trans "Profile Settings" %}</h3>
+                    <span class="hm-badge">{% trans "Dashboard" %}</span>
+                </div>
+                <div class="hm-card__body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="profile_action" value="update_profile_details">
+                        <div class="hm-settings-grid">
+                            <div class="form-group">
+                                <label>{% trans "First Name" %}</label>
+                                <input type="text" name="first_name" class="form-control" value="{{ request.user.first_name }}">
+                            </div>
+                            <div class="form-group">
+                                <label>{% trans "Last Name" %}</label>
+                                <input type="text" name="last_name" class="form-control" value="{{ request.user.last_name }}">
+                            </div>
+                            <div class="form-group">
+                                <label>{% trans "Email" %}</label>
+                                <input type="email" name="email" class="form-control" value="{{ request.user.email }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>{% trans "Phone" %}</label>
+                                <input type="text" name="mobile" class="form-control" value="{{ user_profile.mobile }}">
+                            </div>
+                        </div>
+                        <div class="hm-settings-actions">
+                            <button type="submit" class="hm-btn"><i class="fa fa-save"></i>{% trans "Save Profile" %}</button>
+                        </div>
+                    </form>
+                    <div class="hm-settings-actions">
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="profile_action" value="reset_profile">
+                            <button type="submit" class="hm-btn hm-btn--light"><i class="fa fa-refresh"></i>{% trans "Reset Profile" %}</button>
+                        </form>
+                        <a href="#hotel-profile" class="hm-btn hm-btn--light"><i class="fa fa-building-o"></i>{% trans "Hotel Settings" %}</a>
+                        <a href="#recent-bookings" class="hm-btn hm-btn--light"><i class="fa fa-calendar-check-o"></i>{% trans "Booking Settings" %}</a>
+                    </div>
+                </div>
+            </section>
+
+            <div class="hm-kpis">
+                <article class="hm-kpi" data-animate>
+                    <div class="hm-kpi__top"><span class="hm-kpi__icon"><i class="fa fa-money"></i></span><span class="hm-trend">{% trans "Live" %}</span></div>
+                    <span>{% trans "Total Revenue" %}</span><strong>KES {{ revenue_total|floatformat:0 }}</strong><p class="mb-0 text-muted">{% trans "This year" %}</p>
+                </article>
+                <article class="hm-kpi" data-animate style="--delay: 70ms;">
+                    <div class="hm-kpi__top"><span class="hm-kpi__icon"><i class="fa fa-calendar-check-o"></i></span><span class="hm-trend">{% trans "Live" %}</span></div>
+                    <span>{% trans "Total Bookings" %}</span><strong>{{ total_bookings }}</strong><p class="mb-0 text-muted">{% trans "This year" %}</p>
+                </article>
+                <article class="hm-kpi" data-animate style="--delay: 140ms;">
+                    <div class="hm-kpi__top"><span class="hm-kpi__icon"><i class="fa fa-users"></i></span><span class="hm-trend">{% trans "Live" %}</span></div>
+                    <span>{% trans "Active Guests" %}</span><strong>{{ active_guests }}</strong><p class="mb-0 text-muted">{% trans "Currently checked in" %}</p>
+                </article>
+                <article class="hm-kpi" data-animate style="--delay: 210ms;">
+                    <div class="hm-kpi__top"><span class="hm-kpi__icon"><i class="fa fa-bed"></i></span><span class="hm-trend">{% trans "Live" %}</span></div>
+                    <span>{% trans "Avg Occupancy" %}</span><strong>{{ occupancy_rate }}%</strong><p class="mb-0 text-muted">{% trans "Across all hotels" %}</p>
+                </article>
+                <article class="hm-kpi" data-animate style="--delay: 280ms;">
+                    <div class="hm-kpi__top"><span class="hm-kpi__icon"><i class="fa fa-id-badge"></i></span><span class="hm-trend">{% trans "Live" %}</span></div>
+                    <span>{% trans "Hotel Team" %}</span><strong>{{ staff_members_count }}</strong><p class="mb-0 text-muted">{% trans "Owner, managers, and staff" %}</p>
+                </article>
+            </div>
+
+            <div class="hm-grid">
+                <div>
+                    <section id="revenue-overview" class="hm-card" data-animate="slide-right">
+                        <div class="hm-card__head">
+                            <h3>{% trans "Revenue Overview" %}</h3>
+                            <span class="hm-badge">{{ current_year }}</span>
+                        </div>
+                        <div class="hm-card__body">
+                            <div class="hm-chart" aria-label="{% trans 'Revenue chart' %}">
+                                {% for item in revenue_chart %}
+                                <div class="hm-bar" title="KES {{ item.total|floatformat:0 }}"><span style="height: {{ item.height }}%;"></span>{{ item.label }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="recent-bookings" class="hm-card" data-animate="slide-right">
+                        <div class="hm-card__head">
+                            <h3>{% trans "Recent Bookings" %}</h3>
+                            <span class="hm-badge">{{ completed_bookings }} {% trans "completed" %}</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table hm-table">
+                                <thead><tr><th>{% trans "Guest" %}</th><th>{% trans "Room" %}</th><th>{% trans "Dates" %}</th><th>{% trans "Status" %}</th></tr></thead>
+                                <tbody>
+                                    {% for booking in recent_bookings %}
+                                    <tr>
+                                        <td>{{ booking.first_name }} {{ booking.last_name }}</td>
+                                        <td>{{ booking.room.title }}</td>
+                                        <td>{{ booking.check_in }} - {{ booking.check_out }}</td>
+                                        <td><span class="hm-badge">{{ booking.status }}</span></td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="4" class="text-center py-4">{% trans "No bookings yet." %}</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section id="hotel-profile" class="hm-card" data-animate="slide-right">
+                        <div class="hm-card__head">
+                            <h3>{% trans "Your Rooms" %}</h3>
+                            <a class="hm-btn hm-btn--light" href="{% url 'owner_add_room' %}">{% trans "Add" %}</a>
+                        </div>
+                        <div class="hm-card__body">
+                            <ul class="hm-room-list">
+                                {% for room in rooms %}
+                                <li>
+                                    <div><strong>{{ room.title }}</strong><br><span>{{ room.get_category_display }} - KES {{ room.price|floatformat:0 }}</span></div>
+                                    <span class="hm-badge">{% if room.available %}{% trans "Available" %}{% else %}{% trans "Closed" %}{% endif %}</span>
+                                </li>
+                                {% empty %}
+                                <li><span>{% trans "No rooms submitted yet." %}</span></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </section>
+                </div>
+
+                <aside>
+                    <section class="hm-card" data-animate="slide-left">
+                        <div class="hm-card__head"><h3>{% trans "Today's Operations" %}</h3></div>
+                        <div class="hm-card__body">
+                            <div class="hm-ops-grid">
+                                <div class="hm-op"><span>{% trans "Check-ins" %}</span><strong>{{ today_checkins }}</strong></div>
+                                <div class="hm-op"><span>{% trans "Check-outs" %}</span><strong>{{ today_checkouts }}</strong></div>
+                                <div class="hm-op"><span>{% trans "In-house" %}</span><strong>{{ current_stays }}</strong></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="hm-card" data-animate="slide-left">
+                        <div class="hm-card__head"><h3>{% trans "Quick Management" %}</h3></div>
+                        <div class="hm-card__body">
+                            <div class="hm-quick-links">
+                                <a href="{% url 'owner_add_room' %}"><span><i class="fa fa-bed"></i> {% trans "Add or manage rooms" %}</span><i class="fa fa-angle-right"></i></a>
+                                <a href="/owner/team/"><span><i class="fa fa-id-badge"></i> {% trans "Manage team accounts" %}</span><i class="fa fa-angle-right"></i></a>
+                                {% if hotel %}
+                                <a href="{% url 'hotel_detail' hotel.id %}"><span><i class="fa fa-eye"></i> {% trans "View public hotel page" %}</span><i class="fa fa-angle-right"></i></a>
+                                {% endif %}
+                                <a href="#guest-care"><span><i class="fa fa-comments-o"></i> {% trans "Review guest feedback" %}</span><i class="fa fa-angle-right"></i></a>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="hm-card" data-animate="slide-left">
+                        <div class="hm-card__head"><h3>{% trans "Hotel Profile" %}</h3></div>
+                        <div class="hm-card__body">
+                            {% if hotel and hotel.image %}
+                            <img src="{{ hotel.image.url }}" alt="{{ hotel.name }}" class="hm-profile-img">
+                            {% endif %}
+                            {% if hotel %}
+                            <p><strong>{% trans "Address:" %}</strong> {{ hotel.address|default:"-" }}</p>
+                            <p><strong>{% trans "Rooms needing approval:" %}</strong> {{ room_approval_pending }}</p>
+                            <p><strong>{% trans "Inactive rooms:" %}</strong> {{ inactive_rooms }}</p>
+                            <p><strong>{% trans "Reviews:" %}</strong> {{ reviews_count }}</p>
+                            <p><strong>{% trans "Average rating:" %}</strong> {{ average_rating|floatformat:1 }}/5</p>
+                            <p><strong>{% trans "Open complaints:" %}</strong> {{ complaints_count }}</p>
+                            <form method="post" enctype="multipart/form-data" class="hm-upload">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    <input type="file" name="image" class="form-control-file" accept="image/*" required>
+                                </div>
+                                <button type="submit" class="btn btn-sm">{% trans "Update Image" %}</button>
+                            </form>
+                            {% else %}
+                            <p>{% trans "Your hotel profile will appear here after approval." %}</p>
+                            {% endif %}
+                        </div>
+                    </section>
+
+                    <section class="hm-card" id="guest-care" data-animate="slide-left">
+                        <div class="hm-card__head"><h3>{% trans "Live Reviews" %}</h3></div>
+                        <div class="hm-card__body">
+                            <ul class="hm-room-list">
+                                {% for review in recent_hotel_reviews %}
+                                <li>
+                                    <div>
+                                        <strong>{{ review.title }}</strong><br>
+                                        <span>{{ review.rating }}/5 - {{ review.user.first_name|default:review.user.username }}</span><br>
+                                        <span>{{ review.comment|truncatewords:12 }}</span>
+                                    </div>
+                                    <span class="hm-badge">{{ review.created_at|date:"M d" }}</span>
+                                </li>
+                                {% empty %}
+                                <li><span>{% trans "No hotel reviews yet." %}</span></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </section>
+
+                    <section class="hm-card" data-animate="slide-left">
+                        <div class="hm-card__head"><h3>{% trans "Complaints" %}</h3></div>
+                        <div class="hm-card__body">
+                            <ul class="hm-room-list">
+                                {% for complaint in recent_complaints %}
+                                <li>
+                                    <div>
+                                        <strong>{{ complaint.subject }}</strong><br>
+                                        <span>{{ complaint.full_name }} - {{ complaint.email }}</span><br>
+                                        <span>{{ complaint.message|truncatewords:12 }}</span>
+                                    </div>
+                                    <span class="hm-badge">{{ complaint.get_status_display }}</span>
+                                </li>
+                                {% empty %}
+                                <li><span>{% trans "No complaints submitted." %}</span></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </section>
+
+                    <section class="hm-card" data-animate="slide-left">
+                        <div class="hm-card__head"><h3>{% trans "Recent Payments" %}</h3></div>
+                        <div class="hm-card__body">
+                            <ul class="hm-room-list">
+                                {% for payment in recent_payments %}
+                                <li>
+                                    <div><strong>KES {{ payment.amount|floatformat:0 }}</strong><br><span>{{ payment.provider }} - {{ payment.booking.room.title }}</span></div>
+                                    <span class="hm-badge">{{ payment.status }}</span>
+                                </li>
+                                {% empty %}
+                                <li><span>{% trans "No payment records yet." %}</span></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </section>
+                </aside>
+            </div>
+        </main>
     </div>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var animated = Array.prototype.slice.call(document.querySelectorAll('[data-animate]'));
+        if (!animated.length) {
+            return;
+        }
+        if (!('IntersectionObserver' in window)) {
+            animated.forEach(function (item) {
+                item.classList.add('is-visible');
+            });
+            return;
+        }
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.14, rootMargin: '0px 0px -40px 0px' });
+        animated.forEach(function (item) {
+            observer.observe(item);
+        });
+    });
+</script>
 {% endblock %}

@@ -3,443 +3,515 @@
 
 {% block admin_extra_css %}
 <style>
-    .admin-kpis .card {
+    .dash-pro {
+        --dash-dark: #111827;
+        --dash-gold: #FFD700;
+        --dash-muted: #64748b;
+        --dash-line: #e5e7eb;
+        background: #f6f7fb;
+        margin: -1.5rem -15px 0;
+        padding: 28px;
+        min-height: calc(100vh - 80px);
+        overflow-x: hidden;
+    }
+    .dash-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 20px;
+        align-items: center;
+        padding: 28px;
         border-radius: 18px;
-        box-shadow: 0 14px 35px rgba(0, 0, 0, 0.08);
-        border: 0;
+        background: linear-gradient(135deg, #111827 0%, #202938 58%, #4d4100 100%);
+        color: #ffffff;
+        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.18);
+        margin-bottom: 22px;
+    }
+    .dash-hero__eyebrow {
+        color: var(--dash-gold);
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        margin-bottom: 9px;
+    }
+    .dash-hero h1 {
+        color: #ffffff;
+        font-size: 30px;
+        line-height: 1.2;
+        margin-bottom: 8px;
+    }
+    .dash-hero p {
+        color: rgba(255,255,255,.74);
+        margin: 0;
+        max-width: 720px;
+    }
+    .dash-hero__actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+    .dash-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 42px;
+        padding: 9px 14px;
+        border-radius: 10px;
+        font-weight: 800;
+        border: 1px solid rgba(255,255,255,.2);
+        background: rgba(255,255,255,.08);
+        color: #ffffff;
+    }
+    .dash-btn:hover {
+        color: var(--dash-dark);
+        background: var(--dash-gold);
+        border-color: var(--dash-gold);
+    }
+    .dash-search {
+        background: #ffffff;
+        border: 1px solid var(--dash-line);
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 18px;
+    }
+    .dash-search .form-control {
+        border-radius: 10px;
+        border-color: #d8dde5;
+    }
+    .dash-search .btn {
+        border-radius: 10px;
+        font-weight: 800;
+        background: var(--dash-dark);
+        color: var(--dash-gold);
+        border-color: var(--dash-dark);
+    }
+    .dash-kpis {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+        margin-bottom: 18px;
+    }
+    .dash-kpi {
+        background: #ffffff;
+        border: 1px solid var(--dash-line);
+        border-radius: 16px;
+        padding: 18px;
+        min-height: 142px;
+    }
+    .dash-kpi__top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+    .dash-kpi__icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff8d6;
+        color: #111827;
+        font-size: 18px;
+    }
+    .dash-kpi__trend {
+        color: #16a34a;
+        font-size: 12px;
+        font-weight: 900;
+    }
+    .dash-kpi span {
+        display: block;
+        color: var(--dash-muted);
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        margin-bottom: 5px;
+    }
+    .dash-kpi strong {
+        color: #111827;
+        font-size: 26px;
+        line-height: 1.15;
+    }
+    .dash-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr);
+        gap: 18px;
+    }
+    .dash-card {
+        background: #ffffff;
+        border: 1px solid var(--dash-line);
+        border-radius: 16px;
+        overflow: hidden;
+        min-width: 0;
+    }
+    .dash-card__head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 18px 18px 0;
+        margin-bottom: 14px;
+    }
+    .dash-card__head h2,
+    .dash-card__head h3 {
+        color: #111827;
+        font-size: 18px;
+        margin: 0;
+    }
+    .dash-card__body {
+        padding: 0 18px 18px;
+    }
+    .dash-pipeline {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+    }
+    .dash-pipe {
+        padding: 14px;
+        border-radius: 12px;
+        background: #f8fafc;
+        border: 1px solid #edf0f4;
+    }
+    .dash-pipe span {
+        color: var(--dash-muted);
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+    .dash-pipe strong {
+        display: block;
+        color: #111827;
+        font-size: 22px;
+        margin-top: 8px;
+    }
+    .dash-alert-list,
+    .dash-hotel-list {
+        display: grid;
+        gap: 10px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    .dash-alert-list li,
+    .dash-hotel-list li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px;
+        border: 1px solid #edf0f4;
+        border-radius: 12px;
+        background: #fafafa;
+        min-width: 0;
+    }
+    .dash-alert-list strong,
+    .dash-hotel-list strong {
+        color: #111827;
+    }
+    .dash-alert-list span,
+    .dash-hotel-list span {
+        color: var(--dash-muted);
+        font-size: 12px;
+    }
+    .dash-badge {
+        min-width: 42px;
+        padding: 6px 9px;
+        border-radius: 999px;
+        background: #111827;
+        color: #FFD700;
+        text-align: center;
+        font-weight: 900;
+        font-size: 12px;
+    }
+    .dash-section-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-top: 18px;
+    }
+    .dash-table {
+        margin: 0;
+        min-width: 560px;
+    }
+    .dash-table th {
+        border-top: 0;
+        color: #475569;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+    }
+    .dash-table td {
+        vertical-align: middle;
+        color: #111827;
+    }
+    .dash-link {
+        color: #111827;
+        font-weight: 800;
+    }
+    .dash-link:hover {
+        color: #b39400;
+    }
+    @media (max-width: 1199px) {
+        .dash-kpis {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .dash-grid,
+        .dash-section-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    @media (max-width: 991px) {
+        .dash-pro {
+            margin-top: 0;
+            padding: 22px 18px;
+        }
+        .dash-hero h1 {
+            font-size: 26px;
+        }
+        .dash-kpi strong {
+            font-size: 24px;
+            word-break: break-word;
+        }
+        .dash-card__head {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+        .dash-card__head .dash-link {
+            align-self: flex-start;
+        }
+    }
+    @media (max-width: 767px) {
+        .dash-pro {
+            margin: -1rem -15px 0;
+            padding: 18px 14px;
+        }
+        .dash-hero {
+            grid-template-columns: 1fr;
+            padding: 22px;
+        }
+        .dash-hero__actions {
+            justify-content: flex-start;
+        }
+        .dash-btn,
+        .dash-search .btn {
+            width: 100%;
+            justify-content: center;
+        }
+        .dash-kpis,
+        .dash-pipeline {
+            grid-template-columns: 1fr;
+        }
+        .dash-card__body,
+        .dash-card__head {
+            padding-left: 14px;
+            padding-right: 14px;
+        }
+        .dash-alert-list li,
+        .dash-hotel-list li {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+        .dash-badge {
+            max-width: 100%;
+            white-space: normal;
+        }
+    }
+    @media (max-width: 420px) {
+        .dash-pro {
+            padding: 14px 10px;
+        }
+        .dash-hero {
+            padding: 18px;
+            border-radius: 14px;
+        }
+        .dash-hero h1 {
+            font-size: 23px;
+        }
+        .dash-kpi,
+        .dash-pipe {
+            padding: 14px;
+        }
     }
 </style>
 {% endblock %}
 
 {% block admin_sidebar_extra %}
-<div class="text-muted small mb-2">{% trans "Quick jump" %}</div>
+<div class="text-muted small mb-2">{% trans "Command center" %}</div>
 <div class="list-group">
-    <a href="#section-search" class="list-group-item list-group-item-action">{% trans "Search" %}</a>
-    <a href="#section-users" class="list-group-item list-group-item-action">{% trans "Users" %}</a>
-    <a href="#section-hotels" class="list-group-item list-group-item-action">{% trans "Hotels" %}</a>
-    <a href="#section-rooms" class="list-group-item list-group-item-action">{% trans "Rooms" %}</a>
-    <a href="#section-bookings" class="list-group-item list-group-item-action">{% trans "Bookings" %}</a>
-    <a href="#section-team" class="list-group-item list-group-item-action">{% trans "Team" %}</a>
-    <a href="#section-testimonials" class="list-group-item list-group-item-action">{% trans "Testimonials" %}</a>
-    <a href="#section-payments" class="list-group-item list-group-item-action">{% trans "Payments" %}</a>
-    <a href="#section-applications" class="list-group-item list-group-item-action">{% trans "Applications" %}</a>
+    <a href="#overview" class="list-group-item list-group-item-action">{% trans "Overview" %}</a>
+    <a href="#operations" class="list-group-item list-group-item-action">{% trans "Operations" %}</a>
+    <a href="#bookings" class="list-group-item list-group-item-action">{% trans "Bookings" %}</a>
+    <a href="#hotels" class="list-group-item list-group-item-action">{% trans "Hotels" %}</a>
 </div>
 {% endblock %}
 
 {% block admin_content %}
-<div class="container py-5 px-0">
-    <div class="section-header">
-        <h2>{% trans "Admin Dashboard" %}</h2>
-        <p>{% trans "Search and manage all content in one place." %}</p>
+<div class="dash-pro">
+    <section class="dash-hero">
+        <div>
+            <div class="dash-hero__eyebrow">{% trans "Super Admin Dashboard" %}</div>
+            <h1>{% trans "Hotel Management Command Center" %}</h1>
+            <p>{% trans "Monitor platform revenue, property health, bookings, approvals, rooms, guests, and owner operations from one workspace." %}</p>
+        </div>
+        <div class="dash-hero__actions">
+            <a href="{% url 'admin_hotel_applications' %}" class="dash-btn"><i class="fa fa-file-text-o"></i>{% trans "Review Applications" %}</a>
+            <a href="{% url 'admin_hotels' %}" class="dash-btn"><i class="fa fa-building"></i>{% trans "Manage Hotels" %}</a>
+        </div>
+    </section>
+
+    <form id="overview" method="get" class="dash-search">
+        <div class="form-row">
+            <div class="col-lg-9 mb-2 mb-lg-0">
+                <input type="text" name="q" class="form-control" value="{{ query }}" placeholder="{% trans 'Search users, hotels, rooms, bookings, payments, applications' %}">
+            </div>
+            <div class="col-lg-3">
+                <button type="submit" class="btn btn-block"><i class="fa fa-search"></i> {% trans "Search" %}</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="dash-kpis">
+        <article class="dash-kpi">
+            <div class="dash-kpi__top"><span class="dash-kpi__icon"><i class="fa fa-money"></i></span><span class="dash-kpi__trend">{% trans "Live" %}</span></div>
+            <span>{% trans "Total Revenue" %}</span>
+            <strong>KES {{ admin_metrics.revenue_total|floatformat:0 }}</strong>
+        </article>
+        <article class="dash-kpi">
+            <div class="dash-kpi__top"><span class="dash-kpi__icon"><i class="fa fa-calendar-check-o"></i></span><span class="dash-kpi__trend">{{ admin_metrics.pending_bookings }} {% trans "pending" %}</span></div>
+            <span>{% trans "Confirmed Bookings" %}</span>
+            <strong>{{ admin_metrics.confirmed_bookings }}</strong>
+        </article>
+        <article class="dash-kpi">
+            <div class="dash-kpi__top"><span class="dash-kpi__icon"><i class="fa fa-building"></i></span><span class="dash-kpi__trend">{{ admin_metrics.pending_hotels }} {% trans "pending" %}</span></div>
+            <span>{% trans "Active Hotels" %}</span>
+            <strong>{{ admin_metrics.active_hotels }}</strong>
+        </article>
+        <article class="dash-kpi">
+            <div class="dash-kpi__top"><span class="dash-kpi__icon"><i class="fa fa-bed"></i></span><span class="dash-kpi__trend">{{ admin_metrics.pending_rooms }} {% trans "review" %}</span></div>
+            <span>{% trans "Available Rooms" %}</span>
+            <strong>{{ admin_metrics.available_rooms }}</strong>
+        </article>
     </div>
 
-    <div id="section-search" class="card mb-4 admin-section">
-        <div class="card-body">
-            <form method="get" class="form-row">
-                <div class="col-md-9 mb-2 mb-md-0">
-                    <input type="text" name="q" class="form-control" value="{{ query }}" placeholder="{% trans 'Search users, hotels, rooms, bookings, payments, applications' %}">
+    <div id="operations" class="dash-grid">
+        <section class="dash-card">
+            <div class="dash-card__head">
+                <h2>{% trans "Booking Pipeline" %}</h2>
+                <a href="{% url 'admin_booked_rooms' %}" class="dash-link">{% trans "View all" %}</a>
+            </div>
+            <div class="dash-card__body">
+                <div class="dash-pipeline">
+                    <div class="dash-pipe"><span>{% trans "Pending" %}</span><strong>{{ admin_metrics.pending_bookings }}</strong></div>
+                    <div class="dash-pipe"><span>{% trans "Confirmed" %}</span><strong>{{ admin_metrics.confirmed_bookings }}</strong></div>
+                    <div class="dash-pipe"><span>{% trans "Completed" %}</span><strong>{{ admin_metrics.completed_bookings }}</strong></div>
+                    <div class="dash-pipe"><span>{% trans "Cancelled" %}</span><strong>{{ admin_metrics.cancelled_bookings }}</strong></div>
                 </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-primary btn-block">{% trans "Search" %}</button>
-                </div>
-            </form>
-        </div>
+            </div>
+        </section>
+
+        <section class="dash-card">
+            <div class="dash-card__head">
+                <h2>{% trans "Action Required" %}</h2>
+            </div>
+            <div class="dash-card__body">
+                <ul class="dash-alert-list">
+                    <li><div><strong>{% trans "Hotel applications" %}</strong><br><span>{% trans "Awaiting admin decision" %}</span></div><span class="dash-badge">{{ admin_metrics.pending_applications }}</span></li>
+                    <li><div><strong>{% trans "Rooms pending review" %}</strong><br><span>{% trans "Needs approval before sale" %}</span></div><span class="dash-badge">{{ admin_metrics.pending_rooms }}</span></li>
+                    <li><div><strong>{% trans "Pending revenue" %}</strong><br><span>{% trans "Payments not settled yet" %}</span></div><span class="dash-badge">KES {{ admin_metrics.pending_revenue|floatformat:0 }}</span></li>
+                    <li><div><strong>{% trans "Hotel owners" %}</strong><br><span>{% trans "Partner accounts" %}</span></div><span class="dash-badge">{{ admin_metrics.hotel_owners }}</span></li>
+                </ul>
+            </div>
+        </section>
     </div>
 
-    <div class="row mb-4 admin-kpis">
-        <div class="col-md-2 col-6 mb-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h6>{% trans "Users" %}</h6>
-                    <h3>{{ stats.users }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2 col-6 mb-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h6>{% trans "Bookings" %}</h6>
-                    <h3>{{ stats.bookings }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2 col-6 mb-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h6>{% trans "Rooms" %}</h6>
-                    <h3>{{ stats.rooms }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2 col-6 mb-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h6>{% trans "Hotels" %}</h6>
-                    <h3>{{ stats.hotels }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2 col-6 mb-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h6>{% trans "Payments" %}</h6>
-                    <h3>{{ stats.payments }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2 col-6 mb-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h6>{% trans "Applications" %}</h6>
-                    <h3>{{ stats.applications }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2 col-6 mb-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h6>{% trans "Team" %}</h6>
-                    <h3>{{ stats.team_members }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2 col-6 mb-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h6>{% trans "Testimonials" %}</h6>
-                    <h3>{{ stats.testimonials }}</h3>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="section-users" class="row mb-4 admin-section">
-        <div class="col-12">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <h3 class="mb-0">{% trans "Users" %}</h3>
-                <a href="{% url 'admin_users' %}" class="btn btn-outline-primary btn-sm">{% trans "Manage" %}</a>
+    <div class="dash-section-grid">
+        <section id="bookings" class="dash-card">
+            <div class="dash-card__head">
+                <h3>{% trans "Recent Bookings" %}</h3>
             </div>
             <div class="table-responsive">
-                <table class="table table-bordered table-hover bg-white">
-                    <thead class="thead-light">
-                        <tr>
-                            <th>{% trans "Username" %}</th>
-                            <th>{% trans "Email" %}</th>
-                            <th>{% trans "Date Joined" %}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for user_item in users %}
-                        <tr>
-                            <td><a href="{% url 'admin_user_detail' user_item.id %}">{{ user_item.username }}</a></td>
-                            <td>{{ user_item.email }}</td>
-                            <td>{{ user_item.date_joined|date:"Y-m-d" }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="3" class="text-center py-3">{% trans "No user accounts found." %}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div id="section-hotels" class="row mb-4 admin-section">
-        <div class="col-12">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <h3 class="mb-0">{% trans "Hotels" %}</h3>
-                <a href="{% url 'admin_hotels' %}" class="btn btn-outline-primary btn-sm">{% trans "Manage" %}</a>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover bg-white">
-                    <thead class="thead-light">
-                        <tr>
-                            <th>{% trans "Image" %}</th>
-                            <th>{% trans "Hotel" %}</th>
-                            <th>{% trans "Location" %}</th>
-                            <th>{% trans "Owner" %}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for hotel in hotels %}
-                        <tr>
-                            <td>
-                                <span class="admin-thumb" aria-hidden="true">
-                                    {% if hotel.image %}
-                                        <img src="{{ hotel.image.url }}" alt="">
-                                    {% else %}
-                                        <i class="fa fa-building" aria-hidden="true"></i>
-                                    {% endif %}
-                                </span>
-                            </td>
-                            <td><a href="{% url 'admin_hotel_detail' hotel.id %}">{{ hotel.name }}</a></td>
-                            <td>{{ hotel.city }}{% if hotel.city and hotel.country %}, {% endif %}{{ hotel.country }}</td>
-                            <td>
-                                {% if hotel.owner %}
-                                    <a href="{% url 'admin_user_detail' hotel.owner.id %}">{{ hotel.owner.email|default:hotel.owner.username|default:"-" }}</a>
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="4" class="text-center py-3">{% trans "No hotels available right now." %}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div id="section-rooms" class="row mb-4 admin-section">
-        <div class="col-12">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <h3 class="mb-0">{% trans "Rooms" %}</h3>
-                <a href="{% url 'admin_rooms' %}" class="btn btn-outline-primary btn-sm">{% trans "Manage" %}</a>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover bg-white">
-                    <thead class="thead-light">
-                        <tr>
-                            <th>{% trans "Image" %}</th>
-                            <th>{% trans "Room" %}</th>
-                            <th>{% trans "Hotel" %}</th>
-                            <th>{% trans "Owner" %}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for room in rooms %}
-                        <tr>
-                            <td>
-                                <span class="admin-thumb" aria-hidden="true">
-                                    {% if room.image %}
-                                        <img src="{{ room.image.url }}" alt="">
-                                    {% else %}
-                                        <i class="fa fa-bed" aria-hidden="true"></i>
-                                    {% endif %}
-                                </span>
-                            </td>
-                            <td><a href="{% url 'admin_room_detail' room.id %}">{{ room.title }}</a></td>
-                            <td><a href="{% url 'admin_hotel_detail' room.hotel.id %}">{{ room.hotel.name }}</a></td>
-                            <td>
-                                {% if room.owner %}
-                                    <a href="{% url 'admin_user_detail' room.owner.id %}">{{ room.owner.email|default:room.owner.username|default:"-" }}</a>
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="4" class="text-center py-3">{% trans "No rooms available at the moment." %}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div id="section-bookings" class="row mb-4 admin-section">
-        <div class="col-12">
-            <h3 class="mb-3">{% trans "Bookings" %}</h3>
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover bg-white">
-                    <thead class="thead-light">
-                        <tr>
-                            <th>{% trans "Booking ID" %}</th>
-                            <th>{% trans "Guest" %}</th>
-                            <th>{% trans "Room" %}</th>
-                            <th>{% trans "Status" %}</th>
-                        </tr>
-                    </thead>
+                <table class="table dash-table">
+                    <thead><tr><th>{% trans "Guest" %}</th><th>{% trans "Room" %}</th><th>{% trans "Status" %}</th></tr></thead>
                     <tbody>
                         {% for booking in bookings %}
                         <tr>
-                            <td>#{{ booking.id }}</td>
-                            <td>{{ booking.first_name }} {{ booking.last_name }}</td>
+                            <td>#{{ booking.id }} {{ booking.first_name }} {{ booking.last_name }}</td>
                             <td>{{ booking.room.title|default:"-" }}</td>
-                            <td>{{ booking.status }}</td>
+                            <td><span class="dash-badge">{{ booking.status }}</span></td>
                         </tr>
                         {% empty %}
-                        <tr>
-                            <td colspan="4" class="text-center py-3">{% trans "No bookings yet." %}</td>
-                        </tr>
+                        <tr><td colspan="3" class="text-center py-4">{% trans "No bookings found." %}</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-        </div>
+        </section>
+
+        <section id="hotels" class="dash-card">
+            <div class="dash-card__head">
+                <h3>{% trans "Top Hotels" %}</h3>
+                <a href="{% url 'admin_hotels' %}" class="dash-link">{% trans "Manage" %}</a>
+            </div>
+            <div class="dash-card__body">
+                <ul class="dash-hotel-list">
+                    {% for hotel in top_hotels %}
+                    <li>
+                        <div>
+                            <strong><a class="dash-link" href="{% url 'admin_hotel_detail' hotel.id %}">{{ hotel.name }}</a></strong><br>
+                            <span>{{ hotel.city|default:"-" }}{% if hotel.country %}, {{ hotel.country }}{% endif %} · {{ hotel.total_rooms }} {% trans "rooms" %}</span>
+                        </div>
+                        <span class="dash-badge">{{ hotel.total_bookings }} {% trans "bookings" %}</span>
+                    </li>
+                    {% empty %}
+                    <li><span>{% trans "No hotels available." %}</span></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </section>
     </div>
 
-    <div id="section-team" class="row mb-4 admin-section">
-        <div class="col-12">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <h3 class="mb-0">{% trans "Team Members" %}</h3>
-                <div class="d-flex flex-wrap gap-2">
-                    <a href="{% url 'admin_team_member_create' %}" class="btn btn-primary btn-sm">{% trans "Add" %}</a>
-                    <a href="{% url 'admin_team_members' %}" class="btn btn-outline-primary btn-sm">{% trans "Manage" %}</a>
-                </div>
+    <div class="dash-section-grid">
+        <section class="dash-card">
+            <div class="dash-card__head">
+                <h3>{% trans "Latest Applications" %}</h3>
+                <a href="{% url 'admin_hotel_applications' %}" class="dash-link">{% trans "Review" %}</a>
             </div>
             <div class="table-responsive">
-                <table class="table table-bordered table-hover bg-white">
-                    <thead class="thead-light">
-                        <tr>
-                            <th>{% trans "Image" %}</th>
-                            <th>{% trans "Name" %}</th>
-                            <th>{% trans "Role" %}</th>
-                            <th>{% trans "Status" %}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for member in team_members %}
-                        <tr>
-                            <td>
-                                <span class="admin-thumb" aria-hidden="true">
-                                    {% if member.image %}
-                                        <img src="{{ member.image.url }}" alt="">
-                                    {% else %}
-                                        <i class="fa fa-id-badge" aria-hidden="true"></i>
-                                    {% endif %}
-                                </span>
-                            </td>
-                            <td>{{ member.name }}</td>
-                            <td>{{ member.role }}</td>
-                            <td>{% if member.is_active %}{% trans "Active" %}{% else %}{% trans "Hidden" %}{% endif %}</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="4" class="text-center py-3">{% trans "No team members yet." %}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div id="section-testimonials" class="row mb-4 admin-section">
-        <div class="col-12">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <h3 class="mb-0">{% trans "Testimonials" %}</h3>
-                <a href="{% url 'admin_testimonials' %}" class="btn btn-outline-primary btn-sm">{% trans "Manage" %}</a>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover bg-white">
-                    <thead class="thead-light">
-                        <tr>
-                            <th>{% trans "Name" %}</th>
-                            <th>{% trans "Role" %}</th>
-                            <th>{% trans "Quote" %}</th>
-                            <th>{% trans "Status" %}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for testimonial in testimonials %}
-                        <tr>
-                            <td>{{ testimonial.name }}</td>
-                            <td>{{ testimonial.role|default:"-" }}</td>
-                            <td>{{ testimonial.quote|truncatechars:90 }}</td>
-                            <td>{% if testimonial.is_active %}{% trans "Active" %}{% else %}{% trans "Hidden" %}{% endif %}</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="4" class="text-center py-3">{% trans "No testimonials yet." %}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div id="section-payments" class="row mb-4 admin-section">
-        <div class="col-12">
-            <h3 class="mb-3">{% trans "Payments" %}</h3>
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover bg-white">
-                    <thead class="thead-light">
-                        <tr>
-                            <th>{% trans "Reference" %}</th>
-                            <th>{% trans "Provider" %}</th>
-                            <th>{% trans "Amount" %}</th>
-                            <th>{% trans "Status" %}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for payment in payments %}
-                        <tr>
-                            <td>{{ payment.reference|default:"-" }}</td>
-                            <td>{{ payment.provider }}</td>
-                            <td>{{ payment.amount }}</td>
-                            <td>{{ payment.status }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="4" class="text-center py-3">{% trans "No payment records found." %}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div id="section-applications" class="row admin-section">
-        <div class="col-12">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <h3 class="mb-0">{% trans "Hotel Applications" %}</h3>
-                <a href="{% url 'admin_hotel_applications' %}" class="btn btn-outline-primary btn-sm">{% trans "Manage" %}</a>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover bg-white">
-                    <thead class="thead-light">
-                        <tr>
-                            <th>{% trans "Application ID" %}</th>
-                            <th>{% trans "Hotel" %}</th>
-                            <th>{% trans "Owner" %}</th>
-                            <th>{% trans "Status" %}</th>
-                            <th>{% trans "Action" %}</th>
-                        </tr>
-                    </thead>
+                <table class="table dash-table">
+                    <thead><tr><th>{% trans "Hotel" %}</th><th>{% trans "Owner" %}</th><th>{% trans "Status" %}</th></tr></thead>
                     <tbody>
                         {% for application in applications %}
                         <tr>
-                            <td>#{{ application.id }}</td>
-                            <td>{{ application.hotel_name }}</td>
+                            <td><a class="dash-link" href="{% url 'admin_hotel_application_detail' application.id %}">{{ application.hotel_name }}</a></td>
                             <td>{{ application.contact_email }}</td>
-                            <td>{{ application.get_status_display }}</td>
-                            <td class="d-flex flex-wrap gap-2">
-                                <a href="{% url 'admin_hotel_application_detail' application.id %}" class="btn btn-sm btn-outline-primary">
-                                    {% trans "View" %}
-                                </a>
-                                {% if application.status == 'PENDING' %}
-                                <form method="post" action="{% url 'admin_hotel_application_detail' application.id %}" class="d-inline">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="approve">
-                                    <button type="submit" class="btn btn-sm btn-success">{% trans "Approve" %}</button>
-                                </form>
-                                <form method="post" action="{% url 'admin_hotel_application_detail' application.id %}" class="d-inline">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="reject">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">{% trans "Reject" %}</button>
-                                </form>
-                                {% endif %}
-                            </td>
+                            <td><span class="dash-badge">{{ application.get_status_display }}</span></td>
                         </tr>
                         {% empty %}
-                        <tr>
-                            <td colspan="5" class="text-center py-3">{% trans "No applications found." %}</td>
-                        </tr>
+                        <tr><td colspan="3" class="text-center py-4">{% trans "No applications found." %}</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-        </div>
+        </section>
+
+        <section class="dash-card">
+            <div class="dash-card__head">
+                <h3>{% trans "Platform Health" %}</h3>
+            </div>
+            <div class="dash-card__body">
+                <div class="dash-pipeline">
+                    <div class="dash-pipe"><span>{% trans "Users" %}</span><strong>{{ stats.users }}</strong></div>
+                    <div class="dash-pipe"><span>{% trans "Reviews" %}</span><strong>{{ admin_metrics.reviews }}</strong></div>
+                    <div class="dash-pipe"><span>{% trans "Avg rating" %}</span><strong>{{ admin_metrics.average_review|floatformat:1 }}</strong></div>
+                    <div class="dash-pipe"><span>{% trans "Open complaints" %}</span><strong>{{ admin_metrics.complaints }}</strong></div>
+                    <div class="dash-pipe"><span>{% trans "Payments" %}</span><strong>{{ stats.payments }}</strong></div>
+                </div>
+            </div>
+        </section>
     </div>
 </div>
 {% endblock %}

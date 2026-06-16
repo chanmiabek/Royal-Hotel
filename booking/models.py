@@ -9,11 +9,13 @@ class UserProfile(models.Model):
     USER_TYPES = (
         ('GUEST', 'Guest'),
         ('OWNER', 'Owner'),
+        ('STAFF', 'Staff'),
     )
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     user_type = models.CharField(max_length=10, choices=USER_TYPES, default='GUEST')
     mobile = models.CharField(max_length=30, blank=True)
+    profile_image = models.ImageField(upload_to='profiles/', blank=True, null=True)
 
     @property
     def is_owner(self):
@@ -24,6 +26,13 @@ class UserProfile(models.Model):
 
 
 class TeamMember(models.Model):
+    account = models.OneToOneField(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='platform_team_profile',
+    )
     name = models.CharField(max_length=120)
     role = models.CharField(max_length=120)
     bio = models.TextField()
@@ -219,6 +228,96 @@ class Review(models.Model):
 
     def __str__(self):
         return f"Review #{self.id} - {self.room.title if self.room else 'Room'}"
+
+
+class HotelReview(models.Model):
+    hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='hotel_reviews')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='hotel_reviews')
+    rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    title = models.CharField(max_length=200)
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ('hotel', 'user')
+
+    def __str__(self):
+        return f"{self.hotel.name} review by {self.user.username}"
+
+
+class HotelComplaint(models.Model):
+    STATUS = (
+        ('OPEN', 'Open'),
+        ('REVIEWING', 'Reviewing'),
+        ('RESOLVED', 'Resolved'),
+    )
+    hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='complaints')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='hotel_complaints')
+    full_name = models.CharField(max_length=100)
+    email = models.EmailField()
+    subject = models.CharField(max_length=200)
+    message = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS, default='OPEN')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Complaint about {self.hotel.name} - {self.subject}"
+
+
+class Wishlist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlists')
+    hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='wishlisted_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ('user', 'hotel')
+
+    def __str__(self):
+        return f"{self.user.username} saved {self.hotel.name}"
+
+
+class HotelStaff(models.Model):
+    ROLE_CHOICES = (
+        ('OWNER', 'Owner'),
+        ('MANAGER', 'Manager'),
+        ('FRONT_DESK', 'Front desk'),
+        ('HOUSEKEEPING', 'Housekeeping'),
+        ('ACCOUNTANT', 'Accountant'),
+        ('STAFF', 'Staff'),
+    )
+
+    hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='staff_members')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='hotel_staff_profiles')
+    added_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_hotel_staff',
+    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='STAFF')
+    job_title = models.CharField(max_length=120, blank=True)
+    phone = models.CharField(max_length=30, blank=True)
+    can_manage_rooms = models.BooleanField(default=False)
+    can_manage_bookings = models.BooleanField(default=False)
+    can_manage_payments = models.BooleanField(default=False)
+    can_manage_staff = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['role', 'user__first_name', 'user__username']
+        unique_together = ('hotel', 'user')
+
+    def __str__(self):
+        return f"{self.user.get_full_name() or self.user.username} - {self.hotel.name}"
 
 class ContactMessage(models.Model):
     full_name = models.CharField(max_length=100)
