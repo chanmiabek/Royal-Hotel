@@ -335,7 +335,10 @@ CLOUDINARY_AVAILABLE = (
     and importlib.util.find_spec("cloudinary") is not None
 )
 _cloudinary_config = _cloudinary_storage_config()
-USE_CLOUDINARY = _env_bool("USE_CLOUDINARY", default=bool(_cloudinary_config))
+USE_CLOUDINARY = _env_bool(
+    "USE_CLOUDINARY",
+    default=bool(_cloudinary_config) or RUNNING_DEPLOYED_APP,
+)
 
 if USE_CLOUDINARY and not CLOUDINARY_AVAILABLE:
     raise ImproperlyConfigured(

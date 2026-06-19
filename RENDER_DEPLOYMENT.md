@@ -40,11 +40,11 @@ This project is now wired for a safer Render deployment:
 - `DATABASE_URL=<your production PostgreSQL URL>`
 - `ALLOWED_HOSTS=your-service.onrender.com`
 - `CSRF_TRUSTED_ORIGINS=https://your-service.onrender.com`
+- `CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@<cloud_name>`
 
 ## Usually required in production
 
-- `USE_CLOUDINARY=True`
-- `CLOUDINARY_URL=<your cloudinary url>`
+- `USE_CLOUDINARY=True` (enabled automatically on Render, but set it explicitly for clarity)
 - `DEFAULT_FROM_EMAIL=<your sender address>`
 - `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`
 - `EMAIL_USE_TLS=True`
@@ -83,7 +83,7 @@ This project is now wired for a safer Render deployment:
 - Create a Django admin user from the Render Shell:
   `python manage.py createsuperuser`
 - Test login, registration, booking, contact form email, and any payment method you enabled.
-- Test one image upload and confirm the file persists after a redeploy.
+- Test one image/document upload and confirm the file appears in Cloudinary and persists after a redeploy.
 - If you add a custom domain, update `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, OAuth callback URLs, and webhook URLs.
 
 ## Zero-failure deployment routine
