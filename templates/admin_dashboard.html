@@ -1,517 +1,921 @@
-{% extends 'admin_base.html' %}
+{% extends 'base.html' %}
 {% load i18n %}
 
-{% block admin_extra_css %}
+{% block title %}{% trans "Super Admin Dashboard" %} | Royal Hotel{% endblock %}
+
+{% block extra_css %}
 <style>
-    .dash-pro {
-        --dash-dark: #111827;
-        --dash-gold: #FFD700;
-        --dash-muted: #64748b;
-        --dash-line: #e5e7eb;
+    .sa-app {
+        min-height: 100vh;
         background: #f6f7fb;
-        margin: -1.5rem -15px 0;
-        padding: 28px;
-        min-height: calc(100vh - 80px);
+        color: #111827;
         overflow-x: hidden;
     }
-    .dash-hero {
+    .sa-layout {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 20px;
-        align-items: center;
-        padding: 28px;
-        border-radius: 18px;
-        background: linear-gradient(135deg, #111827 0%, #202938 58%, #4d4100 100%);
-        color: #ffffff;
-        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.18);
-        margin-bottom: 22px;
+        grid-template-columns: 84px minmax(0, 1fr);
+        min-height: 100vh;
     }
-    .dash-hero__eyebrow {
-        color: var(--dash-gold);
-        font-size: 12px;
+    .sa-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1040;
+        width: 84px;
+        height: 100vh;
+        max-height: 100dvh;
+        padding: 18px 12px;
+        background: #111827;
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        overflow-x: hidden;
+        transition: width .22s ease, box-shadow .22s ease;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255,255,255,.28) transparent;
+    }
+    .sa-sidebar:hover,
+    .sa-sidebar:focus-within {
+        width: 292px;
+        box-shadow: 18px 0 40px rgba(15, 23, 42, .22);
+    }
+    .sa-sidebar::-webkit-scrollbar {
+        width: 7px;
+    }
+    .sa-sidebar::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,.28);
+        border-radius: 999px;
+    }
+    .sa-brand {
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 6px;
+        margin-bottom: 20px;
+        color: #FFD700;
+        font-size: 20px;
+        font-weight: 900;
+        white-space: nowrap;
+    }
+    .sa-brand small {
+        display: block;
+        color: rgba(255,255,255,.58);
+        font-size: 10px;
         font-weight: 900;
         letter-spacing: .12em;
         text-transform: uppercase;
-        margin-bottom: 9px;
     }
-    .dash-hero h1 {
+    .sa-brand > span,
+    .sa-admin-card,
+    .sa-nav-label {
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity .16s ease, visibility .16s ease;
+    }
+    .sa-sidebar:hover .sa-brand > span,
+    .sa-sidebar:focus-within .sa-brand > span,
+    .sa-sidebar:hover .sa-admin-card,
+    .sa-sidebar:focus-within .sa-admin-card,
+    .sa-sidebar:hover .sa-nav-label,
+    .sa-sidebar:focus-within .sa-nav-label {
+        opacity: 1;
+        visibility: visible;
+    }
+    .sa-admin-card {
+        min-width: 256px;
+        max-height: 0;
+        margin: 0 0 12px;
+        padding: 0 16px;
+        border-radius: 16px;
+        background: rgba(255,255,255,.08);
+        overflow: hidden;
+        transition: opacity .16s ease, visibility .16s ease, max-height .22s ease, padding .22s ease, margin .22s ease;
+    }
+    .sa-sidebar:hover .sa-admin-card,
+    .sa-sidebar:focus-within .sa-admin-card {
+        max-height: 230px;
+        padding-top: 16px;
+        padding-bottom: 16px;
+        margin-bottom: 20px;
+    }
+    .sa-admin-card__icon {
+        width: 48px;
+        height: 48px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        background: #FFD700;
+        color: #111827;
+        font-size: 20px;
+        margin-bottom: 12px;
+    }
+    .sa-admin-card h3 {
         color: #ffffff;
-        font-size: 30px;
-        line-height: 1.2;
-        margin-bottom: 8px;
+        font-size: 16px;
+        margin-bottom: 5px;
     }
-    .dash-hero p {
-        color: rgba(255,255,255,.74);
+    .sa-admin-card p {
+        color: rgba(255,255,255,.68);
+        font-size: 12px;
+        line-height: 1.45;
         margin: 0;
-        max-width: 720px;
     }
-    .dash-hero__actions {
+    .sa-nav {
+        display: grid;
+        gap: 8px;
+    }
+    .sa-nav a {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        color: rgba(255,255,255,.76);
+        font-weight: 800;
+        white-space: nowrap;
+    }
+    .sa-nav a i {
+        width: 28px;
+        min-width: 28px;
+        text-align: center;
+        font-size: 18px;
+    }
+    .sa-nav a:hover,
+    .sa-nav a.active {
+        background: #FFD700;
+        color: #111827;
+    }
+    .sa-nav-spacer {
+        flex: 1;
+        min-height: 20px;
+    }
+    .sa-main {
+        grid-column: 2;
+        min-width: 0;
+        width: 100%;
+        padding: 26px;
+    }
+    .sa-topbar {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        margin: -26px -26px 20px;
+        padding: 18px 26px;
+        background: rgba(246, 247, 251, .96);
+        border-bottom: 1px solid #e5e7eb;
+        backdrop-filter: blur(10px);
+    }
+    .sa-page-kicker {
+        color: #64748b;
+        font-size: 13px;
+        font-weight: 900;
+        margin: 0 0 3px;
+    }
+    .sa-topbar h1 {
+        color: #111827;
+        font-size: 28px;
+        line-height: 1.2;
+        margin-bottom: 5px;
+    }
+    .sa-topbar p {
+        color: #64748b;
+        margin: 0;
+    }
+    .sa-actions {
         display: flex;
         gap: 10px;
         flex-wrap: wrap;
         justify-content: flex-end;
+        min-width: 0;
     }
-    .dash-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
+    .sa-btn {
         min-height: 42px;
-        padding: 9px 14px;
-        border-radius: 10px;
-        font-weight: 800;
-        border: 1px solid rgba(255,255,255,.2);
-        background: rgba(255,255,255,.08);
-        color: #ffffff;
-    }
-    .dash-btn:hover {
-        color: var(--dash-dark);
-        background: var(--dash-gold);
-        border-color: var(--dash-gold);
-    }
-    .dash-search {
-        background: #ffffff;
-        border: 1px solid var(--dash-line);
-        border-radius: 14px;
-        padding: 14px;
-        margin-bottom: 18px;
-    }
-    .dash-search .form-control {
-        border-radius: 10px;
-        border-color: #d8dde5;
-    }
-    .dash-search .btn {
-        border-radius: 10px;
-        font-weight: 800;
-        background: var(--dash-dark);
-        color: var(--dash-gold);
-        border-color: var(--dash-dark);
-    }
-    .dash-kpis {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 16px;
-        margin-bottom: 18px;
-    }
-    .dash-kpi {
-        background: #ffffff;
-        border: 1px solid var(--dash-line);
-        border-radius: 16px;
-        padding: 18px;
-        min-height: 142px;
-    }
-    .dash-kpi__top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        margin-bottom: 18px;
-    }
-    .dash-kpi__icon {
-        width: 44px;
-        height: 44px;
-        border-radius: 14px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        background: #fff8d6;
-        color: #111827;
-        font-size: 18px;
+        gap: 8px;
+        padding: 9px 14px;
+        border-radius: 10px;
+        background: #111827;
+        color: #FFD700;
+        font-weight: 900;
+        border: 1px solid #111827;
     }
-    .dash-kpi__trend {
-        color: #16a34a;
+    .sa-btn:hover {
+        color: #111827;
+        background: #FFD700;
+        border-color: #FFD700;
+    }
+    .sa-btn--light {
+        background: #ffffff;
+        color: #111827;
+        border-color: #e5e7eb;
+    }
+    .sa-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 340px;
+        gap: 18px;
+        margin-bottom: 18px;
+    }
+    .sa-hero-card,
+    .sa-card,
+    .sa-kpi {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+    }
+    .sa-hero-card {
+        min-width: 0;
+        padding: 24px;
+        color: #ffffff;
+        background: linear-gradient(135deg, #111827 0%, #1f2937 56%, #4d4100 100%);
+        overflow: hidden;
+        position: relative;
+    }
+    .sa-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(255,215,0,.16);
+        color: #FFD700;
         font-size: 12px;
         font-weight: 900;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        margin-bottom: 18px;
     }
-    .dash-kpi span {
-        display: block;
-        color: var(--dash-muted);
-        font-size: 12px;
+    .sa-hero-card h2 {
+        color: #ffffff;
+        font-size: 28px;
+        line-height: 1.18;
+        margin-bottom: 8px;
+    }
+    .sa-hero-card p,
+    .sa-hero-meta {
+        color: rgba(255,255,255,.74);
+    }
+    .sa-hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-top: 16px;
+        font-size: 13px;
+    }
+    .sa-search-card {
+        padding: 18px;
+        display: grid;
+        align-content: start;
+        gap: 12px;
+    }
+    .sa-search {
+        position: relative;
+    }
+    .sa-search input {
+        width: 100%;
+        min-height: 46px;
+        padding: 10px 12px 10px 38px;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        background: #ffffff;
+        color: #111827;
         font-weight: 800;
+    }
+    .sa-search i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #64748b;
+    }
+    .sa-kpis {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 16px;
+        margin-bottom: 18px;
+    }
+    .sa-kpi {
+        min-height: 140px;
+        padding: 18px;
+    }
+    .sa-kpi__top {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    .sa-kpi__icon {
+        width: 42px;
+        height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        background: #fff8d6;
+        color: #111827;
+    }
+    .sa-kpi span,
+    .sa-op span {
+        display: block;
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 900;
         text-transform: uppercase;
         letter-spacing: .08em;
         margin-bottom: 5px;
     }
-    .dash-kpi strong {
+    .sa-kpi strong {
         color: #111827;
-        font-size: 26px;
+        font-size: 24px;
         line-height: 1.15;
+        word-break: break-word;
     }
-    .dash-grid {
+    .sa-trend {
+        color: #16a34a;
+        font-size: 12px;
+        font-weight: 900;
+    }
+    .sa-grid {
         display: grid;
-        grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr);
+        grid-template-columns: minmax(0, 1fr) 370px;
         gap: 18px;
     }
-    .dash-card {
-        background: #ffffff;
-        border: 1px solid var(--dash-line);
-        border-radius: 16px;
-        overflow: hidden;
+    .sa-card {
         min-width: 0;
+        overflow: hidden;
+        margin-bottom: 18px;
     }
-    .dash-card__head {
+    .sa-card__head {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 12px;
         padding: 18px 18px 0;
-        margin-bottom: 14px;
+        margin-bottom: 12px;
     }
-    .dash-card__head h2,
-    .dash-card__head h3 {
+    .sa-card__head h3 {
         color: #111827;
         font-size: 18px;
         margin: 0;
     }
-    .dash-card__body {
+    .sa-card__body {
         padding: 0 18px 18px;
     }
-    .dash-pipeline {
+    .sa-action-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
         gap: 12px;
     }
-    .dash-pipe {
+    .sa-action-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        min-width: 0;
         padding: 14px;
-        border-radius: 12px;
-        background: #f8fafc;
         border: 1px solid #edf0f4;
+        border-radius: 14px;
+        background: #fafafa;
+        color: #111827;
     }
-    .dash-pipe span {
-        color: var(--dash-muted);
-        font-size: 12px;
-        font-weight: 800;
-        text-transform: uppercase;
+    .sa-action-card:hover {
+        border-color: #FFD700;
+        box-shadow: 0 14px 26px rgba(15, 23, 42, .08);
+        transform: translateY(-2px);
     }
-    .dash-pipe strong {
+    .sa-action-card__icon {
+        width: 42px;
+        height: 42px;
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 13px;
+        background: #111827;
+        color: #FFD700;
+    }
+    .sa-action-card strong {
         display: block;
         color: #111827;
-        font-size: 22px;
-        margin-top: 8px;
+        font-size: 24px;
+        line-height: 1;
+        margin-bottom: 5px;
     }
-    .dash-alert-list,
-    .dash-hotel-list {
+    .sa-action-card span {
+        display: block;
+        color: #111827;
+        font-weight: 900;
+    }
+    .sa-action-card p {
+        color: #64748b;
+        font-size: 12px;
+        line-height: 1.45;
+        margin: 4px 0 0;
+    }
+    .sa-ops-grid,
+    .sa-pipeline {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+    }
+    .sa-ops-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .sa-op {
+        padding: 13px;
+        border-radius: 12px;
+        background: #fafafa;
+        border: 1px solid #edf0f4;
+    }
+    .sa-op strong {
+        display: block;
+        color: #111827;
+        font-size: 24px;
+        margin-top: 4px;
+    }
+    .sa-table {
+        margin: 0;
+        min-width: 680px;
+    }
+    .sa-table th {
+        border-top: 0;
+        color: #64748b;
+        font-size: 12px;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+    }
+    .sa-table td {
+        color: #111827;
+        vertical-align: middle;
+    }
+    .sa-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        max-width: 100%;
+        padding: 6px 9px;
+        border-radius: 999px;
+        background: #111827;
+        color: #FFD700;
+        font-size: 12px;
+        font-weight: 900;
+        white-space: nowrap;
+    }
+    .sa-list {
         display: grid;
         gap: 10px;
         margin: 0;
         padding: 0;
         list-style: none;
     }
-    .dash-alert-list li,
-    .dash-hotel-list li {
+    .sa-list li {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 12px;
+        min-width: 0;
         padding: 12px;
         border: 1px solid #edf0f4;
         border-radius: 12px;
         background: #fafafa;
-        min-width: 0;
     }
-    .dash-alert-list strong,
-    .dash-hotel-list strong {
+    .sa-list strong,
+    .sa-link {
         color: #111827;
-    }
-    .dash-alert-list span,
-    .dash-hotel-list span {
-        color: var(--dash-muted);
-        font-size: 12px;
-    }
-    .dash-badge {
-        min-width: 42px;
-        padding: 6px 9px;
-        border-radius: 999px;
-        background: #111827;
-        color: #FFD700;
-        text-align: center;
         font-weight: 900;
-        font-size: 12px;
     }
-    .dash-section-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 18px;
-        margin-top: 18px;
-    }
-    .dash-table {
-        margin: 0;
-        min-width: 560px;
-    }
-    .dash-table th {
-        border-top: 0;
-        color: #475569;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: .06em;
-    }
-    .dash-table td {
-        vertical-align: middle;
-        color: #111827;
-    }
-    .dash-link {
-        color: #111827;
-        font-weight: 800;
-    }
-    .dash-link:hover {
+    .sa-link:hover {
         color: #b39400;
     }
-    @media (max-width: 1199px) {
-        .dash-kpis {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-        .dash-grid,
-        .dash-section-grid {
-            grid-template-columns: 1fr;
+    .sa-list span {
+        color: #64748b;
+        font-size: 12px;
+    }
+    .local-messages {
+        margin: 0 0 14px;
+    }
+    [data-animate] {
+        opacity: 0;
+        transform: translateY(18px);
+        transition: opacity .55s ease, transform .55s ease;
+        transition-delay: var(--delay, 0ms);
+    }
+    [data-animate].is-visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    [data-animate="slide-left"] {
+        transform: translateX(22px);
+    }
+    [data-animate="slide-right"] {
+        transform: translateX(-22px);
+    }
+    [data-animate="slide-left"].is-visible,
+    [data-animate="slide-right"].is-visible {
+        transform: translateX(0);
+    }
+    @media (prefers-reduced-motion: reduce) {
+        [data-animate],
+        [data-animate].is-visible,
+        .sa-action-card {
+            opacity: 1;
+            transform: none;
+            transition: none;
         }
     }
-    @media (max-width: 991px) {
-        .dash-pro {
-            margin-top: 0;
+    @media (max-width: 1199px) {
+        .sa-layout {
+            grid-template-columns: 1fr;
+        }
+        .sa-sidebar {
+            position: sticky;
+            top: 0;
+            left: auto;
+            width: 100%;
+            height: auto;
+            max-height: none;
+            padding: 16px;
+            border-bottom: 1px solid rgba(255,255,255,.12);
+            box-shadow: none;
+            overflow-x: auto;
+        }
+        .sa-sidebar:hover,
+        .sa-sidebar:focus-within {
+            width: 100%;
+            box-shadow: none;
+        }
+        .sa-brand > span,
+        .sa-nav-label {
+            opacity: 1;
+            visibility: visible;
+        }
+        .sa-brand {
+            margin-bottom: 12px;
+        }
+        .sa-admin-card {
+            display: none;
+        }
+        .sa-nav {
+            display: flex;
+            gap: 8px;
+            min-width: max-content;
+        }
+        .sa-nav-spacer {
+            display: none;
+        }
+        .sa-main {
+            grid-column: 1;
             padding: 22px 18px;
         }
-        .dash-hero h1 {
-            font-size: 26px;
+        .sa-topbar {
+            margin: -22px -18px 18px;
+            padding: 16px 18px;
         }
-        .dash-kpi strong {
-            font-size: 24px;
-            word-break: break-word;
-        }
-        .dash-card__head {
-            align-items: flex-start;
-            flex-direction: column;
-        }
-        .dash-card__head .dash-link {
-            align-self: flex-start;
+        .sa-hero,
+        .sa-grid {
+            grid-template-columns: 1fr;
         }
     }
     @media (max-width: 767px) {
-        .dash-pro {
-            margin: -1rem -15px 0;
-            padding: 18px 14px;
-        }
-        .dash-hero {
-            grid-template-columns: 1fr;
-            padding: 22px;
-        }
-        .dash-hero__actions {
-            justify-content: flex-start;
-        }
-        .dash-btn,
-        .dash-search .btn {
-            width: 100%;
-            justify-content: center;
-        }
-        .dash-kpis,
-        .dash-pipeline {
-            grid-template-columns: 1fr;
-        }
-        .dash-card__body,
-        .dash-card__head {
-            padding-left: 14px;
-            padding-right: 14px;
-        }
-        .dash-alert-list li,
-        .dash-hotel-list li {
+        .sa-topbar {
             align-items: flex-start;
             flex-direction: column;
         }
-        .dash-badge {
-            max-width: 100%;
+        .sa-actions,
+        .sa-actions .sa-btn,
+        .sa-search-card .sa-btn {
+            width: 100%;
+        }
+        .sa-hero-card h2 {
+            font-size: 24px;
+        }
+        .sa-kpis,
+        .sa-pipeline,
+        .sa-ops-grid {
+            grid-template-columns: 1fr;
+        }
+        .sa-card__head {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+        .sa-list li {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+        .sa-badge {
             white-space: normal;
         }
     }
     @media (max-width: 420px) {
-        .dash-pro {
-            padding: 14px 10px;
+        .sa-main {
+            padding: 18px 12px;
         }
-        .dash-hero {
-            padding: 18px;
-            border-radius: 14px;
+        .sa-topbar {
+            margin: -18px -12px 16px;
+            padding: 14px 12px;
         }
-        .dash-hero h1 {
-            font-size: 23px;
+        .sa-hero-card,
+        .sa-kpi,
+        .sa-card__body,
+        .sa-search-card {
+            padding: 16px;
         }
-        .dash-kpi,
-        .dash-pipe {
-            padding: 14px;
+        .sa-card__head {
+            padding-left: 16px;
+            padding-right: 16px;
         }
     }
 </style>
 {% endblock %}
 
-{% block admin_sidebar_extra %}
-<div class="text-muted small mb-2">{% trans "Command center" %}</div>
-<div class="list-group">
-    <a href="#overview" class="list-group-item list-group-item-action">{% trans "Overview" %}</a>
-    <a href="#operations" class="list-group-item list-group-item-action">{% trans "Operations" %}</a>
-    <a href="#bookings" class="list-group-item list-group-item-action">{% trans "Bookings" %}</a>
-    <a href="#hotels" class="list-group-item list-group-item-action">{% trans "Hotels" %}</a>
-</div>
+{% block content %}
+<section class="sa-app">
+    <div class="sa-layout">
+        <aside class="sa-sidebar" aria-label="{% trans 'Super admin navigation' %}">
+            <a class="sa-brand" href="{% url 'admin_dashboard' %}">
+                <i class="fa fa-shield"></i>
+                <span>Royal Admin<small>{% trans "Command center" %}</small></span>
+            </a>
+
+            <div class="sa-admin-card">
+                <span class="sa-admin-card__icon"><i class="fa fa-user-secret"></i></span>
+                <h3>{{ request.user.first_name|default:request.user.username }}</h3>
+                <p>{{ request.user.email|default:"Super administrator" }}</p>
+            </div>
+
+            <nav class="sa-nav">
+                <a href="{% url 'admin_dashboard' %}" class="active"><i class="fa fa-dashboard"></i><span class="sa-nav-label">{% trans "Dashboard" %}</span></a>
+                <a href="{% url 'admin_users' %}"><i class="fa fa-users"></i><span class="sa-nav-label">{% trans "Users" %}</span></a>
+                <a href="{% url 'admin_hotels' %}"><i class="fa fa-building"></i><span class="sa-nav-label">{% trans "Hotels" %}</span></a>
+                <a href="{% url 'admin_rooms' %}"><i class="fa fa-bed"></i><span class="sa-nav-label">{% trans "Rooms" %}</span></a>
+                <a href="{% url 'admin_booked_rooms' %}"><i class="fa fa-calendar-check-o"></i><span class="sa-nav-label">{% trans "Bookings" %}</span></a>
+                <a href="{% url 'admin_payments' %}"><i class="fa fa-credit-card"></i><span class="sa-nav-label">{% trans "Payments" %}</span></a>
+                <a href="{% url 'admin_hotel_applications' %}"><i class="fa fa-file-text-o"></i><span class="sa-nav-label">{% trans "Applications" %}</span></a>
+                <a href="{% url 'admin_team_members' %}"><i class="fa fa-id-badge"></i><span class="sa-nav-label">{% trans "Team" %}</span></a>
+            </nav>
+
+            <div class="sa-nav-spacer"></div>
+            <nav class="sa-nav">
+                <a href="{% url 'admin_user_edit' request.user.id %}"><i class="fa fa-cog"></i><span class="sa-nav-label">{% trans "Profile Settings" %}</span></a>
+                <a href="{% url 'logout' %}"><i class="fa fa-sign-out"></i><span class="sa-nav-label">{% trans "Sign out" %}</span></a>
+            </nav>
+        </aside>
+
+        <main class="sa-main">
+            <div class="sa-topbar">
+                <div>
+                    <p class="sa-page-kicker">{% trans "Super Admin Dashboard" %}</p>
+                    <h1>{% trans "Platform Command Center" %}</h1>
+                    <p>{% trans "Monitor hotels, guests, rooms, bookings, payments, approvals, and partner operations." %}</p>
+                </div>
+                <div class="sa-actions">
+                    <a href="{% url 'admin_hotel_applications' %}" class="sa-btn"><i class="fa fa-file-text-o"></i>{% trans "Review Applications" %}</a>
+                    <a href="{% url 'admin_hotels' %}" class="sa-btn sa-btn--light"><i class="fa fa-building"></i>{% trans "Manage Hotels" %}</a>
+                </div>
+            </div>
+
+            <div class="sa-hero">
+                <section class="sa-hero-card" data-animate>
+                    <span class="sa-chip"><i class="fa fa-bolt"></i>{% trans "Live operations" %}</span>
+                    <h2>{% trans "One workspace for every hotel operation." %}</h2>
+                    <p>{% trans "Track platform revenue, booking flow, room approvals, partner applications, guest feedback, and owner activity from a single control surface." %}</p>
+                    <div class="sa-hero-meta">
+                        <span><i class="fa fa-building"></i> {{ admin_metrics.active_hotels }} {% trans "active hotels" %}</span>
+                        <span><i class="fa fa-calendar-check-o"></i> {{ admin_metrics.confirmed_bookings }} {% trans "confirmed bookings" %}</span>
+                        <span><i class="fa fa-warning"></i> {{ admin_metrics.pending_applications }} {% trans "applications pending" %}</span>
+                    </div>
+                </section>
+
+                <form method="get" class="sa-card sa-search-card" data-animate="slide-left">
+                    <div>
+                        <h3 class="mb-2">{% trans "Universal Search" %}</h3>
+                        <p class="text-muted mb-3">{% trans "Find users, hotels, rooms, bookings, payments, or applications." %}</p>
+                    </div>
+                    <div class="sa-search">
+                        <i class="fa fa-search"></i>
+                        <input type="text" name="q" value="{{ query }}" placeholder="{% trans 'Search platform records' %}">
+                    </div>
+                    <button type="submit" class="sa-btn"><i class="fa fa-search"></i>{% trans "Search" %}</button>
+                </form>
+            </div>
+
+            <section class="sa-card" data-animate>
+                <div class="sa-card__head">
+                    <h3>{% trans "Management Action Center" %}</h3>
+                    <span class="sa-badge">{% trans "Live" %}</span>
+                </div>
+                <div class="sa-card__body">
+                    {% include 'includes/local_messages.html' %}
+                    <div class="sa-action-grid">
+                        {% for item in dashboard_notifications %}
+                        <a href="{{ item.url }}" class="sa-action-card" data-animate {% if forloop.counter == 2 %}style="--delay: 80ms;"{% elif forloop.counter == 3 %}style="--delay: 160ms;"{% elif forloop.counter == 4 %}style="--delay: 240ms;"{% endif %}>
+                            <span class="sa-action-card__icon"><i class="fa {{ item.icon }}"></i></span>
+                            <span>
+                                <strong>{{ item.count }}</strong>
+                                <span>{{ item.label }}</span>
+                                <p>{{ item.detail }}</p>
+                            </span>
+                        </a>
+                        {% empty %}
+                        <a href="{% url 'admin_hotels' %}" class="sa-action-card">
+                            <span class="sa-action-card__icon"><i class="fa fa-check"></i></span>
+                            <span><strong>0</strong><span>{% trans "No urgent actions" %}</span><p>{% trans "Platform operations are clear." %}</p></span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+            <div class="sa-kpis">
+                <article class="sa-kpi" data-animate>
+                    <div class="sa-kpi__top"><span class="sa-kpi__icon"><i class="fa fa-money"></i></span><span class="sa-trend">{% trans "Live" %}</span></div>
+                    <span>{% trans "Total Revenue" %}</span><strong>KES {{ admin_metrics.revenue_total|floatformat:0 }}</strong><p class="mb-0 text-muted">{% trans "Settled payments" %}</p>
+                </article>
+                <article class="sa-kpi" data-animate style="--delay: 70ms;">
+                    <div class="sa-kpi__top"><span class="sa-kpi__icon"><i class="fa fa-calendar-check-o"></i></span><span class="sa-trend">{{ admin_metrics.pending_bookings }} {% trans "pending" %}</span></div>
+                    <span>{% trans "Confirmed Bookings" %}</span><strong>{{ admin_metrics.confirmed_bookings }}</strong><p class="mb-0 text-muted">{% trans "Across all hotels" %}</p>
+                </article>
+                <article class="sa-kpi" data-animate style="--delay: 140ms;">
+                    <div class="sa-kpi__top"><span class="sa-kpi__icon"><i class="fa fa-building"></i></span><span class="sa-trend">{{ admin_metrics.pending_hotels }} {% trans "pending" %}</span></div>
+                    <span>{% trans "Active Hotels" %}</span><strong>{{ admin_metrics.active_hotels }}</strong><p class="mb-0 text-muted">{% trans "Approved partners" %}</p>
+                </article>
+                <article class="sa-kpi" data-animate style="--delay: 210ms;">
+                    <div class="sa-kpi__top"><span class="sa-kpi__icon"><i class="fa fa-bed"></i></span><span class="sa-trend">{{ admin_metrics.pending_rooms }} {% trans "review" %}</span></div>
+                    <span>{% trans "Available Rooms" %}</span><strong>{{ admin_metrics.available_rooms }}</strong><p class="mb-0 text-muted">{% trans "Ready for booking" %}</p>
+                </article>
+                <article class="sa-kpi" data-animate style="--delay: 280ms;">
+                    <div class="sa-kpi__top"><span class="sa-kpi__icon"><i class="fa fa-users"></i></span><span class="sa-trend">{% trans "Partners" %}</span></div>
+                    <span>{% trans "Hotel Owners" %}</span><strong>{{ admin_metrics.hotel_owners }}</strong><p class="mb-0 text-muted">{% trans "Owner accounts" %}</p>
+                </article>
+            </div>
+
+            <div class="sa-grid">
+                <div>
+                    <section id="operations" class="sa-card" data-animate="slide-right">
+                        <div class="sa-card__head">
+                            <h3>{% trans "Booking Pipeline" %}</h3>
+                            <a href="{% url 'admin_booked_rooms' %}" class="sa-btn sa-btn--light">{% trans "View all" %}</a>
+                        </div>
+                        <div class="sa-card__body">
+                            <div class="sa-pipeline">
+                                <div class="sa-op"><span>{% trans "Pending" %}</span><strong>{{ admin_metrics.pending_bookings }}</strong></div>
+                                <div class="sa-op"><span>{% trans "Confirmed" %}</span><strong>{{ admin_metrics.confirmed_bookings }}</strong></div>
+                                <div class="sa-op"><span>{% trans "Completed" %}</span><strong>{{ admin_metrics.completed_bookings }}</strong></div>
+                                <div class="sa-op"><span>{% trans "Cancelled" %}</span><strong>{{ admin_metrics.cancelled_bookings }}</strong></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="bookings" class="sa-card" data-animate="slide-right">
+                        <div class="sa-card__head">
+                            <h3>{% trans "Recent Bookings" %}</h3>
+                            <span class="sa-badge">{{ stats.bookings }} {% trans "records" %}</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table sa-table">
+                                <thead><tr><th>{% trans "Guest" %}</th><th>{% trans "Room" %}</th><th>{% trans "Status" %}</th></tr></thead>
+                                <tbody>
+                                    {% for booking in bookings %}
+                                    <tr>
+                                        <td>#{{ booking.id }} {{ booking.first_name }} {{ booking.last_name }}</td>
+                                        <td>{{ booking.room.title|default:"-" }}</td>
+                                        <td><span class="sa-badge">{{ booking.status }}</span></td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="3" class="text-center py-4">{% trans "No bookings found." %}</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section class="sa-card" data-animate="slide-right">
+                        <div class="sa-card__head">
+                            <h3>{% trans "Latest Applications" %}</h3>
+                            <a href="{% url 'admin_hotel_applications' %}" class="sa-btn sa-btn--light">{% trans "Review" %}</a>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table sa-table">
+                                <thead><tr><th>{% trans "Hotel" %}</th><th>{% trans "Owner" %}</th><th>{% trans "Status" %}</th></tr></thead>
+                                <tbody>
+                                    {% for application in applications %}
+                                    <tr>
+                                        <td><a class="sa-link" href="{% url 'admin_hotel_application_detail' application.id %}">{{ application.hotel_name }}</a></td>
+                                        <td>{{ application.contact_email }}</td>
+                                        <td><span class="sa-badge">{{ application.get_status_display }}</span></td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="3" class="text-center py-4">{% trans "No applications found." %}</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+
+                <aside>
+                    <section class="sa-card" data-animate="slide-left">
+                        <div class="sa-card__head"><h3>{% trans "Action Required" %}</h3></div>
+                        <div class="sa-card__body">
+                            <ul class="sa-list">
+                                <li><div><strong>{% trans "Hotel applications" %}</strong><br><span>{% trans "Awaiting admin decision" %}</span></div><span class="sa-badge">{{ admin_metrics.pending_applications }}</span></li>
+                                <li><div><strong>{% trans "Rooms pending review" %}</strong><br><span>{% trans "Needs approval before sale" %}</span></div><span class="sa-badge">{{ admin_metrics.pending_rooms }}</span></li>
+                                <li><div><strong>{% trans "Pending revenue" %}</strong><br><span>{% trans "Payments not settled yet" %}</span></div><span class="sa-badge">KES {{ admin_metrics.pending_revenue|floatformat:0 }}</span></li>
+                                <li><div><strong>{% trans "Open complaints" %}</strong><br><span>{% trans "Guest issues needing attention" %}</span></div><span class="sa-badge">{{ admin_metrics.complaints }}</span></li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <section class="sa-card" data-animate="slide-left">
+                        <div class="sa-card__head"><h3>{% trans "Platform Health" %}</h3></div>
+                        <div class="sa-card__body">
+                            <div class="sa-ops-grid">
+                                <div class="sa-op"><span>{% trans "Users" %}</span><strong>{{ stats.users }}</strong></div>
+                                <div class="sa-op"><span>{% trans "Hotels" %}</span><strong>{{ stats.hotels }}</strong></div>
+                                <div class="sa-op"><span>{% trans "Rooms" %}</span><strong>{{ stats.rooms }}</strong></div>
+                                <div class="sa-op"><span>{% trans "Payments" %}</span><strong>{{ stats.payments }}</strong></div>
+                                <div class="sa-op"><span>{% trans "Reviews" %}</span><strong>{{ admin_metrics.reviews }}</strong></div>
+                                <div class="sa-op"><span>{% trans "Avg rating" %}</span><strong>{{ admin_metrics.average_review|floatformat:1 }}</strong></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="hotels" class="sa-card" data-animate="slide-left">
+                        <div class="sa-card__head">
+                            <h3>{% trans "Top Hotels" %}</h3>
+                            <a href="{% url 'admin_hotels' %}" class="sa-btn sa-btn--light">{% trans "Manage" %}</a>
+                        </div>
+                        <div class="sa-card__body">
+                            <ul class="sa-list">
+                                {% for hotel in top_hotels %}
+                                <li>
+                                    <div>
+                                        <strong><a class="sa-link" href="{% url 'admin_hotel_detail' hotel.id %}">{{ hotel.name }}</a></strong><br>
+                                        <span>{{ hotel.city|default:"-" }}{% if hotel.country %}, {{ hotel.country }}{% endif %} &middot; {{ hotel.total_rooms }} {% trans "rooms" %}</span>
+                                    </div>
+                                    <span class="sa-badge">{{ hotel.total_bookings }} {% trans "bookings" %}</span>
+                                </li>
+                                {% empty %}
+                                <li><span>{% trans "No hotels available." %}</span></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </section>
+
+                    <section class="sa-card" data-animate="slide-left">
+                        <div class="sa-card__head"><h3>{% trans "Quick Management" %}</h3></div>
+                        <div class="sa-card__body">
+                            <ul class="sa-list">
+                                {% for item in dashboard_messages %}
+                                <li>
+                                    <div><strong>{{ item.label }}</strong><br><span>{{ item.detail }}</span></div>
+                                    <a class="sa-badge" href="{{ item.url }}">{{ item.count }}</a>
+                                </li>
+                                {% empty %}
+                                <li><span>{% trans "No quick messages available." %}</span></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </section>
+                </aside>
+            </div>
+        </main>
+    </div>
+</section>
 {% endblock %}
 
-{% block admin_content %}
-<div class="dash-pro">
-    <section class="dash-hero">
-        <div>
-            <div class="dash-hero__eyebrow">{% trans "Super Admin Dashboard" %}</div>
-            <h1>{% trans "Hotel Management Command Center" %}</h1>
-            <p>{% trans "Monitor platform revenue, property health, bookings, approvals, rooms, guests, and owner operations from one workspace." %}</p>
-        </div>
-        <div class="dash-hero__actions">
-            <a href="{% url 'admin_hotel_applications' %}" class="dash-btn"><i class="fa fa-file-text-o"></i>{% trans "Review Applications" %}</a>
-            <a href="{% url 'admin_hotels' %}" class="dash-btn"><i class="fa fa-building"></i>{% trans "Manage Hotels" %}</a>
-        </div>
-    </section>
-
-    <form id="overview" method="get" class="dash-search">
-        <div class="form-row">
-            <div class="col-lg-9 mb-2 mb-lg-0">
-                <input type="text" name="q" class="form-control" value="{{ query }}" placeholder="{% trans 'Search users, hotels, rooms, bookings, payments, applications' %}">
-            </div>
-            <div class="col-lg-3">
-                <button type="submit" class="btn btn-block"><i class="fa fa-search"></i> {% trans "Search" %}</button>
-            </div>
-        </div>
-    </form>
-
-    <div class="dash-kpis">
-        <article class="dash-kpi">
-            <div class="dash-kpi__top"><span class="dash-kpi__icon"><i class="fa fa-money"></i></span><span class="dash-kpi__trend">{% trans "Live" %}</span></div>
-            <span>{% trans "Total Revenue" %}</span>
-            <strong>KES {{ admin_metrics.revenue_total|floatformat:0 }}</strong>
-        </article>
-        <article class="dash-kpi">
-            <div class="dash-kpi__top"><span class="dash-kpi__icon"><i class="fa fa-calendar-check-o"></i></span><span class="dash-kpi__trend">{{ admin_metrics.pending_bookings }} {% trans "pending" %}</span></div>
-            <span>{% trans "Confirmed Bookings" %}</span>
-            <strong>{{ admin_metrics.confirmed_bookings }}</strong>
-        </article>
-        <article class="dash-kpi">
-            <div class="dash-kpi__top"><span class="dash-kpi__icon"><i class="fa fa-building"></i></span><span class="dash-kpi__trend">{{ admin_metrics.pending_hotels }} {% trans "pending" %}</span></div>
-            <span>{% trans "Active Hotels" %}</span>
-            <strong>{{ admin_metrics.active_hotels }}</strong>
-        </article>
-        <article class="dash-kpi">
-            <div class="dash-kpi__top"><span class="dash-kpi__icon"><i class="fa fa-bed"></i></span><span class="dash-kpi__trend">{{ admin_metrics.pending_rooms }} {% trans "review" %}</span></div>
-            <span>{% trans "Available Rooms" %}</span>
-            <strong>{{ admin_metrics.available_rooms }}</strong>
-        </article>
-    </div>
-
-    <div id="operations" class="dash-grid">
-        <section class="dash-card">
-            <div class="dash-card__head">
-                <h2>{% trans "Booking Pipeline" %}</h2>
-                <a href="{% url 'admin_booked_rooms' %}" class="dash-link">{% trans "View all" %}</a>
-            </div>
-            <div class="dash-card__body">
-                <div class="dash-pipeline">
-                    <div class="dash-pipe"><span>{% trans "Pending" %}</span><strong>{{ admin_metrics.pending_bookings }}</strong></div>
-                    <div class="dash-pipe"><span>{% trans "Confirmed" %}</span><strong>{{ admin_metrics.confirmed_bookings }}</strong></div>
-                    <div class="dash-pipe"><span>{% trans "Completed" %}</span><strong>{{ admin_metrics.completed_bookings }}</strong></div>
-                    <div class="dash-pipe"><span>{% trans "Cancelled" %}</span><strong>{{ admin_metrics.cancelled_bookings }}</strong></div>
-                </div>
-            </div>
-        </section>
-
-        <section class="dash-card">
-            <div class="dash-card__head">
-                <h2>{% trans "Action Required" %}</h2>
-            </div>
-            <div class="dash-card__body">
-                <ul class="dash-alert-list">
-                    <li><div><strong>{% trans "Hotel applications" %}</strong><br><span>{% trans "Awaiting admin decision" %}</span></div><span class="dash-badge">{{ admin_metrics.pending_applications }}</span></li>
-                    <li><div><strong>{% trans "Rooms pending review" %}</strong><br><span>{% trans "Needs approval before sale" %}</span></div><span class="dash-badge">{{ admin_metrics.pending_rooms }}</span></li>
-                    <li><div><strong>{% trans "Pending revenue" %}</strong><br><span>{% trans "Payments not settled yet" %}</span></div><span class="dash-badge">KES {{ admin_metrics.pending_revenue|floatformat:0 }}</span></li>
-                    <li><div><strong>{% trans "Hotel owners" %}</strong><br><span>{% trans "Partner accounts" %}</span></div><span class="dash-badge">{{ admin_metrics.hotel_owners }}</span></li>
-                </ul>
-            </div>
-        </section>
-    </div>
-
-    <div class="dash-section-grid">
-        <section id="bookings" class="dash-card">
-            <div class="dash-card__head">
-                <h3>{% trans "Recent Bookings" %}</h3>
-            </div>
-            <div class="table-responsive">
-                <table class="table dash-table">
-                    <thead><tr><th>{% trans "Guest" %}</th><th>{% trans "Room" %}</th><th>{% trans "Status" %}</th></tr></thead>
-                    <tbody>
-                        {% for booking in bookings %}
-                        <tr>
-                            <td>#{{ booking.id }} {{ booking.first_name }} {{ booking.last_name }}</td>
-                            <td>{{ booking.room.title|default:"-" }}</td>
-                            <td><span class="dash-badge">{{ booking.status }}</span></td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="3" class="text-center py-4">{% trans "No bookings found." %}</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <section id="hotels" class="dash-card">
-            <div class="dash-card__head">
-                <h3>{% trans "Top Hotels" %}</h3>
-                <a href="{% url 'admin_hotels' %}" class="dash-link">{% trans "Manage" %}</a>
-            </div>
-            <div class="dash-card__body">
-                <ul class="dash-hotel-list">
-                    {% for hotel in top_hotels %}
-                    <li>
-                        <div>
-                            <strong><a class="dash-link" href="{% url 'admin_hotel_detail' hotel.id %}">{{ hotel.name }}</a></strong><br>
-                            <span>{{ hotel.city|default:"-" }}{% if hotel.country %}, {{ hotel.country }}{% endif %} · {{ hotel.total_rooms }} {% trans "rooms" %}</span>
-                        </div>
-                        <span class="dash-badge">{{ hotel.total_bookings }} {% trans "bookings" %}</span>
-                    </li>
-                    {% empty %}
-                    <li><span>{% trans "No hotels available." %}</span></li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </section>
-    </div>
-
-    <div class="dash-section-grid">
-        <section class="dash-card">
-            <div class="dash-card__head">
-                <h3>{% trans "Latest Applications" %}</h3>
-                <a href="{% url 'admin_hotel_applications' %}" class="dash-link">{% trans "Review" %}</a>
-            </div>
-            <div class="table-responsive">
-                <table class="table dash-table">
-                    <thead><tr><th>{% trans "Hotel" %}</th><th>{% trans "Owner" %}</th><th>{% trans "Status" %}</th></tr></thead>
-                    <tbody>
-                        {% for application in applications %}
-                        <tr>
-                            <td><a class="dash-link" href="{% url 'admin_hotel_application_detail' application.id %}">{{ application.hotel_name }}</a></td>
-                            <td>{{ application.contact_email }}</td>
-                            <td><span class="dash-badge">{{ application.get_status_display }}</span></td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="3" class="text-center py-4">{% trans "No applications found." %}</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <section class="dash-card">
-            <div class="dash-card__head">
-                <h3>{% trans "Platform Health" %}</h3>
-            </div>
-            <div class="dash-card__body">
-                <div class="dash-pipeline">
-                    <div class="dash-pipe"><span>{% trans "Users" %}</span><strong>{{ stats.users }}</strong></div>
-                    <div class="dash-pipe"><span>{% trans "Reviews" %}</span><strong>{{ admin_metrics.reviews }}</strong></div>
-                    <div class="dash-pipe"><span>{% trans "Avg rating" %}</span><strong>{{ admin_metrics.average_review|floatformat:1 }}</strong></div>
-                    <div class="dash-pipe"><span>{% trans "Open complaints" %}</span><strong>{{ admin_metrics.complaints }}</strong></div>
-                    <div class="dash-pipe"><span>{% trans "Payments" %}</span><strong>{{ stats.payments }}</strong></div>
-                </div>
-            </div>
-        </section>
-    </div>
-</div>
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var animated = Array.prototype.slice.call(document.querySelectorAll('[data-animate]'));
+        if (!animated.length) {
+            return;
+        }
+        if (!('IntersectionObserver' in window)) {
+            animated.forEach(function (item) {
+                item.classList.add('is-visible');
+            });
+            return;
+        }
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.14, rootMargin: '0px 0px -40px 0px' });
+        animated.forEach(function (item) {
+            observer.observe(item);
+        });
+    });
+</script>
 {% endblock %}

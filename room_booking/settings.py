@@ -29,6 +29,15 @@ def _load_dotenv(dotenv_path, override=True):
 
 
 RUNNING_TESTS = "test" in sys.argv
+RUNNING_LOCAL_DEV_SERVER = (
+    "runserver" in sys.argv
+    and not any(arg.startswith(("0.0.0.0:", "0:")) for arg in sys.argv)
+)
+RUNNING_DEPLOYED_APP = bool(
+    os.getenv("RENDER", "").strip()
+    or os.getenv("RENDER_EXTERNAL_HOSTNAME", "").strip()
+    or os.getenv("RENDER_EXTERNAL_URL", "").strip()
+)
 if not RUNNING_TESTS:
     # Load local development overrides without clobbering real environment
     # variables from Render, CI, or the shell.
@@ -256,9 +265,13 @@ if WHITENOISE_AVAILABLE:
     MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
 if not DEBUG and not RUNNING_TESTS:
-    SECURE_SSL_REDIRECT = _env_bool("SECURE_SSL_REDIRECT", default=True)
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = (
+        _env_bool("SECURE_SSL_REDIRECT", default=True)
+        if RUNNING_DEPLOYED_APP and not RUNNING_LOCAL_DEV_SERVER
+        else False
+    )
+    SESSION_COOKIE_SECURE = RUNNING_DEPLOYED_APP and not RUNNING_LOCAL_DEV_SERVER
+    CSRF_COOKIE_SECURE = RUNNING_DEPLOYED_APP and not RUNNING_LOCAL_DEV_SERVER
     SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "31536000"))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = _env_bool("SECURE_HSTS_INCLUDE_SUBDOMAINS", default=True)
     SECURE_HSTS_PRELOAD = _env_bool("SECURE_HSTS_PRELOAD", default=False)
@@ -284,8 +297,10 @@ STORAGES = {
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+
 def _cloudinary_storage_config():
-    if (cloudinary_url := os.getenv("CLOUDINARY_URL" or  "cloudinary://155148888292477:ionVzNAFM_n7EDc1CnXqgtJlqfE@duqzrcdfu").strip()):
+    cloudinary_url = os.getenv("CLOUDINARY_URL", "").strip()
+    if cloudinary_url and cloudinary_url.lower() not in {"cloudinary", "cloudinary://"}:
         parsed = urlparse(cloudinary_url)
         if parsed.scheme == "cloudinary":
             cloud_name = (parsed.hostname or "").strip()
@@ -320,9 +335,20 @@ CLOUDINARY_AVAILABLE = (
     and importlib.util.find_spec("cloudinary") is not None
 )
 _cloudinary_config = _cloudinary_storage_config()
-USE_CLOUDINARY = _env_bool("USE_CLOUDINARY", default=bool(_cloudinary_config and not DEBUG))
+USE_CLOUDINARY = _env_bool("USE_CLOUDINARY", default=bool(_cloudinary_config))
 
-if USE_CLOUDINARY and CLOUDINARY_AVAILABLE and _cloudinary_config:
+if USE_CLOUDINARY and not CLOUDINARY_AVAILABLE:
+    raise ImproperlyConfigured(
+        "Install cloudinary and django-cloudinary-storage to use Cloudinary media storage."
+    )
+
+if USE_CLOUDINARY and not _cloudinary_config:
+    raise ImproperlyConfigured(
+        "Set CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@<cloud_name> "
+        "or set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET."
+    )
+
+if USE_CLOUDINARY:
     CLOUDINARY_STORAGE = _cloudinary_config
 
     # Ensure template tags + storage backend are available.
