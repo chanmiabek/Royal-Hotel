@@ -1,10 +1,14 @@
 # Use official Python runtime as base image
 FROM python:3.12.8-slim
 
+# Accept SECRET_KEY as build argument
+ARG SECRET_KEY=dev-only-change-this-to-a-long-random-secret-key-value-1234567890
+
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    SECRET_KEY=${SECRET_KEY}
 
 # Set work directory
 WORKDIR /app
