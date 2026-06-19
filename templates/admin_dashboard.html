@@ -123,6 +123,46 @@
         line-height: 1.45;
         margin: 0;
     }
+    .sa-admin-card__actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+    }
+    .sa-admin-card__actions a {
+        min-height: 34px;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 7px 10px;
+        border-radius: 10px;
+        background: rgba(255,255,255,.1);
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: 900;
+    }
+    .sa-admin-card__actions a:hover {
+        background: #FFD700;
+        color: #111827;
+    }
+    .sa-menu-title {
+        color: rgba(255,255,255,.52);
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        margin: 0 0 10px;
+        padding: 0 12px;
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity .16s ease, visibility .16s ease;
+    }
+    .sa-sidebar:hover .sa-menu-title,
+    .sa-sidebar:focus-within .sa-menu-title {
+        opacity: 1;
+        visibility: visible;
+    }
     .sa-nav {
         display: grid;
         gap: 8px;
@@ -553,7 +593,9 @@
             box-shadow: none;
         }
         .sa-brand > span,
-        .sa-nav-label {
+        .sa-nav-label,
+        .sa-menu-title,
+        .sa-admin-card {
             opacity: 1;
             visibility: visible;
         }
@@ -561,12 +603,23 @@
             margin-bottom: 12px;
         }
         .sa-admin-card {
-            display: none;
+            min-width: 280px;
+            max-height: none;
+            padding-top: 16px;
+            padding-bottom: 16px;
+            margin-right: 8px;
+            margin-bottom: 0;
+            flex: 0 0 280px;
         }
         .sa-nav {
             display: flex;
             gap: 8px;
             min-width: max-content;
+        }
+        .sa-menu-title {
+            align-self: center;
+            margin: 0 8px 0 0;
+            padding: 0;
         }
         .sa-nav-spacer {
             display: none;
@@ -649,17 +702,23 @@
                 <span class="sa-admin-card__icon"><i class="fa fa-user-secret"></i></span>
                 <h3>{{ request.user.first_name|default:request.user.username }}</h3>
                 <p>{{ request.user.email|default:"Super administrator" }}</p>
+                <div class="sa-admin-card__actions">
+                    <a href="{% url 'admin_user_edit' request.user.id %}"><i class="fa fa-cog"></i>{% trans "Profile Settings" %}</a>
+                    <a href="{% url 'logout' %}"><i class="fa fa-sign-out"></i>{% trans "Logout" %}</a>
+                </div>
             </div>
 
+            <p class="sa-menu-title">{% trans "Admin Menu" %}</p>
             <nav class="sa-nav">
                 <a href="{% url 'admin_dashboard' %}" class="active"><i class="fa fa-dashboard"></i><span class="sa-nav-label">{% trans "Dashboard" %}</span></a>
                 <a href="{% url 'admin_users' %}"><i class="fa fa-users"></i><span class="sa-nav-label">{% trans "Users" %}</span></a>
                 <a href="{% url 'admin_hotels' %}"><i class="fa fa-building"></i><span class="sa-nav-label">{% trans "Hotels" %}</span></a>
                 <a href="{% url 'admin_rooms' %}"><i class="fa fa-bed"></i><span class="sa-nav-label">{% trans "Rooms" %}</span></a>
-                <a href="{% url 'admin_booked_rooms' %}"><i class="fa fa-calendar-check-o"></i><span class="sa-nav-label">{% trans "Bookings" %}</span></a>
+                <a href="{% url 'admin_booked_rooms' %}"><i class="fa fa-calendar-check-o"></i><span class="sa-nav-label">{% trans "Booked Rooms" %}</span></a>
+                <a href="{% url 'admin_team_members' %}"><i class="fa fa-id-badge"></i><span class="sa-nav-label">{% trans "Team Members" %}</span></a>
+                <a href="{% url 'admin_testimonials' %}"><i class="fa fa-quote-left"></i><span class="sa-nav-label">{% trans "Testimonials" %}</span></a>
                 <a href="{% url 'admin_payments' %}"><i class="fa fa-credit-card"></i><span class="sa-nav-label">{% trans "Payments" %}</span></a>
                 <a href="{% url 'admin_hotel_applications' %}"><i class="fa fa-file-text-o"></i><span class="sa-nav-label">{% trans "Applications" %}</span></a>
-                <a href="{% url 'admin_team_members' %}"><i class="fa fa-id-badge"></i><span class="sa-nav-label">{% trans "Team" %}</span></a>
             </nav>
 
             <div class="sa-nav-spacer"></div>
