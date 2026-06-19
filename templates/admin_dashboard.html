@@ -793,6 +793,49 @@
                 </div>
             </section>
 
+            <section class="sa-card" data-animate>
+                <div class="sa-card__head">
+                    <h3>{% trans "Admin Menu" %}</h3>
+                    <span class="sa-badge">{% trans "Dashboard" %}</span>
+                </div>
+                <div class="sa-card__body">
+                    <div class="sa-action-grid">
+                        <a href="{% url 'admin_users' %}" class="sa-action-card">
+                            <span class="sa-action-card__icon"><i class="fa fa-users"></i></span>
+                            <span><span>{% trans "Users" %}</span><p>{% trans "Manage customer, owner, staff, and admin accounts." %}</p></span>
+                        </a>
+                        <a href="{% url 'admin_hotels' %}" class="sa-action-card">
+                            <span class="sa-action-card__icon"><i class="fa fa-building"></i></span>
+                            <span><span>{% trans "Hotels" %}</span><p>{% trans "Review approved properties and partner hotel records." %}</p></span>
+                        </a>
+                        <a href="{% url 'admin_rooms' %}" class="sa-action-card">
+                            <span class="sa-action-card__icon"><i class="fa fa-bed"></i></span>
+                            <span><span>{% trans "Rooms" %}</span><p>{% trans "Approve, edit, and manage rooms across hotels." %}</p></span>
+                        </a>
+                        <a href="{% url 'admin_booked_rooms' %}" class="sa-action-card">
+                            <span class="sa-action-card__icon"><i class="fa fa-calendar-check-o"></i></span>
+                            <span><span>{% trans "Booked Rooms" %}</span><p>{% trans "Track guest bookings and reservation statuses." %}</p></span>
+                        </a>
+                        <a href="{% url 'admin_team_members' %}" class="sa-action-card">
+                            <span class="sa-action-card__icon"><i class="fa fa-id-badge"></i></span>
+                            <span><span>{% trans "Team Members" %}</span><p>{% trans "Manage public team profiles and platform staff content." %}</p></span>
+                        </a>
+                        <a href="{% url 'admin_testimonials' %}" class="sa-action-card">
+                            <span class="sa-action-card__icon"><i class="fa fa-quote-left"></i></span>
+                            <span><span>{% trans "Testimonials" %}</span><p>{% trans "Create and edit guest testimonial content." %}</p></span>
+                        </a>
+                        <a href="{% url 'admin_payments' %}" class="sa-action-card">
+                            <span class="sa-action-card__icon"><i class="fa fa-credit-card"></i></span>
+                            <span><span>{% trans "Payments" %}</span><p>{% trans "Monitor payment records, providers, and statuses." %}</p></span>
+                        </a>
+                        <a href="{% url 'admin_hotel_applications' %}" class="sa-action-card">
+                            <span class="sa-action-card__icon"><i class="fa fa-file-text-o"></i></span>
+                            <span><span>{% trans "Applications" %}</span><p>{% trans "Review hotel partner applications and documents." %}</p></span>
+                        </a>
+                    </div>
+                </div>
+            </section>
+
             <div class="sa-kpis">
                 <article class="sa-kpi" data-animate>
                     <div class="sa-kpi__top"><span class="sa-kpi__icon"><i class="fa fa-money"></i></span><span class="sa-trend">{% trans "Live" %}</span></div>
