@@ -46,10 +46,10 @@ If you see "You're accessing the development server over HTTPS", make sure you'r
 python manage.py seed_demo_hotels
 ```
 
-## 5c) Enable Google (Gmail) login (optional)
+## 5c) Enable Clerk login (optional)
 Add these to `.env`:
-- `GOOGLE_OAUTH_CLIENT_ID`
-- `GOOGLE_OAUTH_CLIENT_SECRET`
+- `CLERK_PUBLISHABLE_KEY`
+- `CLERK_SECRET_KEY`
 
 ## 6) Run tests
 ```powershell

@@ -14,8 +14,7 @@ This project is now wired for a safer Render deployment:
 - Make sure you are using PostgreSQL in production. SQLite is intentionally blocked when `DEBUG=False`.
 - Decide how uploaded media will persist. Render's default filesystem is ephemeral, so use `Cloudinary` or attach a persistent disk.
 - If you use a custom domain, add that domain to both `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS`.
-- If you use Google OAuth, add the live callback URL in Google Cloud:
-  `https://your-service.onrender.com/auth/google/callback/`
+- If you use Clerk auth, add your live domain in the Clerk dashboard and set the Clerk environment variables below.
 - If you use Stripe, point the live webhook endpoint to:
   `https://your-service.onrender.com/payments/stripe/webhook/`
 - If you use M-Pesa, set `MPESA_CALLBACK_URL` to your live HTTPS callback URL.
@@ -69,8 +68,9 @@ This project is now wired for a safer Render deployment:
 - `MPESA_STK_URL`
 - `MPESA_STK_QUERY_URL`
 - `GOOGLE_MAPS_API_KEY`
-- `GOOGLE_OAUTH_CLIENT_ID`
-- `GOOGLE_OAUTH_CLIENT_SECRET`
+- `CLERK_PUBLISHABLE_KEY`
+- `CLERK_SECRET_KEY`
+- `CLERK_DOMAIN`
 - `JWT_ISSUER`
 - `JWT_JWKS_URL`
 - `JWT_AUDIENCE`
@@ -84,7 +84,7 @@ This project is now wired for a safer Render deployment:
   `python manage.py createsuperuser`
 - Test login, registration, booking, contact form email, and any payment method you enabled.
 - Test one image/document upload and confirm the file appears in Cloudinary and persists after a redeploy.
-- If you add a custom domain, update `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, OAuth callback URLs, and webhook URLs.
+- If you add a custom domain, update `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, Clerk domains, and webhook URLs.
 
 ## Zero-failure deployment routine
 

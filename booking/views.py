@@ -2323,50 +2323,122 @@ def mpesa_callback(request):
 
     return JsonResponse({"ResultCode": 0, "ResultDesc": "Accepted"})
 
-# Google OAuth (Login with Google / Gmail)
-_GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
-_GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
-_GOOGLE_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs"
-_GOOGLE_ALLOWED_ISSUERS = {"https://accounts.google.com", "accounts.google.com"}
-
-
-def _google_oauth_config():
-    client_id = (getattr(settings, "GOOGLE_OAUTH_CLIENT_ID", "") or "").strip()
-    client_secret = (getattr(settings, "GOOGLE_OAUTH_CLIENT_SECRET", "") or "").strip()
-    return client_id, client_secret
+# Clerk authentication
+def _clerk_is_configured():
+    return bool(
+        (getattr(settings, "CLERK_PUBLISHABLE_KEY", "") or "").strip()
+        and (getattr(settings, "CLERK_SECRET_KEY", "") or "").strip()
+        and (getattr(settings, "CLERK_JWKS_URL", "") or "").strip()
+    )
 
 
 @lru_cache(maxsize=2)
-def _google_jwks_client():
+def _clerk_jwks_client():
     if PyJWKClient is None:  # pragma: no cover
-        raise RuntimeError("PyJWT is required for Google login. Install with: pip install PyJWT[crypto]")
-    return PyJWKClient(_GOOGLE_JWKS_URL)
+        raise RuntimeError("PyJWT is required for Clerk login. Install with: pip install PyJWT[crypto]")
+    return PyJWKClient(settings.CLERK_JWKS_URL)
 
 
-def _verify_google_id_token(id_token: str, client_id: str) -> dict:
+def _verify_clerk_session_token(token: str) -> dict:
     if jwt is None:  # pragma: no cover
-        raise RuntimeError("PyJWT is required for Google login. Install with: pip install PyJWT[crypto]")
+        raise RuntimeError("PyJWT is required for Clerk login. Install with: pip install PyJWT[crypto]")
 
-    signing_key = _google_jwks_client().get_signing_key_from_jwt(id_token).key
+    signing_key = _clerk_jwks_client().get_signing_key_from_jwt(token).key
     claims = jwt.decode(
-        id_token,
+        token,
         signing_key,
         algorithms=["RS256"],
-        audience=client_id,
+        issuer=getattr(settings, "CLERK_ISSUER", "") or None,
         options={
             "verify_signature": True,
             "verify_exp": True,
-            "verify_aud": True,
-            "verify_iss": False,
+            "verify_iss": bool(getattr(settings, "CLERK_ISSUER", "")),
+            "verify_aud": False,
         },
         leeway=60,
     )
-
-    issuer = (claims.get("iss") or "").strip()
-    if issuer not in _GOOGLE_ALLOWED_ISSUERS:
-        raise ValueError("Invalid token issuer.")
-
+    if not claims.get("sub"):
+        raise ValueError("Missing Clerk user id.")
     return claims
+
+
+def _clerk_user_profile(clerk_user_id):
+    if requests is None:
+        return {}
+    secret_key = (getattr(settings, "CLERK_SECRET_KEY", "") or "").strip()
+    api_url = (getattr(settings, "CLERK_API_URL", "") or "https://api.clerk.com").rstrip("/")
+    if not secret_key or not clerk_user_id:
+        return {}
+
+    try:
+        response = requests.get(
+            f"{api_url}/v1/users/{clerk_user_id}",
+            headers={"Authorization": f"Bearer {secret_key}"},
+            timeout=15,
+        )
+    except Exception:
+        return {}
+
+    if response.status_code >= 300:
+        return {}
+    try:
+        return response.json() or {}
+    except Exception:
+        return {}
+
+
+def _primary_clerk_email(profile):
+    email_addresses = profile.get("email_addresses") or []
+    primary_id = profile.get("primary_email_address_id")
+    for email_entry in email_addresses:
+        if email_entry.get("id") == primary_id:
+            return (email_entry.get("email_address") or "").strip().lower()
+    for email_entry in email_addresses:
+        email = (email_entry.get("email_address") or "").strip().lower()
+        if email:
+            return email
+    return ""
+
+
+def _sync_clerk_user(claims):
+    clerk_user_id = (claims.get("sub") or "").strip()
+    profile = _clerk_user_profile(clerk_user_id)
+    email = _primary_clerk_email(profile)
+    if not email:
+        email = (
+            claims.get("email")
+            or claims.get("email_address")
+            or claims.get("primary_email_address")
+            or ""
+        ).strip().lower()
+
+    first_name = (profile.get("first_name") or claims.get("given_name") or "").strip()
+    last_name = (profile.get("last_name") or claims.get("family_name") or "").strip()
+    username = email or clerk_user_id
+
+    user = None
+    if email:
+        user = User.objects.filter(Q(username__iexact=email) | Q(email__iexact=email)).order_by("id").first()
+    if user is None:
+        user = User.objects.filter(username__iexact=clerk_user_id).first()
+    if user is None:
+        user = User(username=username, email=email)
+        user.set_unusable_password()
+
+    if email:
+        user.username = email
+        user.email = email
+    elif not user.username:
+        user.username = clerk_user_id
+    if first_name:
+        user.first_name = first_name
+    if last_name:
+        user.last_name = last_name
+    if not user.is_active:
+        user.is_active = True
+    user.save()
+    _get_or_create_profile(user)
+    return user
 
 
 def _safe_next_url(request, next_url: str) -> str:
@@ -2403,131 +2475,31 @@ def _post_login_redirect(request, user, next_url=""):
     return redirect(safe_next or dashboard_url_name)
 
 
-def google_login(request):
-    client_id, client_secret = _google_oauth_config()
-    if not client_id or not client_secret:
-        messages.error(request, "Google login is not configured.")
-        return redirect("login")
-
-    state = secrets.token_urlsafe(32)
-    request.session["google_oauth_state"] = state
-
-    next_url = (request.GET.get("next") or "").strip()
-    if next_url:
-        request.session["google_oauth_next"] = next_url
-
-    redirect_uri = request.build_absolute_uri(reverse("google_callback"))
-    params = {
-        "client_id": client_id,
-        "redirect_uri": redirect_uri,
-        "response_type": "code",
-        "scope": "openid email profile",
-        "state": state,
-        "prompt": "select_account",
-    }
-    return redirect(f"{_GOOGLE_AUTH_URL}?{urlencode(params)}")
-
-
-def google_callback(request):
-    client_id, client_secret = _google_oauth_config()
-    if not client_id or not client_secret:
-        messages.error(request, "Google login is not configured.")
-        return redirect("login")
-
-    if request.GET.get("error"):
-        messages.error(request, "Google login was cancelled.")
-        return redirect("login")
-
-    state = (request.GET.get("state") or "").strip()
-    expected_state = (request.session.pop("google_oauth_state", "") or "").strip()
-    if not state or not expected_state or state != expected_state:
-        messages.error(request, "Google login failed. Please try again.")
-        return redirect("login")
-
-    code = (request.GET.get("code") or "").strip()
-    if not code:
-        messages.error(request, "Google login failed. Missing authorization code.")
-        return redirect("login")
-
-    if requests is None:  # pragma: no cover
-        messages.error(request, "Google login is unavailable (requests not installed).")
-        return redirect("login")
-
-    redirect_uri = request.build_absolute_uri(reverse("google_callback"))
-    try:
-        response = requests.post(
-            _GOOGLE_TOKEN_URL,
-            data={
-                "code": code,
-                "client_id": client_id,
-                "client_secret": client_secret,
-                "redirect_uri": redirect_uri,
-                "grant_type": "authorization_code",
-            },
-            timeout=15,
-        )
-        token_data = response.json() if response.content else {}
-    except Exception:
-        token_data = {}
-        response = None
-
-    if not token_data or (response is not None and response.status_code >= 400):
-        message = token_data.get("error_description") or token_data.get("error") or "Token exchange failed."
-        messages.error(request, f"Google login failed: {message}")
-        return redirect("login")
-
-    id_token = (token_data.get("id_token") or "").strip()
-    if not id_token:
-        messages.error(request, "Google login failed: missing ID token.")
-        return redirect("login")
+def clerk_session(request):
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "Invalid method."}, status=405)
+    if not _clerk_is_configured():
+        return JsonResponse({"ok": False, "error": "Clerk is not configured."}, status=503)
 
     try:
-        claims = _verify_google_id_token(id_token, client_id=client_id)
+        payload = json.loads((request.body or b"{}").decode("utf-8"))
     except Exception:
-        messages.error(request, "Google login failed: invalid ID token.")
-        return redirect("login")
+        payload = {}
 
-    email = (claims.get("email") or "").strip().lower()
-    if not email:
-        messages.error(request, "Google login failed: email not available.")
-        return redirect("login")
+    token = (payload.get("token") or "").strip()
+    if not token:
+        return JsonResponse({"ok": False, "error": "Missing Clerk session token."}, status=400)
 
-    email_verified = claims.get("email_verified")
-    if email_verified in (False, "false", "False", "0", 0):
-        messages.error(request, "Google login failed: email not verified.")
-        return redirect("login")
-
-    given_name = (claims.get("given_name") or "").strip()
-    family_name = (claims.get("family_name") or "").strip()
-    full_name = (claims.get("name") or "").strip()
-
-    if not given_name and full_name:
-        parts = [part for part in full_name.split(" ") if part]
-        given_name = parts[0] if parts else ""
-        if not family_name and len(parts) > 1:
-            family_name = " ".join(parts[1:]).strip()
-
-    user = User.objects.filter(username__iexact=email).first() or User.objects.filter(email__iexact=email).first()
-    if user is None:
-        user = User(username=email, email=email)
-        user.set_unusable_password()
-
-    user.username = email
-    user.email = email
-    if given_name and not user.first_name:
-        user.first_name = given_name
-    if family_name and not user.last_name:
-        user.last_name = family_name
-    if not user.is_active:
-        user.is_active = True
-    user.save()
+    try:
+        claims = _verify_clerk_session_token(token)
+        user = _sync_clerk_user(claims)
+    except Exception:
+        return JsonResponse({"ok": False, "error": "Clerk login failed."}, status=401)
 
     login(request, user)
-    _get_or_create_profile(user)
-
-    messages.success(request, f"Welcome, {user.first_name or user.username}!")
-    next_url = (request.session.pop("google_oauth_next", "") or "").strip()
-    return _post_login_redirect(request, user, next_url)
+    next_url = _safe_next_url(request, payload.get("next") or "")
+    redirect_response = _post_login_redirect(request, user, next_url)
+    return JsonResponse({"ok": True, "redirect": redirect_response["Location"]})
 
 
 PASSWORD_RESET_CODE_TTL = timedelta(minutes=10)

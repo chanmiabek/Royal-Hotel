@@ -5,6 +5,7 @@ import os
 import sys
 import importlib.util
 from urllib.parse import urlparse, parse_qs, unquote
+import base64
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
 
@@ -419,9 +420,30 @@ MPESA_TRANSACTION_DESC = os.getenv('MPESA_TRANSACTION_DESC', 'Hotel Booking Paym
 # Google Maps
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY'or  '')
 
-# Google OAuth (Login with Google / Gmail)
-GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID" or "").strip()
-GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET" or "").strip()
+def _decode_clerk_domain(publishable_key):
+    value = (publishable_key or "").strip()
+    if not value.startswith(("pk_test_", "pk_live_")):
+        return ""
+    encoded = value.split("_", 2)[2]
+    encoded += "=" * (-len(encoded) % 4)
+    try:
+        decoded = base64.urlsafe_b64decode(encoded.encode("ascii")).decode("utf-8")
+    except Exception:
+        return ""
+    return decoded.rstrip("$").strip()
+
+
+_raw_clerk_public = (os.getenv("CLERK_PUBLISHABLE_KEY") or os.getenv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY") or "").strip()
+_legacy_clerk_public = (os.getenv("CLERK_PUBLIC_SECRET_KEY") or "").strip()
+if not _raw_clerk_public and _legacy_clerk_public.startswith("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="):
+    _raw_clerk_public = _legacy_clerk_public.split("=", 1)[1].strip()
+
+CLERK_PUBLISHABLE_KEY = _raw_clerk_public
+CLERK_SECRET_KEY = (os.getenv("CLERK_SECRET_KEY") or "").strip()
+CLERK_DOMAIN = (os.getenv("CLERK_DOMAIN") or _decode_clerk_domain(CLERK_PUBLISHABLE_KEY)).strip()
+CLERK_ISSUER = (os.getenv("CLERK_ISSUER") or (f"https://{CLERK_DOMAIN}" if CLERK_DOMAIN else "")).strip()
+CLERK_JWKS_URL = (os.getenv("CLERK_JWKS_URL") or (f"{CLERK_ISSUER}/.well-known/jwks.json" if CLERK_ISSUER else "")).strip()
+CLERK_API_URL = (os.getenv("CLERK_API_URL") or "https://api.clerk.com").strip().rstrip("/")
 
 # JWT / OIDC (optional)
 # Used by booking.jwt_auth to validate Bearer tokens against a JWKS endpoint.
