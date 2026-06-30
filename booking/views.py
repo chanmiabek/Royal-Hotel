@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login, logout
 from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse, Http404
@@ -2693,26 +2693,6 @@ def login_view(request):
     if request.user.is_authenticated:
         return redirect(_dashboard_url_name_for_user(request.user))
 
-    if request.method == "POST":
-        identifier = (request.POST.get('login_email') or '').strip()
-        password = request.POST.get('login_password')
-
-        user = authenticate(request, username=identifier, password=password)
-
-        if user is None and identifier and "@" in identifier:
-            user_obj = User.objects.filter(email__iexact=identifier).order_by("-id").first()
-            if user_obj:
-                user = authenticate(request, username=user_obj.username, password=password)
-
-        if user is not None:
-            login(request, user)
-            _get_or_create_profile(user)
-            messages.success(request, f"Welcome back, {user.first_name or user.username}!")
-
-            return _post_login_redirect(request, user, request.GET.get('next'))
-
-        messages.error(request, "Invalid email or password.")
-
     return render(request, 'login.html')
 
 # Register view
@@ -2723,54 +2703,8 @@ def register_options_view(request):
 
 
 def register_view(request):
-    if request.method == "POST":
-        name = (request.POST.get('name') or '').strip()
-        email = (request.POST.get('email') or '').strip()
-        password = request.POST.get('password')
-        repeat_password = request.POST.get('repeat_password')
-        user_type = request.POST.get('user_type', 'GUEST')
-
-        if not all([name, email, password, repeat_password]):
-            messages.error(request, "All fields are required.")
-            return redirect('register')
-
-        if password != repeat_password:
-            messages.error(request, "Passwords do not match!")
-            return redirect('register')
-
-        if User.objects.filter(username__iexact=email).exists() or User.objects.filter(email__iexact=email).exists():
-            messages.error(request, "An account with this email already exists.")
-            return redirect('register')
-
-        if len(password) < 8:
-            messages.error(request, "Password must be at least 8 characters long.")
-            return redirect('register')
-
-        try:
-            user = User.objects.create_user(
-                username=email,
-                email=email,
-                password=password,
-                first_name=name
-            )
-            valid_user_types = {code for code, _ in UserProfile.USER_TYPES}
-            if user_type not in valid_user_types:
-                user_type = 'GUEST'
-            wants_owner = user_type == 'OWNER'
-            profile_type = 'GUEST' if wants_owner else user_type
-            UserProfile.objects.update_or_create(
-                user=user,
-                defaults={'user_type': profile_type},
-            )
-            if wants_owner:
-                login(request, user)
-                messages.success(request, "Account created. Please complete the partnership form.")
-                return redirect('hotel_partner_apply')
-            messages.success(request, "Registration successful! Please login.")
-            return redirect('login')
-        except Exception as e:
-            messages.error(request, f"Registration failed: {str(e)}")
-            return redirect('register')
+    if request.user.is_authenticated:
+        return redirect(_dashboard_url_name_for_user(request.user))
 
     return render(request, 'register.html')
 

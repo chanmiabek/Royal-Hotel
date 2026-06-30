@@ -148,21 +148,6 @@
         color: #222222;
         margin-top: 2px;
     }
-    .auth-lite__divider {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin: 28px 0;
-        color: #111111;
-        font-size: 16px;
-    }
-    .auth-lite__divider::before,
-    .auth-lite__divider::after {
-        content: "";
-        height: 1px;
-        flex: 1;
-        background: #e5e7eb;
-    }
     .auth-lite__social {
         display: grid;
         justify-items: center;
@@ -295,65 +280,9 @@
     <div class="auth-lite__panel">
         <div class="auth-lite__card">
         <h1>{% trans "Create your account" %}</h1>
-        <p>{% trans "Create a Royal Hotel account to book faster and manage your stays." %}</p>
+        <p>{% trans "Use Clerk to securely create your Royal Hotel account." %}</p>
 
-        <form method="POST">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="name">{% trans "Your name" %}</label>
-                <input id="name" type="text" name="name" class="form-control" required autocomplete="name" placeholder="{% trans 'Enter your name' %}">
-            </div>
-            <div class="form-group">
-                <label for="email">{% trans "Email address" %}</label>
-                <input id="email" type="email" name="email" class="form-control" required autocomplete="email" placeholder="{% trans 'Enter your email address' %}">
-            </div>
-            <div class="form-group">
-                <label for="password">{% trans "Password" %}</label>
-                <div class="input-group">
-                    <input id="password" type="password" name="password" class="form-control" required autocomplete="new-password" placeholder="{% trans 'Create a password' %}">
-                    <div class="input-group-append">
-                        <button
-                            type="button"
-                            class="btn btn-outline-secondary"
-                            data-toggle-password="password"
-                            data-label-show="{% trans 'Show password' %}"
-                            data-label-hide="{% trans 'Hide password' %}"
-                            aria-label="{% trans 'Show password' %}"
-                            aria-pressed="false"
-                        >
-                            <i class="fa fa-eye" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="repeat_password">{% trans "Repeat password" %}</label>
-                <div class="input-group">
-                    <input id="repeat_password" type="password" name="repeat_password" class="form-control" required autocomplete="new-password" placeholder="{% trans 'Repeat your password' %}">
-                    <div class="input-group-append">
-                        <button
-                            type="button"
-                            class="btn btn-outline-secondary"
-                            data-toggle-password="repeat_password"
-                            data-label-show="{% trans 'Show password' %}"
-                            data-label-hide="{% trans 'Hide password' %}"
-                            aria-label="{% trans 'Show password' %}"
-                            aria-pressed="false"
-                        >
-                            <i class="fa fa-eye" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <button type="submit" class="auth-lite__primary">{% trans "Continue with email" %}</button>
-            <div class="auth-lite__secure">
-                <i class="fa fa-lock" aria-hidden="true"></i>
-                <span>{% trans "Your account details are protected and used only for bookings and hotel services." %}</span>
-            </div>
-        </form>
-
-        <div class="auth-lite__divider">{% trans "or use one of these options" %}</div>
-        <div class="auth-lite__social" aria-label="{% trans 'Social sign in options' %}">
+        <div class="auth-lite__social" aria-label="{% trans 'Clerk sign up' %}">
             {% if CLERK_AUTH_ENABLED %}
             <div id="clerk-auth" class="auth-lite__clerk" data-mode="sign-up" data-next="{{ request.GET.next|default:'' }}"></div>
             {% else %}
