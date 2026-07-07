@@ -291,6 +291,31 @@
             background: #ffffff;
             color: #222222;
             font-weight: 900;
+            overflow: hidden;
+            flex: 0 0 auto;
+        }
+        .nav-user__avatar img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+        }
+        .nav-user__coin {
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: -18px;
+            align-self: flex-end;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            background: #f6b900;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 900;
+            line-height: 1;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, .18);
         }
         .nav-user__copy {
             display: grid;
@@ -318,35 +343,156 @@
             white-space: nowrap;
         }
         #header.booking-navbar .top-menu .nav-user__menu {
-            min-width: 288px;
+            width: min(374px, calc(100vw - 28px));
+            min-width: 320px;
             top: calc(100% + 10px);
             right: 0;
             left: auto;
-            padding: 12px;
+            padding: 0;
             border: 0;
             border-radius: 8px;
             background: #ffffff;
-            box-shadow: 0 18px 44px rgba(15, 23, 42, 0.2);
+            overflow: hidden;
+            box-shadow: 0 22px 60px rgba(15, 23, 42, 0.24);
         }
-        #header.booking-navbar .top-menu .nav-user__menu .dropdown-item {
-            min-height: 48px;
+        .nav-user-card {
+            padding: 18px 20px 16px;
+            background:
+                radial-gradient(circle at 88% 42%, rgba(255,255,255,.58) 0 42px, transparent 43px),
+                linear-gradient(135deg, #eef6ff 0%, #f8fbff 56%, #e8f3ff 100%);
+            border-bottom: 1px solid #edf2f7;
+        }
+        .nav-user-card__main {
+            display: grid;
+            grid-template-columns: 40px minmax(0, 1fr) 20px;
+            align-items: center;
+            gap: 12px;
+            color: #1f2937;
+            text-decoration: none;
+        }
+        .nav-user-card__main:hover {
+            color: #111827;
+            text-decoration: none;
+        }
+        .nav-user-card__avatar {
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 50%;
+            background: #ffffff;
+            color: #2563eb;
+            font-size: 17px;
+            font-weight: 900;
+            box-shadow: 0 0 0 1px rgba(37, 99, 235, .12);
+        }
+        .nav-user-card__avatar img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+        }
+        .nav-user-card__identity {
+            display: grid;
+            gap: 3px;
+            min-width: 0;
+        }
+        .nav-user-card__identity strong {
+            color: #345985;
+            font-size: 20px;
+            font-weight: 900;
+            line-height: 1.2;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .nav-user-card__identity small {
+            color: #64748b;
+            font-size: 13px;
+            font-weight: 700;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .nav-user-card__main > i {
+            color: #2f5f9d;
+            font-size: 28px;
+            text-align: right;
+        }
+        .nav-user-card__status {
             display: flex;
             align-items: center;
             gap: 14px;
-            padding: 10px 8px;
+            margin-top: 12px;
+            color: #111827;
+            font-size: 14px;
+            font-weight: 800;
+        }
+        .nav-user-card__badge,
+        .nav-user-card__wallet {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 26px;
+        }
+        .nav-user-card__badge {
+            padding: 4px 9px;
+            border-radius: 4px;
+            background: #cfe2f6;
+            color: #365f8f;
+        }
+        .nav-user-card__badge i {
+            color: #7ca9da;
+        }
+        .nav-user-card__wallet span {
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #f6b900;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 900;
+        }
+        .nav-user__section {
+            margin: 0 20px;
+            padding: 10px 0;
+            border-top: 1px solid #e5e7eb;
+        }
+        .nav-user-card + .nav-user__section {
+            border-top: 0;
+            padding-top: 14px;
+        }
+        .nav-user__section--signout {
+            padding-bottom: 12px;
+        }
+        #header.booking-navbar .top-menu .nav-user__menu .dropdown-item {
+            min-height: 42px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
             border-radius: 6px;
-            color: #222222;
+            color: #111827;
             font-size: 16px;
+            font-weight: 500;
         }
         #header.booking-navbar .top-menu .nav-user__menu .dropdown-item i {
             width: 22px;
-            color: #222222;
-            font-size: 19px;
+            color: #6b7280;
+            font-size: 18px;
             text-align: center;
         }
         #header.booking-navbar .top-menu .nav-user__menu .dropdown-item:hover {
-            background: #fff8d6;
+            background: transparent;
             color: #111111;
+            text-decoration: underline;
+            text-decoration-color: #d1d5db;
+            text-underline-offset: 4px;
         }
         #header.booking-navbar .phone {
             display: none;
@@ -761,6 +907,7 @@
     </style>
     
     {% block extra_css %}{% endblock %}
+    <link href="{% static 'css/compact-fonts.css' %}?v=20260707-1" rel="stylesheet">
 </head>
 
 <body>
@@ -975,96 +1122,111 @@
     <!-- Footer Section Start -->
     <div id="footer">
         <div class="container">
-            <section class="footer-business-cta">
-                <div>
-                    <span>{% trans "Royal Hotel partner network" %}</span>
-                    <h2>{% trans "Grow your bookings with a trusted hotel marketplace." %}</h2>
-                    <p>{% trans "List rooms, manage guests, track payments, and reach travelers looking for stays across Kenya." %}</p>
-                </div>
-                <div class="footer-business-cta__actions">
-                    <a href="{% if request.user.is_authenticated %}{% url 'hotel_partner_apply' %}{% else %}{% url 'partner_signin' %}{% endif %}" class="footer-btn footer-btn--primary">{% trans "List your property" %}</a>
-                    <a href="{% url 'contact' %}" class="footer-btn">{% trans "Talk to support" %}</a>
-                </div>
-            </section>
-
-            <section class="footer-popular">
-                <h2>{% trans "Popular with travelers from Kenya" %}</h2>
+            <section class="footer-popular" aria-label="{% trans 'Approved hotel partners' %}">
                 <div class="footer-destinations">
-                    {% for hotel in home_hotels %}
+                    {% for hotel in footer_approved_hotels %}
                         <a href="{% url 'hotel_detail' hotel.id %}">
                             {{ hotel.name }}{% if hotel.city %}, {{ hotel.city }}{% endif %}
                         </a>
                     {% empty %}
-                        <a href="{% url 'hotel_list' %}">{% trans "View partner hotels" %}</a>
+                        <span class="footer-empty">{% trans "Approved hotel partners will appear here." %}</span>
                     {% endfor %}
-                </div>
-            </section>
-
-            <section class="footer-trust-strip" aria-label="{% trans 'Royal Hotel service highlights' %}">
-                <div>
-                    <strong>{{ hotels_count|default:"" }}{% if hotels_count %}+{% endif %}</strong>
-                    <span>{% trans "approved hotel partners" %}</span>
-                </div>
-                <div>
-                    <strong>24/7</strong>
-                    <span>{% trans "guest and partner assistance" %}</span>
-                </div>
-                <div>
-                    <strong>{% trans "Local" %}</strong>
-                    <span>{% trans "pricing for Kenyan travelers" %}</span>
-                </div>
-                <div>
-                    <strong>{% trans "Secure" %}</strong>
-                    <span>{% trans "booking and payment records" %}</span>
                 </div>
             </section>
 
             <section class="footer-columns">
                 <div>
-                    <h3>{% trans "Support" %}</h3>
-                    <a href="/info/manage-your-trips/">{% trans "Manage your trips" %}</a>
-                    <a href="/info/contact-customer-service/">{% trans "Contact Customer Service" %}</a>
-                    <a href="/info/safety-resource-center/">{% trans "Safety Resource Center" %}</a>
-                    <a href="tel:+254799091016">+254799091016</a>
-                </div>
-                <div>
-                    <h3>{% trans "Discover" %}</h3>
-                    <a href="/info/seasonal-and-holiday-deals/">{% trans "Seasonal and holiday deals" %}</a>
-                    <a href="/info/travel-articles/">{% trans "Travel articles" %}</a>
-                    <a href="/info/royal-hotel-for-business/">{% trans "Royal Hotel for Business" %}</a>
-                    <a href="/info/traveller-review-awards/">{% trans "Traveller Review Awards" %}</a>
-                    <a href="/info/long-stay-hotel-deals/">{% trans "Long-stay hotel deals" %}</a>
-                    <a href="/info/verified-places-to-stay/">{% trans "Verified places to stay" %}</a>
-                </div>
-                <div>
-                    <h3>{% trans "Terms and settings" %}</h3>
-                    <a href="/info/privacy-notice/">{% trans "Privacy Notice" %}</a>
-                    <a href="/info/terms-of-service/">{% trans "Terms of Service" %}</a>
-                    <a href="/info/accessibility-statement/">{% trans "Accessibility Statement" %}</a>
-                    <a href="/info/partner-dispute/">{% trans "Partner dispute" %}</a>
-                    <a href="/info/human-rights-statement/">{% trans "Human Rights Statement" %}</a>
-                </div>
-                <div>
-                    <h3>{% trans "Partners" %}</h3>
-                    <a href="{% url 'partner_signin' %}">{% trans "Extranet login" %}</a>
-                    <a href="/info/partner-help/">{% trans "Partner help" %}</a>
-                    <a href="{% if request.user.is_authenticated %}{% url 'hotel_partner_apply' %}{% else %}{% url 'partner_signin' %}{% endif %}">{% trans "List your property" %}</a>
+                    <h3>{% trans "Contact us" %}</h3>
+                    <a href="/info/contact-customer-service/">{% trans "Customer support" %}</a>
+                    <a href="/info/safety-resource-center/">{% trans "Service Guarantee" %}</a>
+                    <a href="{% url 'contact' %}">{% trans "More service info" %}</a>
+                    <div class="footer-social" aria-label="{% trans 'Social links' %}">
+                        <a href="#" aria-label="Facebook"><i class="fa fa-facebook"></i></a>
+                        <a href="#" aria-label="X"><i class="fa fa-times"></i></a>
+                        <a href="#" aria-label="YouTube"><i class="fa fa-youtube-play"></i></a>
+                    </div>
                 </div>
                 <div>
                     <h3>{% trans "About" %}</h3>
                     <a href="/info/about-royal-hotel/">{% trans "About Royal Hotel" %}</a>
-                    <a href="/info/how-we-work/">{% trans "How We Work" %}</a>
-                    <a href="/info/press-center/">{% trans "Press center" %}</a>
+                    <a href="/info/press-center/">{% trans "News" %}</a>
                     <a href="/info/careers/">{% trans "Careers" %}</a>
-                    <a href="/info/corporate-contact/">{% trans "Corporate contact" %}</a>
-                    <a href="/info/content-guidelines-and-reporting/">{% trans "Content guidelines and reporting" %}</a>
+                    <a href="/info/terms-of-service/">{% trans "Terms & Conditions" %}</a>
+                    <a href="/info/privacy-notice/">{% trans "Privacy Statement" %}</a>
+                    <a href="/info/accessibility-statement/">{% trans "Accessibility Statement" %}</a>
+                    <a href="/info/how-we-work/">{% trans "About Royal Hotel Group" %}</a>
+                </div>
+                <div>
+                    <h3>{% trans "Other services" %}</h3>
+                    <a href="/info/corporate-contact/">{% trans "Investor relations" %}</a>
+                    <a href="/info/traveller-review-awards/">{% trans "Royal Hotel Rewards" %}</a>
+                    <a href="/info/royal-hotel-for-business/">{% trans "Affiliate program" %}</a>
+                    <a href="{% if request.user.is_authenticated %}{% url 'hotel_partner_apply' %}{% else %}{% url 'partner_signin' %}{% endif %}">{% trans "List your property" %}</a>
+                    <a href="{% url 'hotel_list' %}">{% trans "All hotels" %}</a>
+                    <a href="{% url 'partner_signin' %}">{% trans "Become a Supplier" %}</a>
+                    <a href="/info/safety-resource-center/">{% trans "Security" %}</a>
+                </div>
+                <div class="footer-brand-block">
+                    <div>
+                        <h3>{% trans "Payment methods" %}</h3>
+                        <div class="footer-badges footer-badges--payments" aria-label="{% trans 'Payment methods' %}">
+                            <span>MPESA</span>
+                            <span>MC</span>
+                            <span>VISA</span>
+                            <span>AMEX</span>
+                            <span>JCB</span>
+                            <span>UPI</span>
+                            <span>DISC</span>
+                            <span><i class="fa fa-apple"></i> Pay</span>
+                            <span>PayPal</span>
+                            <span>T</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h3>{% trans "Our partners" %}</h3>
+                        <div class="footer-partners" aria-label="{% trans 'Our partners' %}">
+                            {% for partner in footer_business_partners %}
+                                {% if partner.website_url %}
+                                    <a href="{{ partner.website_url }}" target="_blank" rel="noopener" class="footer-partner">
+                                        {% if partner.logo %}
+                                            <img src="{{ partner.logo.url }}" alt="{{ partner.name }}">
+                                        {% else %}
+                                            <span>{{ partner.name }}</span>
+                                        {% endif %}
+                                    </a>
+                                {% else %}
+                                    <span class="footer-partner">
+                                        {% if partner.logo %}
+                                            <img src="{{ partner.logo.url }}" alt="{{ partner.name }}">
+                                        {% else %}
+                                            <span>{{ partner.name }}</span>
+                                        {% endif %}
+                                    </span>
+                                {% endif %}
+                            {% empty %}
+                                <span class="footer-partner"><span>Google</span></span>
+                                <span class="footer-partner"><i class="fa fa-tripadvisor"></i><span>Tripadvisor</span></span>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
             </section>
 
+            <section class="footer-awards" aria-label="{% trans 'Awards' %}">
+                <div class="footer-award footer-award--if"><strong>iF</strong><span>{% trans "Design Award 2026" %}</span></div>
+                <div class="footer-award"><strong>G</strong><span>{% trans "GOOD DESIGN AWARD 2024" %}</span></div>
+                <div class="footer-award"><strong>CC</strong><span>{% trans "Contact Center of the year 2025" %}</span></div>
+            </section>
+
             <div class="footer-legal-booking">
-                <p>{% trans "Royal Hotel is an online hotel booking platform connecting guests with trusted stays and hotel partners." %}</p>
-                <p>Copyright &#169; 2006-{% now "Y" %} Royal Hotel. {% trans "All rights reserved." %}</p>
+                <p>Copyright &#169; {% now "Y" %} Royal Hotel. {% trans "All rights reserved." %}</p>
+                <p>{% trans "Site Operator: Royal Hotel Booking Platform." %}</p>
             </div>
+        </div>
+        <div class="footer-floating-actions" aria-label="{% trans 'Quick help' %}">
+            <a href="#" class="footer-float-btn" aria-label="{% trans 'Back to top' %}"><i class="fa fa-chevron-up"></i></a>
+            <a href="{% url 'contact' %}" class="footer-float-btn footer-float-btn--genie" aria-label="{% trans 'Support assistant' %}"><i class="fa fa-comments"></i><span>GENIE</span></a>
+            <a href="tel:+254799091016" class="footer-float-btn" aria-label="{% trans 'Call support' %}"><i class="fa fa-headphones"></i></a>
         </div>
     </div>
     <!-- Footer Section End -->
@@ -1087,6 +1249,7 @@
     <script src="{% static 'vendor/tempusdominus/js/moment.min.js' %}"></script>
     <script src="{% static 'vendor/tempusdominus/js/moment-timezone.min.js' %}"></script>
     <script src="{% static 'vendor/tempusdominus/js/tempusdominus-bootstrap-4.min.js' %}"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
     
     <!-- Booking JavaScript Files (if they exist) -->
     {% comment %}

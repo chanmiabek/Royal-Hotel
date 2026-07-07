@@ -17,7 +17,7 @@
                 <div class="hotel-detail-top__image">
                     <div class="hotel-card__media">
                         {% if hotel.image %}
-                            <img src="{{ hotel.image.url }}" alt="{{ hotel.name }}">
+                            <img src="{{ hotel.image|media_image_url }}" alt="{{ hotel.name }}">
                         {% endif %}
                         <button
                             type="button"
@@ -97,7 +97,7 @@
             <div class="hotel-card room-row">
                 <div class="hotel-card__media">
                     {% if room.image %}
-                        <img src="{{ room.image.url }}" alt="{{ room.title }}">
+                        <img src="{{ room.image|media_image_url }}" alt="{{ room.title }}">
                     {% endif %}
                 </div>
                 <div class="hotel-card__body">

@@ -33,7 +33,7 @@
                             <td>
                                 <span class="admin-thumb" aria-hidden="true">
                                     {% if member.image %}
-                                        <img src="{{ member.image.url }}" alt="">
+                                        <img src="{{ member.image|media_image_url }}" alt="">
                                     {% else %}
                                         <i class="fa fa-id-badge" aria-hidden="true"></i>
                                     {% endif %}

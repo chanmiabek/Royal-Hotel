@@ -1,0 +1,74 @@
+{% load static i18n booking_extras %}
+<article class="rh-featured-card">
+    <a href="{% url 'hotel_detail' hotel.id %}" class="rh-featured-card__media">
+        {% if hotel.image %}
+            <img src="{{ hotel.image|media_image_url }}" alt="{{ hotel.name }}">
+        {% else %}
+            <img src="{% static 'img/slider/header-slider-3.jpg' %}" alt="{{ hotel.name }}">
+        {% endif %}
+        {% if hotel.review_count or hotel.star_rating %}
+        <span class="rh-featured-card__rating-pill">
+            <strong>
+                {% if hotel.review_score %}
+                    {{ hotel.review_score|floatformat:1 }}/10
+                {% else %}
+                    {{ hotel.star_rating|floatformat:1 }}/5
+                {% endif %}
+            </strong>
+            <span>
+                {% if hotel.review_count %}
+                    {{ hotel.review_count }} {% trans "reviews" %}
+                {% else %}
+                    {% trans "New reviews" %}
+                {% endif %}
+            </span>
+        </span>
+        {% endif %}
+    </a>
+    <div class="rh-featured-card__body">
+        <div class="rh-featured-card__title-line">
+            <a href="{% url 'hotel_detail' hotel.id %}" class="rh-featured-card__title">{{ hotel.name }}</a>
+            {% if hotel.star_rating %}
+            <span class="rh-featured-card__stars" aria-label="{{ hotel.star_rating }} {% trans 'stars' %}">
+                {% for i in "12345"|make_list %}
+                    {% if forloop.counter <= hotel.star_rating %}
+                        <i class="fa fa-star" aria-hidden="true"></i>
+                    {% endif %}
+                {% endfor %}
+            </span>
+            {% endif %}
+        </div>
+        <div class="rh-featured-card__address">
+            {% if hotel.address %}{{ hotel.address|trim }}{% elif hotel.city %}{{ hotel.city|trim }}{% else %}{% trans "Royal Hotel partner" %}{% endif %}
+            {% if hotel.city or hotel.country %}
+                <span>|</span>
+                {% if hotel.city %}{{ hotel.city|trim }}{% endif %}{% if hotel.city and hotel.country %}, {% endif %}{% if hotel.country %}{{ hotel.country|trim }}{% endif %}
+            {% endif %}
+        </div>
+        <div class="rh-featured-card__distance">
+            {% if hotel.city %}
+                {% blocktrans with city=hotel.city|trim %}Near {{ city }} city center{% endblocktrans %}
+            {% else %}
+                {% trans "Close to local attractions" %}
+            {% endif %}
+        </div>
+        {% if hotel.star_rating %}
+        <div class="rh-featured-card__rank">
+            <strong>{{ hotel.star_rating }}</strong>
+            <span>
+                {% for i in "12345"|make_list %}
+                    {% if forloop.counter <= hotel.star_rating %}<i class="fa fa-circle" aria-hidden="true"></i>{% endif %}
+                {% endfor %}
+            </span>
+        </div>
+        {% endif %}
+        <div class="rh-featured-card__foot">
+            {% if hotel.starting_price %}
+                <span>{% trans "From" %}</span>
+                <strong>KES {{ hotel.starting_price|floatformat:0 }}</strong>
+            {% else %}
+                <span>{% trans "Check latest availability" %}</span>
+            {% endif %}
+        </div>
+    </div>
+</article>

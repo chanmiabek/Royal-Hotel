@@ -7,6 +7,8 @@ import re
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.files import File
+from django.core.files.storage import default_storage
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
@@ -25,15 +27,32 @@ class _RoomTemplate:
     description: str
 
 
-def _list_media_images(subdir: str) -> list[str]:
-    base = Path(getattr(settings, "MEDIA_ROOT", "")) / subdir
+def _list_source_images(subdir: str) -> list[Path]:
+    media_base = Path(getattr(settings, "MEDIA_ROOT", "")) / subdir
+    static_base = Path(settings.BASE_DIR) / "static" / "img" / subdir
+    fallback_static_base = Path(settings.BASE_DIR) / "static" / "img" / "room"
+
+    base = media_base if media_base.exists() and media_base.is_dir() else static_base
+    if subdir == "hotel" and (not base.exists() or not base.is_dir()):
+        base = fallback_static_base
     if not base.exists() or not base.is_dir():
         return []
+
     images: list[str] = []
     for ext in ("*.jpg", "*.jpeg", "*.png", "*.jfif", "*.webp"):
         images.extend([p.name for p in base.glob(ext)])
-    images = sorted(dict.fromkeys(images))
-    return [f"{subdir}/{name}" for name in images]
+    return [base / name for name in sorted(dict.fromkeys(images))]
+
+
+def _store_demo_images(subdir: str) -> list[str]:
+    stored_names: list[str] = []
+    for source_path in _list_source_images(subdir):
+        storage_name = f"{subdir}/{source_path.name}"
+        if not default_storage.exists(storage_name):
+            with source_path.open("rb") as source_file:
+                storage_name = default_storage.save(storage_name, File(source_file))
+        stored_names.append(storage_name)
+    return stored_names
 
 
 def _demo_hotels() -> list[dict]:
@@ -221,11 +240,16 @@ class Command(BaseCommand):
             action="store_true",
             help="Reset password for existing demo owner accounts.",
         )
+        parser.add_argument(
+            "--refresh-images",
+            action="store_true",
+            help="Update existing demo hotels and rooms with the stored demo images.",
+        )
 
     @transaction.atomic
     def handle(self, *args, **options):
-        hotel_images = _list_media_images("hotel")
-        room_images = _list_media_images("room")
+        hotel_images = _store_demo_images("hotel")
+        room_images = _store_demo_images("room")
 
         if options.get("reset"):
             demo_names = [h["name"] for h in _demo_hotels()]
@@ -240,6 +264,7 @@ class Command(BaseCommand):
         created_owners = 0
         owner_password = options.get("owner_password") or "Owner12345!"
         reset_owner_password = bool(options.get("reset_owner_password"))
+        refresh_images = bool(options.get("refresh_images"))
         owner_accounts: list[tuple[str, bool]] = []
 
         for idx, hotel_data in enumerate(_demo_hotels(), start=1):
@@ -253,6 +278,9 @@ class Command(BaseCommand):
             )
             if hotel_created:
                 created_hotels += 1
+            elif refresh_images and hotel_image_pool:
+                hotel.image = next(hotel_image_pool)
+                hotel.save(update_fields=["image"])
 
             owner, owner_created = _ensure_owner_account(
                 hotel,
@@ -292,9 +320,16 @@ class Command(BaseCommand):
                 )
                 if room_created:
                     created_rooms += 1
-                elif room.owner_id is None and owner is not None:
-                    room.owner = owner
-                    room.save(update_fields=["owner"])
+                else:
+                    update_fields = []
+                    if refresh_images and room_image_pool:
+                        room.image = next(room_image_pool)
+                        update_fields.append("image")
+                    if room.owner_id is None and owner is not None:
+                        room.owner = owner
+                        update_fields.append("owner")
+                    if update_fields:
+                        room.save(update_fields=update_fields)
 
         self.stdout.write(
             self.style.SUCCESS(

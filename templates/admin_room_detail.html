@@ -30,7 +30,7 @@
                 <div class="col-md-4 mb-3 mb-md-0">
                     <div class="admin-thumb" style="width: 100%; height: 220px; border-radius: 18px;">
                         {% if room.image %}
-                            <img src="{{ room.image.url }}" alt="{{ room.title }}">
+                            <img src="{{ room.image|media_image_url }}" alt="{{ room.title }}">
                         {% else %}
                             <div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
                                 <i class="fa fa-bed fa-3x" aria-hidden="true"></i>
@@ -108,4 +108,3 @@
     </div>
 </div>
 {% endblock %}
-

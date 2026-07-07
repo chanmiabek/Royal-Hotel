@@ -1,0 +1,242 @@
+﻿html {
+    font-size: 13px;
+}
+
+body {
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+p,
+li,
+label,
+input,
+select,
+textarea,
+button,
+.btn,
+.form-control,
+.custom-select,
+.dropdown-item,
+.alert {
+    font-size: 12px;
+}
+
+p {
+    line-height: 1.55;
+}
+
+h1 {
+    font-size: 24px;
+    line-height: 1.15;
+}
+
+h2 {
+    font-size: 20px;
+    line-height: 1.2;
+}
+
+h3 {
+    font-size: 16px;
+    line-height: 1.25;
+}
+
+h4,
+h5,
+h6 {
+    font-size: 14px;
+    line-height: 1.3;
+}
+
+#header.booking-navbar .main-menu ul li a,
+#header.booking-navbar .main-menu ul li.nav-category a,
+#header.booking-navbar .main-menu ul li.nav-meta span,
+#header.booking-navbar .main-menu ul li.nav-meta .dropdown-toggle,
+#header.booking-navbar .main-menu ul li.nav-list-property a,
+#header.booking-navbar .top-menu .nav-user__menu .dropdown-item,
+.top-menu .dropdown-item,
+.mobile-more__item {
+    font-size: 12px;
+}
+
+#header.booking-navbar .main-menu ul li.nav-category i,
+#header.booking-navbar .mobile-menu-btn,
+#header.booking-navbar .mobile-account-btn,
+.mobile-more__icon {
+    font-size: 16px;
+}
+
+.nav-user-card__identity strong,
+.booking-mobile-menu .mobile-menu-title {
+    font-size: 15px;
+}
+
+.nav-user-card__identity small,
+.nav-user-card__status,
+.mobile-more__section h3 {
+    font-size: 11px;
+}
+
+.section-header h2,
+.footer-business-cta h2,
+.footer-popular h2,
+.rh-featured-head h2,
+.rh-featured-group__head h3,
+.rh-home-section__head h2,
+.rh-home-section-title h2,
+.rh-home-offer h2,
+.rh-featured-head h2,
+.hotel-results-header h1,
+.results-title,
+.hotel-collection .section-header h2 {
+    font-size: 20px;
+    line-height: 1.2;
+}
+
+.section-header p,
+.footer-business-cta p,
+.rh-featured-head p,
+.rh-featured-group__head p,
+.hotel-results-header p,
+.results-subtitle {
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+#headerSlider .carousel-caption h1,
+#welcome h3,
+.rh-home-hero h1 {
+    font-size: 28px;
+    line-height: 1.1;
+}
+
+#welcome p,
+.rh-home-hero__copy p:not(.rh-home-hero__eyebrow) {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.rh-home-tab,
+.rh-home-search input,
+.rh-home-search select,
+.rh-home-search button,
+.rh-home-search > button[type="submit"],
+.search-panel__body h5,
+.search-panel__body label,
+.result-card__title,
+.hotel-card__title,
+.hotel-card--detail .hotel-card__title,
+.rh-featured-card__title,
+.rh-home-type span,
+.hotel-result-title,
+.hotel-result-price strong,
+.hotel-result-cta {
+    font-size: 13px;
+}
+
+.result-card__price-main,
+.hotel-result-price div,
+.rh-featured-card__foot strong,
+#rooms .room-rate h1 {
+    font-size: 18px;
+}
+
+.hotel-result-image-fallback,
+.result-card__image-fallback {
+    font-size: 24px;
+}
+
+.result-card__meta,
+.result-card__desc,
+.result-card__rating-label,
+.hotel-card__meta,
+.hotel-card__rating,
+.hotel-result-location,
+.hotel-result-tags,
+.hotel-result-review,
+.hotel-result-rating,
+.hotel-result-price,
+.rh-featured-card__meta,
+.rh-featured-card__address,
+.rh-featured-card__distance,
+.rh-featured-card p,
+.rh-featured-card__foot,
+.footer-columns a,
+.footer-legal-booking p {
+    font-size: 12px;
+}
+
+.room-amenities li,
+.hotel-result-tags span,
+.result-card__rating-sub,
+.rh-featured-card__score,
+.rh-featured-card__rating-pill strong,
+.rh-featured-card__rating-pill span,
+.rh-featured-card__stars,
+.rh-featured-card__rank,
+.rh-featured-card__rank span,
+.footer-business-cta span,
+.footer-trust-strip span,
+.footer-columns h3 {
+    font-size: 11px;
+}
+
+@media (max-width: 575.98px) {
+    html,
+    body {
+        font-size: 12px;
+    }
+
+    p,
+    li,
+    label,
+    input,
+    select,
+    textarea,
+    button,
+    .btn,
+    .form-control,
+    .custom-select,
+    .dropdown-item,
+    .alert {
+        font-size: 12px;
+    }
+
+    h1,
+    #headerSlider .carousel-caption h1,
+    #welcome h3,
+    .rh-home-hero h1 {
+        font-size: 22px;
+    }
+
+    h2,
+    .section-header h2,
+    .footer-business-cta h2,
+    .footer-popular h2,
+    .rh-featured-head h2,
+    .rh-featured-group__head h3,
+    .rh-home-section__head h2,
+    .rh-home-section-title h2,
+    .rh-home-offer h2,
+    .hotel-results-header h1,
+    .results-title {
+        font-size: 18px;
+    }
+
+    #header.booking-navbar .logo::after,
+    #header.booking-navbar .main-menu ul li.nav-category a,
+    .rh-home-hero__copy p:not(.rh-home-hero__eyebrow),
+    .rh-home-search input,
+    .rh-home-search select,
+    .rh-home-search > button[type="submit"] {
+        font-size: 13px;
+    }
+
+    #header.booking-navbar .mobile-menu-btn,
+    #header.booking-navbar .mobile-account-btn,
+    #header.booking-navbar .main-menu ul li.nav-category i,
+    .rh-home-search__field i {
+        font-size: 18px;
+    }
+}
+

@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load i18n %}
 {% block extra_css %}
 <style>
@@ -375,7 +375,7 @@
     }
     .hm-welcome h2 {
         color: #111827;
-        font-size: 30px;
+        font-size: 20px;
         line-height: 1.15;
         margin-bottom: 6px;
     }
@@ -979,7 +979,7 @@
                         <button type="button" class="hm-profile-pill" aria-haspopup="true">
                             <span class="hm-avatar">
                                 {% if user_profile and user_profile.profile_image %}
-                                <img src="{{ user_profile.profile_image.url }}" alt="{{ request.user.first_name|default:request.user.username }}">
+                                <img src="{{ user_profile.profile_image|media_image_url }}" alt="{{ request.user.first_name|default:request.user.username }}">
                                 {% else %}
                                 {{ request.user.first_name|default:request.user.username|first|upper }}{{ request.user.last_name|first|upper }}
                                 {% endif %}
@@ -1205,7 +1205,7 @@
                         <div class="hm-card__head"><h3>{% trans "Hotel Profile" %}</h3></div>
                         <div class="hm-card__body">
                             {% if hotel and hotel.image %}
-                            <img src="{{ hotel.image.url }}" alt="{{ hotel.name }}" class="hm-profile-img">
+                            <img src="{{ hotel.image|media_image_url }}" alt="{{ hotel.name }}" class="hm-profile-img">
                             {% endif %}
                             {% if hotel %}
                             <p><strong>{% trans "Address:" %}</strong> {{ hotel.address|default:"-" }}</p>
@@ -1316,3 +1316,4 @@
     });
 </script>
 {% endblock %}
+

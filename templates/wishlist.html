@@ -12,7 +12,7 @@
             <a href="{% url 'hotel_detail' saved.hotel.id %}" class="hotel-card">
                 <div class="hotel-card__media">
                     {% if saved.hotel.image %}
-                    <img src="{{ saved.hotel.image.url }}" alt="{{ saved.hotel.name }}">
+                    <img src="{{ saved.hotel.image|media_image_url }}" alt="{{ saved.hotel.name }}">
                     {% endif %}
                     <span class="hotel-card__fav"><i class="fa fa-heart"></i></span>
                 </div>

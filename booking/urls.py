@@ -9,6 +9,7 @@ urlpatterns = [
     path('api/auth/me/', api_views.jwt_me, name='jwt_me'),
     # Home
     path('', views.home, name='index'),
+    path('fragments/home-hotel-groups/', views.home_hotel_groups_fragment, name='home_hotel_groups_fragment'),
     path('search/', views.search, name='search'),
     
     # About
@@ -50,7 +51,8 @@ urlpatterns = [
     # Authentication
     path('sign-in/', views.login_options_view, name='login_options'),
     path('login/', views.login_view, name='login'),
-    path('auth/clerk/session/', views.clerk_session, name='clerk_session'),
+    path('auth/google/', views.google_login, name='google_login'),
+    path('auth/google/callback/', views.google_callback, name='google_callback'),
     path('create-account/', views.register_options_view, name='register_options'),
     path('register/', views.register_view, name='register'),
     path('logout/', views.logout_view, name='logout'),

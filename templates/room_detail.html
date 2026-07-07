@@ -15,7 +15,7 @@
         <div class="hotel-card hotel-card--detail room-detail-card">
             <div class="hotel-card__media">
                 {% if room.image %}
-                    <img src="{{ room.image.url }}" alt="{{ room.title }}">
+                    <img src="{{ room.image|media_image_url }}" alt="{{ room.title }}">
                 {% endif %}
                 <span class="hotel-card__fav">
                     <i class="fa fa-heart-o"></i>

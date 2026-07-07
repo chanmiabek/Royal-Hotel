@@ -11,6 +11,13 @@
 body {
     background: var(--admin-light);
     color: var(--admin-text);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+#branding h1,
+#branding h1 a {
+    font-size: 16px;
 }
 
 #header {
@@ -69,8 +76,25 @@ div.breadcrumbs {
 .inline-group h2 {
     background: #ffffff;
     color: var(--admin-text);
+    font-size: 13px;
     font-weight: 700;
     border-bottom: 1px solid var(--admin-border);
+}
+
+table,
+th,
+td,
+label,
+input,
+textarea,
+select,
+.button,
+input[type="submit"],
+.submit-row input,
+.submit-row a.button,
+#user-tools,
+div.breadcrumbs {
+    font-size: 12px;
 }
 
 table {

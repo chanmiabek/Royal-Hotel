@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.db.models import Exists, OuterRef
 from django.utils import timezone
-from .models import Booking, ContactMessage, HotelComplaint, HotelReview, HotelStaff, Payment, Room, TeamMember, Testimonial, Wishlist
+from .models import Booking, BusinessPartner, ContactMessage, HotelComplaint, HotelReview, HotelStaff, Payment, Room, TeamMember, Testimonial, Wishlist
 
 
 class RoomOccupancyFilter(admin.SimpleListFilter):
@@ -114,4 +114,12 @@ class TestimonialAdmin(admin.ModelAdmin):
     list_display = ['name', 'role', 'display_order', 'is_active', 'updated_at']
     list_filter = ['is_active']
     search_fields = ['name', 'role', 'quote']
+    list_editable = ['display_order', 'is_active']
+
+
+@admin.register(BusinessPartner)
+class BusinessPartnerAdmin(admin.ModelAdmin):
+    list_display = ['name', 'website_url', 'display_order', 'is_active', 'updated_at']
+    list_filter = ['is_active']
+    search_fields = ['name', 'website_url']
     list_editable = ['display_order', 'is_active']

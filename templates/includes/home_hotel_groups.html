@@ -1,0 +1,41 @@
+{% load i18n %}
+{% if hotel_card_groups %}
+<section id="home-hotels" class="hotel-collection hotel-search rh-featured-stays">
+    <div class="container">
+        <div class="rh-featured-head">
+            <div>
+                <h2>{% trans "Explore hotels by location, rating, and visits" %}</h2>
+                <p>{{ hotels_count }} {% trans "approved properties ready for booking." %}</p>
+            </div>
+            <a href="{% url 'hotel_list' %}" class="btn">{% trans "View all hotels" %}</a>
+        </div>
+
+        {% for group in hotel_card_groups %}
+        <section class="rh-featured-group" aria-labelledby="hotel-group-{{ forloop.counter }}">
+            <div class="rh-featured-group__head">
+                <div>
+                    <h3 id="hotel-group-{{ forloop.counter }}">{{ group.title }}</h3>
+                    <p>{{ group.subtitle }}</p>
+                </div>
+                <a href="{{ group.url }}">{% trans "View all" %}</a>
+            </div>
+
+            <div class="rh-featured-scroll-wrap">
+                <div class="rh-featured-grid" data-hotel-scroll-row>
+                    {% for hotel in group.hotels %}
+                        {% include 'includes/hotel_scroll_card.html' %}
+                    {% endfor %}
+                </div>
+                <button type="button" class="rh-featured-scroll-btn rh-featured-scroll-btn--next" aria-label="{% trans 'Scroll hotels right' %}">
+                    <i class="fa fa-chevron-right" aria-hidden="true"></i>
+                </button>
+            </div>
+        </section>
+        {% endfor %}
+
+        <div class="rh-featured-reviews-link">
+            <a href="{% url 'hotel_list' %}">{% trans "Read Reviews" %} <i class="fa fa-angle-down" aria-hidden="true"></i></a>
+        </div>
+    </div>
+</section>
+{% endif %}

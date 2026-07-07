@@ -5,7 +5,6 @@ import os
 import sys
 import importlib.util
 from urllib.parse import urlparse, parse_qs, unquote
-import base64
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
 
@@ -77,7 +76,12 @@ def _default_csrf_trusted_origins():
     if render_host := os.getenv("RENDER_EXTERNAL_HOSTNAME", "").strip():
         origins.append(f"https://{render_host}")
     if DEBUG:
-        origins.extend(["http://localhost", "http://127.0.0.1"])
+        origins.extend([
+            "http://localhost",
+            "http://localhost:8000",
+            "http://127.0.0.1",
+            "http://127.0.0.1:8000",
+        ])
     return ",".join(dict.fromkeys(origins))
 
 
@@ -365,18 +369,18 @@ if USE_CLOUDINARY:
     STORAGES["default"]["BACKEND"] = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 # Email
-EMAIL_HOST = os.getenv("EMAIL_HOST", "https://royal-hotel-mwb5.onrender.com") or 'smtp.gmail.com'
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", "25"))
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "") or 'chanjak03@gmailc.om'
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "") or 'hxxvvlojkmvsaiti'
-EMAIL_USE_TLS = _env_bool("EMAIL_USE_TLS", default=False)
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com").strip()
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "").strip()
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "").strip()
+EMAIL_USE_TLS = _env_bool("EMAIL_USE_TLS", default=True)
 if (EMAIL_USE_SSL := _env_bool("EMAIL_USE_SSL", default=False)):
     EMAIL_USE_TLS = False
 EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "20"))
 
 if (_email_backend := (os.getenv("EMAIL_BACKEND") or "").strip()):
     EMAIL_BACKEND = _email_backend
-elif EMAIL_HOST_USER and EMAIL_HOST != "https://royal-hotel-mwb5.onrender.com":
+elif EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 else:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
@@ -397,11 +401,18 @@ PAYPAL_BASE_URL = os.getenv('PAYPAL_BASE_URL', 'https://api-m.sandbox.paypal.com
 PAYPAL_CLIENT_ID = os.getenv('PAYPAL_CLIENT_ID', '') or ''
 PAYPAL_CLIENT_SECRET = os.getenv('PAYPAL_CLIENT_SECRET', '') or ''
 
-MPESA_CONSUMER_KEY = os.getenv('MPESA_CONSUMER_KEY') or 'gN43u6RBle3pldlpY0LsqtyOxQbcAHHzqg6AcCwB0WLgeH1Z'
-MPESA_CONSUMER_SECRET = os.getenv('MPESA_CONSUMER_SECRET') or 'kJb1o5bD024u7EGz22vfGkMMO84AT6c0ywuqPFgkthjSyFXGGsI95B3pK463GINz'
-MPESA_SHORTCODE = os.getenv('MPESA_SHORTCODE') or '174379'
-MPESA_PASSKEY = os.getenv('MPESA_PASSKEY') or 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'
-MPESA_CALLBACK_URL = os.getenv('MPESA_CALLBACK_URL') or 'https://https://royal-hotel-mwb5.onrender.com/payments/mpesa/callback/'
+MPESA_CONSUMER_KEY = os.getenv('MPESA_CONSUMER_KEY', '').strip()
+MPESA_CONSUMER_SECRET = os.getenv('MPESA_CONSUMER_SECRET', '').strip()
+MPESA_SHORTCODE = os.getenv('MPESA_SHORTCODE', '').strip()
+MPESA_PASSKEY = os.getenv('MPESA_PASSKEY', '').strip()
+_mpesa_callback_base_url = (
+    os.getenv('RENDER_EXTERNAL_URL', '').strip().rstrip('/')
+    or 'https://royal-hotel-mwb5.onrender.com'
+)
+MPESA_CALLBACK_URL = (
+    os.getenv('MPESA_CALLBACK_URL', '').strip()
+    or f'{_mpesa_callback_base_url}/payments/mpesa/callback/'
+)
 MPESA_AUTH_URL = os.getenv(
     'MPESA_AUTH_URL',
     'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials'
@@ -418,32 +429,11 @@ MPESA_TRANSACTION_TYPE = os.getenv('MPESA_TRANSACTION_TYPE', 'CustomerPayBillOnl
 MPESA_TRANSACTION_DESC = os.getenv('MPESA_TRANSACTION_DESC', 'Hotel Booking Payment')
 
 # Google Maps
-GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY'or  '')
+GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', '').strip()
 
-def _decode_clerk_domain(publishable_key):
-    value = (publishable_key or "").strip()
-    if not value.startswith(("pk_test_", "pk_live_")):
-        return ""
-    encoded = value.split("_", 2)[2]
-    encoded += "=" * (-len(encoded) % 4)
-    try:
-        decoded = base64.urlsafe_b64decode(encoded.encode("ascii")).decode("utf-8")
-    except Exception:
-        return ""
-    return decoded.rstrip("$").strip()
-
-
-_raw_clerk_public = (os.getenv("CLERK_PUBLISHABLE_KEY") or os.getenv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY") or "").strip()
-_legacy_clerk_public = (os.getenv("CLERK_PUBLIC_SECRET_KEY") or "").strip()
-if not _raw_clerk_public and _legacy_clerk_public.startswith("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="):
-    _raw_clerk_public = _legacy_clerk_public.split("=", 1)[1].strip()
-
-CLERK_PUBLISHABLE_KEY = _raw_clerk_public
-CLERK_SECRET_KEY = (os.getenv("CLERK_SECRET_KEY") or "").strip()
-CLERK_DOMAIN = (os.getenv("CLERK_DOMAIN") or _decode_clerk_domain(CLERK_PUBLISHABLE_KEY)).strip()
-CLERK_ISSUER = (os.getenv("CLERK_ISSUER") or (f"https://{CLERK_DOMAIN}" if CLERK_DOMAIN else "")).strip()
-CLERK_JWKS_URL = (os.getenv("CLERK_JWKS_URL") or (f"{CLERK_ISSUER}/.well-known/jwks.json" if CLERK_ISSUER else "")).strip()
-CLERK_API_URL = (os.getenv("CLERK_API_URL") or "https://api.clerk.com").strip().rstrip("/")
+# Google OAuth (Login with Google / Gmail)
+GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "").strip()
+GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "").strip()
 
 # JWT / OIDC (optional)
 # Used by booking.jwt_auth to validate Bearer tokens against a JWKS endpoint.

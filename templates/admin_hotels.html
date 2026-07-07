@@ -42,7 +42,7 @@
                     <td>
                         <span class="admin-thumb" aria-hidden="true">
                             {% if hotel.image %}
-                                <img src="{{ hotel.image.url }}" alt="">
+                                <img src="{{ hotel.image|media_image_url }}" alt="">
                             {% else %}
                                 <i class="fa fa-building" aria-hidden="true"></i>
                             {% endif %}
@@ -81,4 +81,3 @@
     </div>
 </div>
 {% endblock %}
-

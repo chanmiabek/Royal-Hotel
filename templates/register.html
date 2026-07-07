@@ -148,16 +148,26 @@
         color: #222222;
         margin-top: 2px;
     }
-    .auth-lite__social {
-        display: grid;
-        justify-items: center;
-        margin-bottom: 30px;
+    .auth-lite__divider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 28px 0;
+        color: #111111;
+        font-size: 16px;
     }
-    .auth-lite__clerk {
-        width: 100%;
-        min-height: 360px;
-        display: grid;
-        justify-items: center;
+    .auth-lite__divider::before,
+    .auth-lite__divider::after {
+        content: "";
+        height: 1px;
+        flex: 1;
+        background: #e5e7eb;
+    }
+    .auth-lite__social {
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        margin-bottom: 30px;
     }
     .auth-lite__social a,
     .auth-lite__social span {
@@ -248,7 +258,7 @@
             font-size: 24px;
         }
         .auth-lite__social {
-            justify-items: stretch;
+            gap: 18px;
         }
         .auth-lite__social a,
         .auth-lite__social span {
@@ -280,17 +290,84 @@
     <div class="auth-lite__panel">
         <div class="auth-lite__card">
         <h1>{% trans "Create your account" %}</h1>
-        <p>{% trans "Use Clerk to securely create your Royal Hotel account." %}</p>
+        <p>{% trans "Create a Royal Hotel account to book faster and manage your stays." %}</p>
 
-        <div class="auth-lite__social" aria-label="{% trans 'Clerk sign up' %}">
-            {% if CLERK_AUTH_ENABLED %}
-            <div id="clerk-auth" class="auth-lite__clerk" data-mode="sign-up" data-next="{{ request.GET.next|default:'' }}"></div>
-            {% else %}
-            <span aria-label="{% trans 'Clerk login is not configured yet' %}">
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="name">{% trans "Your name" %}</label>
+                <input id="name" type="text" name="name" class="form-control" required autocomplete="name" placeholder="{% trans 'Enter your name' %}">
+            </div>
+            <div class="form-group">
+                <label for="email">{% trans "Email address" %}</label>
+                <input id="email" type="email" name="email" class="form-control" required autocomplete="email" placeholder="{% trans 'Enter your email address' %}">
+            </div>
+            <div class="form-group">
+                <label for="password">{% trans "Password" %}</label>
+                <div class="input-group">
+                    <input id="password" type="password" name="password" class="form-control" required autocomplete="new-password" placeholder="{% trans 'Create a password' %}">
+                    <div class="input-group-append">
+                        <button
+                            type="button"
+                            class="btn btn-outline-secondary"
+                            data-toggle-password="password"
+                            data-label-show="{% trans 'Show password' %}"
+                            data-label-hide="{% trans 'Hide password' %}"
+                            aria-label="{% trans 'Show password' %}"
+                            aria-pressed="false"
+                        >
+                            <i class="fa fa-eye" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="repeat_password">{% trans "Repeat password" %}</label>
+                <div class="input-group">
+                    <input id="repeat_password" type="password" name="repeat_password" class="form-control" required autocomplete="new-password" placeholder="{% trans 'Repeat your password' %}">
+                    <div class="input-group-append">
+                        <button
+                            type="button"
+                            class="btn btn-outline-secondary"
+                            data-toggle-password="repeat_password"
+                            data-label-show="{% trans 'Show password' %}"
+                            data-label-hide="{% trans 'Hide password' %}"
+                            aria-label="{% trans 'Show password' %}"
+                            aria-pressed="false"
+                        >
+                            <i class="fa fa-eye" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="auth-lite__primary">{% trans "Continue with email" %}</button>
+            <div class="auth-lite__secure">
                 <i class="fa fa-lock" aria-hidden="true"></i>
-                <small>Clerk</small>
+                <span>{% trans "Your account details are protected and used only for bookings and hotel services." %}</span>
+            </div>
+        </form>
+
+        <div class="auth-lite__divider">{% trans "or use one of these options" %}</div>
+        <div class="auth-lite__social" aria-label="{% trans 'Social sign in options' %}">
+            {% if GOOGLE_OAUTH_ENABLED %}
+            <a href="{% url 'google_login' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}" aria-label="{% trans 'Continue with Google' %}">
+                <i class="fa fa-google" aria-hidden="true"></i>
+                <small>Google</small>
+            </a>
+            {% else %}
+            <span aria-label="{% trans 'Google login is not configured yet' %}">
+                <i class="fa fa-google" aria-hidden="true"></i>
+                <small>Google</small>
             </span>
             {% endif %}
+            <span aria-label="{% trans 'Continue with Apple' %}">
+                <i class="fa fa-apple" aria-hidden="true"></i>
+                <small>Apple</small>
+            </span>
+            <span aria-label="{% trans 'Continue with Facebook' %}">
+                <i class="fa fa-facebook" aria-hidden="true"></i>
+                <small>Facebook</small>
+            </span>
         </div>
 
         <div class="auth-lite__assist">
@@ -318,67 +395,4 @@
         </div>
     </div>
 </section>
-{% endblock %}
-{% block extra_js %}
-{% if CLERK_AUTH_ENABLED %}
-<script
-    async
-    crossorigin="anonymous"
-    data-clerk-publishable-key="{{ CLERK_PUBLISHABLE_KEY }}"
-    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
-    type="text/javascript">
-</script>
-<script>
-    (function () {
-        function cookie(name) {
-            var value = "; " + document.cookie;
-            var parts = value.split("; " + name + "=");
-            if (parts.length === 2) {
-                return parts.pop().split(";").shift();
-            }
-            return "";
-        }
-
-        async function syncClerkSession(nextUrl) {
-            if (!window.Clerk || !window.Clerk.session) {
-                return;
-            }
-            var token = await window.Clerk.session.getToken();
-            if (!token) {
-                return;
-            }
-            var response = await fetch("{% url 'clerk_session' %}", {
-                method: "POST",
-                credentials: "same-origin",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": cookie("csrftoken")
-                },
-                body: JSON.stringify({ token: token, next: nextUrl || "" })
-            });
-            var data = await response.json();
-            if (data.ok && data.redirect) {
-                window.location.assign(data.redirect);
-            }
-        }
-
-        window.addEventListener("load", async function () {
-            var mount = document.getElementById("clerk-auth");
-            if (!mount || !window.Clerk) {
-                return;
-            }
-            var nextUrl = mount.getAttribute("data-next") || "";
-            await window.Clerk.load();
-            if (window.Clerk.user) {
-                await syncClerkSession(nextUrl);
-                return;
-            }
-            window.Clerk.mountSignUp(mount, {
-                signInUrl: "{% url 'login' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}",
-                afterSignUpUrl: window.location.href
-            });
-        });
-    }());
-</script>
-{% endif %}
 {% endblock %}

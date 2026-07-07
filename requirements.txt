@@ -12,3 +12,4 @@ gunicorn>=22.0.0
 whitenoise>=6.7.0
 PyJWT[crypto]>=2.8.0
 reportlab>=4.0.0
+clerk-backend-api>=6.0.1

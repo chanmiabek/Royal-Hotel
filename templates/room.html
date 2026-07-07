@@ -79,7 +79,7 @@
             <div class="hotel-card">
                 <div class="hotel-card__media">
                     {% if room.image %}
-                        <img src="{{ room.image.url }}" alt="{{ room.title }}">
+                        <img src="{{ room.image|media_image_url }}" alt="{{ room.title }}">
                     {% endif %}
                 </div>
                 <div class="hotel-card__body">
@@ -135,7 +135,7 @@
                 <div class="row">
                     <div class="col-12">
                         {% if room.image %}
-                            <img src="{{ room.image.url }}" class="img-fluid mb-3" alt="{{ room.title }}">
+                            <img src="{{ room.image|media_image_url }}" class="img-fluid mb-3" alt="{{ room.title }}">
                         {% endif %}
                         <h2>{% trans "Description" %}</h2>
                         <p>

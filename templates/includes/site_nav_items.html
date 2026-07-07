@@ -49,43 +49,86 @@
 {% if user.is_authenticated %}
 <li class="nav-user dropdown {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'my_bookings' or request.resolver_match.url_name == 'owner_dashboard' or request.resolver_match.url_name|default:''|slice:':6' == 'admin_' %}active{% endif %}">
     <a class="nav-user__trigger dropdown-toggle" href="#" id="userDropdownNav" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        <span class="nav-user__avatar">{{ user.first_name|default:user.username|first|upper }}</span>
+        <span class="nav-user__avatar">
+            {% if user.profile.profile_image %}
+                <img src="{{ user.profile.profile_image|media_image_url }}" alt="{{ user.first_name|default:user.username }}">
+            {% else %}
+                {{ user.first_name|default:user.username|first|upper }}
+            {% endif %}
+        </span>
+        <span class="nav-user__coin" aria-label="{% trans 'Reward balance' %}">T</span>
         <span class="nav-user__copy">
             <strong>{{ user.first_name|default:user.username }}</strong>
-            <small>{% trans "Genius Level 1" %}</small>
+            <small>{% trans "0 reward points" %}</small>
         </span>
     </a>
     <div class="dropdown-menu nav-user__menu" aria-labelledby="userDropdownNav">
-        <a class="dropdown-item" href="{% url 'profile' %}">
-            <i class="fa fa-user-o"></i> {% trans "My account" %}
-        </a>
-        <a class="dropdown-item" href="{% url 'my_bookings' %}">
-            <i class="fa fa-suitcase"></i> {% trans "Bookings & Trips" %}
-        </a>
-        <a class="dropdown-item" href="{% url 'my_bookings' %}">
-            <i class="fa fa-google"></i> {% trans "Genius loyalty program" %}
-        </a>
-        <a class="dropdown-item" href="{% url 'my_bookings' %}">
-            <i class="fa fa-credit-card"></i> {% trans "Rewards & Wallet" %}
-        </a>
-        <a class="dropdown-item" href="{% url 'my_bookings' %}">
-            <i class="fa fa-comments-o"></i> {% trans "Reviews" %}
-        </a>
-        <a class="dropdown-item" href="/wishlist/">
-            <i class="fa fa-heart-o"></i> {% trans "Saved" %}
-        </a>
+        <div class="nav-user-card">
+            <a href="{% url 'profile' %}" class="nav-user-card__main">
+                <span class="nav-user-card__avatar">
+                    {% if user.profile.profile_image %}
+                        <img src="{{ user.profile.profile_image|media_image_url }}" alt="{{ user.first_name|default:user.username }}">
+                    {% else %}
+                        {{ user.first_name|default:user.username|first|upper }}
+                    {% endif %}
+                </span>
+                <span class="nav-user-card__identity">
+                    <strong>{{ user.get_full_name|default:user.username }}</strong>
+                    <small>{{ user.email|default:"Member account" }}</small>
+                </span>
+                <i class="fa fa-angle-right" aria-hidden="true"></i>
+            </a>
+            <div class="nav-user-card__status">
+                <span class="nav-user-card__badge"><i class="fa fa-shield" aria-hidden="true"></i> {% trans "Silver" %}</span>
+                <span class="nav-user-card__wallet"><span>T</span> 0 (~ US$0)</span>
+            </div>
+        </div>
+
+        <div class="nav-user__section nav-user__section--primary">
+            <a class="dropdown-item" href="{% url 'my_bookings' %}">
+                <i class="fa fa-calendar-check-o"></i> {% trans "My bookings" %}
+            </a>
+            <a class="dropdown-item" href="{% url 'profile' %}">
+                <i class="fa fa-user-o"></i> {% trans "Manage my account" %}
+            </a>
+        </div>
+
+        <div class="nav-user__section">
+            <a class="dropdown-item" href="{% url 'hotel_list' %}">
+                <i class="fa fa-ticket"></i> {% trans "Promo codes" %}
+            </a>
+            <a class="dropdown-item" href="{% url 'wishlist' %}">
+                <i class="fa fa-heart-o"></i> {% trans "Saved" %}
+            </a>
+            <a class="dropdown-item" href="{% url 'my_bookings' %}">
+                <i class="fa fa-comments-o"></i> {% trans "My reviews" %}
+            </a>
+            <a class="dropdown-item" href="{% url 'hotel_list' %}?sort=price_asc">
+                <i class="fa fa-bell-o"></i> {% trans "Price alerts" %}
+            </a>
+            <a class="dropdown-item" href="{% url 'contact' %}">
+                <i class="fa fa-life-ring"></i> {% trans "Customer support" %}
+            </a>
+        </div>
+
         {% if user.is_staff or user.is_superuser %}
+        <div class="nav-user__section">
         <a class="dropdown-item" href="{% url 'admin_dashboard' %}">
             <i class="fa fa-dashboard"></i> {% trans "Admin Dashboard" %}
         </a>
+        </div>
         {% elif user.profile.user_type == 'OWNER' %}
+        <div class="nav-user__section">
         <a class="dropdown-item" href="{% url 'owner_dashboard' %}">
             <i class="fa fa-line-chart"></i> {% trans "Owner Dashboard" %}
         </a>
+        </div>
         {% endif %}
+        <div class="nav-user__section nav-user__section--signout">
         <a class="dropdown-item" href="{% url 'logout' %}">
             <i class="fa fa-sign-out"></i> {% trans "Sign out" %}
         </a>
+        </div>
     </div>
 </li>
 {% else %}

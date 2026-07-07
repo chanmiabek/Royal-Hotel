@@ -70,6 +70,22 @@ class Testimonial(models.Model):
         return self.name
 
 
+class BusinessPartner(models.Model):
+    name = models.CharField(max_length=120)
+    logo = models.ImageField(upload_to='partners/', blank=True, null=True)
+    website_url = models.URLField(blank=True)
+    display_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['display_order', 'name']
+
+    def __str__(self):
+        return self.name
+
+
 class PasswordResetCode(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="password_reset_codes")
     code_hash = models.CharField(max_length=128)

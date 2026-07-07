@@ -41,7 +41,7 @@
                     <td>
                         <span class="admin-thumb" aria-hidden="true">
                             {% if room.image %}
-                                <img src="{{ room.image.url }}" alt="">
+                                <img src="{{ room.image|media_image_url }}" alt="">
                             {% else %}
                                 <i class="fa fa-bed" aria-hidden="true"></i>
                             {% endif %}

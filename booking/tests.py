@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 
 from django.test import TestCase
+from django.conf import settings
 from django.urls import reverse
 
 from .models import Booking, Hotel, Room
@@ -63,3 +64,17 @@ class PublicPagesTests(TestCase):
     def test_jwt_me_requires_bearer_token(self):
         response = self.client.get(reverse("jwt_me"))
         self.assertEqual(response.status_code, 401)
+
+
+class SettingsDefaultsTests(TestCase):
+    def test_mpesa_callback_default_is_absolute_https_url(self):
+        self.assertEqual(
+            settings.MPESA_CALLBACK_URL,
+            "https://royal-hotel-mwb5.onrender.com/payments/mpesa/callback/",
+        )
+
+    def test_email_defaults_do_not_enable_smtp_without_credentials(self):
+        self.assertEqual(settings.EMAIL_HOST, "smtp.gmail.com")
+        self.assertEqual(settings.EMAIL_PORT, 587)
+        self.assertEqual(settings.EMAIL_HOST_USER, "")
+        self.assertEqual(settings.EMAIL_HOST_PASSWORD, "")

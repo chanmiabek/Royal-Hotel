@@ -237,7 +237,7 @@
                     {% for member in team_members %}
                     <div class="col-md-4 mb-4">
                         <div class="about-card">
-                            <img src="{% if member.image %}{{ member.image.url }}{% else %}{% static 'img/about/about-1.jpg' %}{% endif %}" alt="{{ member.name }}">
+                            <img src="{% if member.image %}{{ member.image|media_image_url }}{% else %}{% static 'img/about/about-1.jpg' %}{% endif %}" alt="{{ member.name }}">
                             <div class="about-card-body">
                                 <span class="about-card-role">{{ member.role }}</span>
                                 <h4>{{ member.name }}</h4>

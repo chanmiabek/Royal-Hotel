@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static i18n booking_extras %}
 {% block extra_css %}
-<link href="{% static 'css/hotel-cards.css' %}?v=20260615-7" rel="stylesheet">
+<link href="{% static 'css/hotel-cards.css' %}?v=20260702-1" rel="stylesheet">
 {% endblock %}
 {% block content %}
 
@@ -107,66 +107,36 @@
     </div>
 </section>
 
-{% if home_hotels %}
-<section id="home-hotels" class="hotel-collection hotel-search rh-featured-stays">
+<section
+    id="home-hotels"
+    class="hotel-collection hotel-search rh-featured-stays rh-featured-skeleton"
+    hx-get="{% url 'home_hotel_groups_fragment' %}"
+    hx-trigger="load"
+    hx-swap="outerHTML"
+>
     <div class="container">
         <div class="rh-featured-head">
             <div>
-                <h2>{% trans "Featured stays" %}</h2>
-                <p>{{ hotels_count }} {% trans "approved properties ready for booking." %}</p>
+                <h2>{% trans "Explore hotels by location, rating, and visits" %}</h2>
+                <p>{% trans "Loading approved properties..." %}</p>
             </div>
-            <a href="{% url 'hotel_list' %}" class="btn">{% trans "View all hotels" %}</a>
+            <span class="btn rh-skeleton-pill" aria-hidden="true"></span>
         </div>
-
-        <div class="rh-featured-grid">
-            {% for hotel in home_hotels %}
-            <article class="rh-featured-card">
-                <a href="{% url 'hotel_detail' hotel.id %}" class="rh-featured-card__media">
-                    {% if hotel.image %}
-                        <img src="{{ hotel.image.url }}" alt="{{ hotel.name }}">
-                    {% else %}
-                        <img src="{% static 'img/slider/header-slider-3.jpg' %}" alt="{{ hotel.name }}">
-                    {% endif %}
-                </a>
-                <div class="rh-featured-card__body">
-                    <div class="rh-featured-card__top">
-                        <a href="{% url 'hotel_detail' hotel.id %}" class="rh-featured-card__title">{{ hotel.name }}</a>
-                        {% if hotel.review_count %}
-                            <span class="rh-featured-card__score">{{ hotel.review_score|floatformat:1 }}</span>
-                        {% elif hotel.star_rating %}
-                            <span class="rh-featured-card__score">{{ hotel.star_rating|floatformat:1 }}</span>
-                        {% endif %}
-                    </div>
-                    <div class="rh-featured-card__meta">
-                        {% if hotel.city %}{{ hotel.city|trim }}{% if hotel.country %}, {{ hotel.country|trim }}{% endif %}{% elif hotel.country %}{{ hotel.country|trim }}{% else %}{% trans "Royal Hotel partner" %}{% endif %}
-                    </div>
-                    {% if hotel.star_rating %}
-                    <div class="rh-featured-card__stars" aria-label="{{ hotel.star_rating }} {% trans 'stars' %}">
-                        {% for i in "12345"|make_list %}
-                            {% if forloop.counter <= hotel.star_rating %}
-                                <i class="fa fa-star" aria-hidden="true"></i>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                    {% if hotel.description %}
-                        <p>{{ hotel.description|truncatewords:18 }}</p>
-                    {% endif %}
-                    <div class="rh-featured-card__foot">
-                        {% if hotel.starting_price %}
-                            <span>{% trans "From" %} <strong>KES {{ hotel.starting_price|floatformat:0 }}</strong></span>
-                        {% else %}
-                            <span>{% trans "Check latest availability" %}</span>
-                        {% endif %}
-                        <a href="{% url 'hotel_detail' hotel.id %}">{% trans "See availability" %}</a>
-                    </div>
+        <div class="rh-featured-group">
+            <div class="rh-featured-group__head">
+                <div>
+                    <span class="rh-skeleton-line rh-skeleton-line--title"></span>
+                    <span class="rh-skeleton-line rh-skeleton-line--text"></span>
                 </div>
-            </article>
-            {% endfor %}
+            </div>
+            <div class="rh-featured-grid rh-featured-grid--skeleton" aria-hidden="true">
+                <span class="rh-featured-card rh-featured-card--skeleton"></span>
+                <span class="rh-featured-card rh-featured-card--skeleton"></span>
+                <span class="rh-featured-card rh-featured-card--skeleton"></span>
+            </div>
         </div>
     </div>
 </section>
-{% endif %}
 
 {% endblock %}
 
@@ -177,5 +147,17 @@
             format: 'MM/DD/YYYY'
         });
     });
+
+    (function () {
+        document.addEventListener('click', function (event) {
+            var button = event.target.closest('.rh-featured-scroll-btn');
+            if (!button) return;
+            var wrap = button.closest('.rh-featured-scroll-wrap');
+            var row = wrap ? wrap.querySelector('[data-hotel-scroll-row]') : null;
+            if (!row) return;
+            var nearEnd = row.scrollLeft + row.clientWidth >= row.scrollWidth - 12;
+            row.scrollBy({ left: nearEnd ? -row.scrollWidth : Math.max(300, row.clientWidth * 0.85), behavior: 'smooth' });
+        });
+    })();
 </script>
 {% endblock %}
