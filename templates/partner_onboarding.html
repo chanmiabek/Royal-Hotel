@@ -21,6 +21,16 @@
         margin: 0 auto;
         padding: 42px 20px 70px;
     }
+    .partner-flow__body--auth {
+        max-width: none;
+        min-height: calc(100vh - 86px);
+        display: grid;
+        align-items: start;
+        padding: 0 20px 70px;
+        background:
+            linear-gradient(180deg, #f7f8fb 0, #ffffff 300px),
+            #ffffff;
+    }
     .partner-flow__bar {
         height: 86px;
         background: #222222;
@@ -71,6 +81,15 @@
         max-width: 540px;
         margin: 42px auto 0;
         padding: 0 20px 48px;
+    }
+    .partner-flow__panel--auth {
+        margin-top: 74px;
+        padding: 32px;
+        border: 1px solid #d9dee7;
+        border-top: 4px solid #FFD700;
+        border-radius: 8px;
+        background: #ffffff;
+        box-shadow: none;
     }
     .partner-flow__panel--gated {
         display: none;
@@ -419,17 +438,19 @@
     }
     .partner-flow .form-control {
         width: 100%;
-        min-height: 50px;
-        border: 1px solid #6b7280;
-        border-radius: 6px;
+        min-height: 52px;
+        border: 1px solid #b9c0cc;
+        border-radius: 4px;
         color: #111111;
         font-size: 16px;
-        padding: 10px 12px;
+        padding: 11px 13px;
         box-shadow: none;
     }
     .partner-flow .form-control:focus {
         border-color: #222222;
-        box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.4);
+        box-shadow: none;
+        outline: 3px solid rgba(255, 215, 0, 0.34);
+        outline-offset: 1px;
     }
     .partner-flow__primary,
     .partner-flow__secondary {
@@ -510,13 +531,23 @@
         position: relative;
     }
     .partner-flow__password .form-control {
-        padding-right: 48px;
+        padding-right: 52px;
     }
-    .partner-flow__password i {
+    .partner-flow__password-toggle {
         position: absolute;
         right: 14px;
-        bottom: 16px;
+        bottom: 9px;
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-left: 1px solid #d9dee7;
+        background: transparent;
         color: #222222;
+        cursor: pointer;
+        padding: 0;
     }
     @media (max-width: 575px) {
         .partner-flow__bar {
@@ -525,10 +556,18 @@
         .partner-flow__body {
             padding: 24px 14px 48px;
         }
+        .partner-flow__body--auth {
+            min-height: calc(100vh - 76px);
+            padding: 0 14px 44px;
+        }
         .partner-flow__panel {
             margin-top: 44px;
             padding-left: 0;
             padding-right: 0;
+        }
+        .partner-flow__panel--auth {
+            margin-top: 34px;
+            padding: 24px 18px;
         }
         .partner-flow h1 {
             font-size: 24px;
@@ -577,8 +616,8 @@
         </div>
     </header>
 
-    <div class="partner-flow__body">
-    {% if step == 'signin' or step == 'email' %}
+    <div class="partner-flow__body {% if step == 'signin' or step == 'email' %}partner-flow__body--auth{% endif %}">
+    {% if show_partner_landing %}
     <section class="partner-landing" aria-label="{% trans 'Royal Hotel partner information' %}">
         <div class="partner-hero">
             <div class="partner-hero__copy">
@@ -707,7 +746,7 @@
     </section>
     {% endif %}
 
-    <section class="partner-flow__panel {% if step == 'signin' or step == 'email' %}partner-flow__panel--gated{% endif %}" id="partner-start">
+    <section class="partner-flow__panel {% if step == 'signin' or step == 'email' %}partner-flow__panel--auth{% endif %}" id="partner-start">
         {% if messages %}
             {% for message in messages %}
             <div class="alert alert-{{ message.tags }} mb-4">{{ message }}</div>
@@ -784,12 +823,32 @@
             <div class="form-group partner-flow__password">
                 <label for="partner_password">{% trans "Password" %} *</label>
                 <input id="partner_password" type="password" name="password" class="form-control" placeholder="{% trans 'Enter a password' %}" autocomplete="new-password" autofocus required>
-                <i class="fa fa-eye" aria-hidden="true"></i>
+                <button
+                    type="button"
+                    class="partner-flow__password-toggle"
+                    data-toggle-password="partner_password"
+                    data-label-show="{% trans 'Show password' %}"
+                    data-label-hide="{% trans 'Hide password' %}"
+                    aria-label="{% trans 'Show password' %}"
+                    aria-pressed="false"
+                >
+                    <i class="fa fa-eye" aria-hidden="true"></i>
+                </button>
             </div>
             <div class="form-group partner-flow__password">
                 <label for="partner_repeat_password">{% trans "Confirm password" %} *</label>
                 <input id="partner_repeat_password" type="password" name="repeat_password" class="form-control" placeholder="{% trans 'Confirm your password' %}" autocomplete="new-password" required>
-                <i class="fa fa-eye" aria-hidden="true"></i>
+                <button
+                    type="button"
+                    class="partner-flow__password-toggle"
+                    data-toggle-password="partner_repeat_password"
+                    data-label-show="{% trans 'Show password' %}"
+                    data-label-hide="{% trans 'Hide password' %}"
+                    aria-label="{% trans 'Show password' %}"
+                    aria-pressed="false"
+                >
+                    <i class="fa fa-eye" aria-hidden="true"></i>
+                </button>
             </div>
             <button type="submit" class="partner-flow__primary">{% trans "Create account" %}</button>
         </form>

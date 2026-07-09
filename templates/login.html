@@ -5,8 +5,6 @@
     body {
         background: #ffffff;
     }
-    #header,
-    #mobile-menu-panel,
     .back-to-top {
         display: none !important;
     }
@@ -16,61 +14,19 @@
             linear-gradient(180deg, #f7f8fb 0, #ffffff 280px),
             #ffffff;
     }
-    .auth-lite__bar {
-        height: 86px;
-        background: #222222;
-    }
-    .auth-lite__bar-inner {
-        max-width: 1364px;
-        height: 100%;
-        margin: 0 auto;
-        padding: 0 24px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .auth-lite__brand {
-        color: #FFD700;
-        font-size: 22px;
-        font-weight: 900;
-        letter-spacing: 0;
-    }
-    .auth-lite__brand:hover {
-        color: #ffffff;
-    }
-    .auth-lite__tools {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        color: #FFD700;
-    }
-    .auth-lite__language,
-    .auth-lite__help {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 34px;
-        height: 34px;
-        border-radius: 50%;
-        color: #FFD700;
-        font-weight: 800;
-    }
-    .auth-lite__help {
-        border: 2px solid #FFD700;
-        font-size: 17px;
-    }
     .auth-lite__panel {
         width: 100%;
-        max-width: 520px;
-        margin: 72px auto 0;
+        max-width: 500px;
+        margin: 64px auto 0;
         padding: 0 20px 44px;
     }
     .auth-lite__card {
         background: #ffffff;
-        border: 1px solid #e7e9ee;
-        border-radius: 10px;
-        padding: 30px;
-        box-shadow: 0 22px 52px rgba(15, 23, 42, 0.08);
+        border: 1px solid #d9dee7;
+        border-top: 4px solid #FFD700;
+        border-radius: 8px;
+        padding: 18px;
+        box-shadow: none;
     }
     .auth-lite h1 {
         color: #111111;
@@ -94,27 +50,47 @@
     }
     .auth-lite .form-control {
         width: 100%;
-        min-height: 46px;
-        border: 1px solid #6b7280;
+        min-height: 50px;
+        border: 1px solid #b9c0cc;
         border-radius: 4px;
         color: #111111;
         font-size: 16px;
-        padding: 9px 12px;
+        padding: 10px 13px;
         box-shadow: none;
     }
     .auth-lite .form-control:focus {
         border-color: #222222;
-        box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.35);
+        box-shadow: none;
+        outline: 3px solid rgba(255, 215, 0, 0.34);
+        outline-offset: 1px;
     }
-    .auth-lite .input-group .form-control {
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
+    .auth-lite .auth-password-field {
+        position: relative;
+        display: block;
     }
-    .auth-lite .input-group-append .btn {
-        min-height: 46px;
-        border-radius: 0 4px 4px 0;
-        border-color: #6b7280;
+    .auth-lite .auth-password-field .form-control {
+        padding-right: 52px;
+        border-radius: 4px;
+    }
+    .auth-lite .auth-password-field .input-group-append {
+        position: absolute;
+        top: 1px;
+        right: 1px;
+        bottom: 1px;
+        z-index: 5;
+        display: flex;
+        margin: 0;
+    }
+    .auth-lite .auth-password-field .input-group-append .btn {
+        width: 48px;
+        min-height: 0;
+        height: 100%;
+        border: 0;
+        border-left: 1px solid #d9dee7;
+        border-radius: 0 3px 3px 0;
         color: #222222;
+        background: transparent;
+        padding: 0;
     }
     .auth-lite__primary {
         width: 100%;
@@ -186,6 +162,24 @@
         border-color: #FFD700;
         color: #111111;
     }
+    .auth-lite__social .auth-social--google i {
+        color: #4285F4;
+    }
+    .auth-lite__social .auth-social--apple i {
+        color: #000000;
+    }
+    .auth-lite__social .auth-social--facebook i {
+        color: #1877F2;
+    }
+    .auth-lite__social .auth-social--google:hover {
+        border-color: #4285F4;
+    }
+    .auth-lite__social .auth-social--apple:hover {
+        border-color: #000000;
+    }
+    .auth-lite__social .auth-social--facebook:hover {
+        border-color: #1877F2;
+    }
     .auth-lite__social small {
         color: #4b5563;
         font-size: 12px;
@@ -194,7 +188,7 @@
     .auth-lite__link-row {
         text-align: center;
         font-size: 16px;
-        margin-bottom: 62px;
+        margin: 24px 0 42px;
     }
     .auth-lite__assist {
         display: grid;
@@ -234,23 +228,48 @@
         font-size: 14px;
         margin-bottom: 14px;
     }
+    .auth-lite__clerk {
+        margin-top: 18px;
+        display: grid;
+        justify-items: center;
+    }
+    .auth-lite__clerk-mount {
+        width: 100%;
+        min-height: 440px;
+    }
+    .auth-lite__clerk .cl-card,
+    .auth-lite__clerk .cl-cardBox {
+        box-shadow: none !important;
+        border: 0 !important;
+    }
+    .auth-lite__clerk-loading {
+        min-height: 220px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        color: #4b5563;
+        font-size: 14px;
+    }
+    .auth-lite__clerk-loading span {
+        width: 22px;
+        height: 22px;
+        border: 3px solid #e5e7eb;
+        border-top-color: #222222;
+        border-radius: 999px;
+        animation: authLiteSpin .8s linear infinite;
+    }
+    @keyframes authLiteSpin {
+        to { transform: rotate(360deg); }
+    }
     @media (max-width: 767px) {
-        .auth-lite__bar {
-            height: 72px;
-        }
-        .auth-lite__bar-inner {
-            padding: 0 18px;
-        }
-        .auth-lite__brand {
-            font-size: 20px;
-        }
         .auth-lite__panel {
             max-width: none;
             margin-top: 42px;
             padding: 0 16px 30px;
         }
         .auth-lite__card {
-            padding: 22px 18px;
+            padding: 14px;
         }
         .auth-lite h1 {
             font-size: 24px;
@@ -275,90 +294,13 @@
 {% endblock %}
 {% block content %}
 <section class="auth-lite">
-    <div class="auth-lite__bar">
-        <div class="auth-lite__bar-inner">
-            <a href="{% url 'index' %}" class="auth-lite__brand">Royal Hotel</a>
-            <div class="auth-lite__tools">
-                <span class="auth-lite__language">KES</span>
-                <span class="auth-lite__help" aria-label="{% trans 'Help' %}">?</span>
-            </div>
-        </div>
-    </div>
-
     <div class="auth-lite__panel">
         <div class="auth-lite__card">
-        <h1>{% trans "Sign in or create an account" %}</h1>
-        <p>{% trans "You can sign in using your Royal Hotel account to access our services." %}</p>
+        {% include 'includes/local_messages.html' %}
 
-        <form method="POST">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="login_email">{% trans "Email address" %}</label>
-                <input id="login_email" type="text" name="login_email" class="form-control" required autocomplete="username" placeholder="{% trans 'Enter your email address' %}">
-            </div>
-            <div class="form-group">
-                <label for="login_password">{% trans "Password" %}</label>
-                <div class="input-group">
-                    <input id="login_password" type="password" name="login_password" class="form-control" required autocomplete="current-password" placeholder="{% trans 'Enter your password' %}">
-                    <div class="input-group-append">
-                        <button
-                            type="button"
-                            class="btn btn-outline-secondary"
-                            data-toggle-password="login_password"
-                            data-label-show="{% trans 'Show password' %}"
-                            data-label-hide="{% trans 'Hide password' %}"
-                            aria-label="{% trans 'Show password' %}"
-                            aria-pressed="false"
-                        >
-                            <i class="fa fa-eye" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <button type="submit" class="auth-lite__primary">{% trans "Continue with email" %}</button>
-            <div class="auth-lite__secure">
-                <i class="fa fa-lock" aria-hidden="true"></i>
-                <span>{% trans "Your sign-in details are protected and used only to manage your bookings." %}</span>
-            </div>
-        </form>
-
-        <div class="auth-lite__divider">{% trans "or use one of these options" %}</div>
-        <div class="auth-lite__social" aria-label="{% trans 'Social sign in options' %}">
-            {% if GOOGLE_OAUTH_ENABLED %}
-            <a href="{% url 'google_login' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}" aria-label="{% trans 'Continue with Google' %}">
-                <i class="fa fa-google" aria-hidden="true"></i>
-                <small>Google</small>
-            </a>
-            {% else %}
-            <span aria-label="{% trans 'Google login is not configured yet' %}">
-                <i class="fa fa-google" aria-hidden="true"></i>
-                <small>Google</small>
-            </span>
-            {% endif %}
-            <span aria-label="{% trans 'Continue with Apple' %}">
-                <i class="fa fa-apple" aria-hidden="true"></i>
-                <small>Apple</small>
-            </span>
-            <span aria-label="{% trans 'Continue with Facebook' %}">
-                <i class="fa fa-facebook" aria-hidden="true"></i>
-                <small>Facebook</small>
-            </span>
-        </div>
-
-        <div class="auth-lite__assist">
-            <div class="auth-lite__assist-item">
-                <strong>{% trans "Manage bookings" %}</strong>
-                {% trans "View reservations and booking status from one account." %}
-            </div>
-            <div class="auth-lite__assist-item">
-                <strong>{% trans "Faster checkout" %}</strong>
-                {% trans "Reuse your saved contact details on future stays." %}
-            </div>
-        </div>
+        {% include 'includes/clerk_auth_embed.html' %}
 
         <div class="auth-lite__link-row">
-            {% trans "No account yet?" %} <a href="{% url 'register' %}">{% trans "Create one" %}</a>
-            <br>
             {% trans "Signing in as a hotel partner?" %} <a href="{% url 'partner_signin' %}">{% trans "Use Partner Extranet" %}</a>
         </div>
 

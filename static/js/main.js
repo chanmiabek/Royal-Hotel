@@ -1,8 +1,10 @@
 (function ($) {
     "use strict";
     
-    // Initiate the wowjs animation library
-    new WOW().init();
+    // Initiate optional vendor plugins when they are available.
+    if (typeof WOW !== 'undefined') {
+        new WOW().init();
+    }
     
     // Initiate responsive menu
     var $menuToggle = $('.mobile-menu-btn');
@@ -87,44 +89,50 @@
     });
     
     // Date and time picker
-    $('#date-1, #date-2, #date-3, #date-4').datetimepicker({
-        format: 'L'
-    });
-    $('#time-1, #time-2').datetimepicker({
-        format: 'LT'
-    });
+    if ($.fn.datetimepicker) {
+        $('#date-1, #date-2, #date-3, #date-4').datetimepicker({
+            format: 'L'
+        });
+        $('#time-1, #time-2').datetimepicker({
+            format: 'LT'
+        });
+    }
     
     //Portfolio modal slider
-    $('.port-slider').delay(10000);
-    $('.port-slider').slick({
-        autoplay: true,
-        slidesToShow: 1,
-        slidesToScroll: 1,
-        arrows: false,
-        fade: true,
-        asNavFor: '.port-slider-nav'
-    });
-    $('.port-slider-nav').slick({
-        autoplay: true,
-        slidesToShow: 5,
-        slidesToScroll: 1,
-        asNavFor: '.port-slider',
-        arrows: false,
-        dots: false,
-        centerMode: true,
-        focusOnSelect: true
-    });
+    if ($.fn.slick && $('.port-slider').length && $('.port-slider-nav').length) {
+        $('.port-slider').delay(10000);
+        $('.port-slider').slick({
+            autoplay: true,
+            slidesToShow: 1,
+            slidesToScroll: 1,
+            arrows: false,
+            fade: true,
+            asNavFor: '.port-slider-nav'
+        });
+        $('.port-slider-nav').slick({
+            autoplay: true,
+            slidesToShow: 5,
+            slidesToScroll: 1,
+            asNavFor: '.port-slider',
+            arrows: false,
+            dots: false,
+            centerMode: true,
+            focusOnSelect: true
+        });
+    }
     
     $('#popover-content-download').hide();
-    $("[data-toggle=popover]").each(function (e) {
-        $(this).popover({
-            html: true,
-            content: function () {
-                var id = $(this).attr('id')
-                return $('#popover-content-' + id).html();
-            }
-        });
+    if ($.fn.popover) {
+        $("[data-toggle=popover]").each(function () {
+            $(this).popover({
+                html: true,
+                content: function () {
+                    var id = $(this).attr('id');
+                    return $('#popover-content-' + id).html() || '';
+                }
+            });
 
-    });
+        });
+    }
 })(jQuery);
 

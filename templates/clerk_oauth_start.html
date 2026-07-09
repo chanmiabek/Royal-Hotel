@@ -1,0 +1,83 @@
+{% load i18n %}
+<!doctype html>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% trans "Signing in" %} | Royal Hotel</title>
+    <style>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            display: grid;
+            place-items: center;
+            font-family: Arial, sans-serif;
+            color: #152238;
+            background: #f7f8fb;
+        }
+
+        .clerk-auth-status {
+            width: min(360px, calc(100vw - 32px));
+            padding: 28px;
+            border: 1px solid #e2e7f0;
+            border-radius: 8px;
+            background: #fff;
+            text-align: center;
+        }
+
+        .clerk-auth-status__loader {
+            width: 34px;
+            height: 34px;
+            margin: 0 auto 16px;
+            border: 3px solid #e8edf5;
+            border-top-color: #b8860b;
+            border-radius: 999px;
+            animation: clerk-spin .8s linear infinite;
+        }
+
+        .clerk-auth-status strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 17px;
+        }
+
+        .clerk-auth-status p {
+            margin: 0;
+            color: #667085;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        @keyframes clerk-spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <main class="clerk-auth-status" aria-live="polite">
+        <div class="clerk-auth-status__loader" aria-hidden="true"></div>
+        <strong>{% trans "Opening secure sign in" %}</strong>
+        <p>{% trans "You are being redirected to continue with your selected account." %}</p>
+    </main>
+
+    <script
+        crossorigin="anonymous"
+        data-clerk-publishable-key="{{ clerk_publishable_key }}"
+        src="{{ clerk_js_url }}">
+    </script>
+    <script>
+        window.addEventListener('load', async () => {
+            try {
+                await window.Clerk.load();
+                await window.Clerk.authenticateWithRedirect({
+                    strategy: '{{ clerk_strategy|escapejs }}',
+                    redirectUrl: '{{ clerk_callback_url|escapejs }}',
+                    redirectUrlComplete: '{{ clerk_complete_url|escapejs }}'
+                });
+            } catch (error) {
+                window.location.href = "{% url 'login' %}";
+            }
+        });
+    </script>
+</body>
+</html>

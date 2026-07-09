@@ -2437,6 +2437,19 @@ _GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 _GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 _GOOGLE_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs"
 _GOOGLE_ALLOWED_ISSUERS = {"https://accounts.google.com", "accounts.google.com"}
+_FACEBOOK_AUTH_URL = "https://www.facebook.com/v20.0/dialog/oauth"
+_FACEBOOK_TOKEN_URL = "https://graph.facebook.com/v20.0/oauth/access_token"
+_FACEBOOK_PROFILE_URL = "https://graph.facebook.com/me"
+_APPLE_AUTH_URL = "https://appleid.apple.com/auth/authorize"
+_APPLE_TOKEN_URL = "https://appleid.apple.com/auth/token"
+_APPLE_JWKS_URL = "https://appleid.apple.com/auth/keys"
+_APPLE_ISSUER = "https://appleid.apple.com"
+_CLERK_JS_VERSION = "latest"
+_CLERK_STRATEGIES = {
+    "google": "oauth_google",
+    "apple": "oauth_apple",
+    "facebook": "oauth_facebook",
+}
 
 
 def _google_oauth_config():
@@ -2445,11 +2458,94 @@ def _google_oauth_config():
     return client_id, client_secret
 
 
+def _facebook_oauth_config():
+    client_id = (getattr(settings, "FACEBOOK_OAUTH_CLIENT_ID", "") or "").strip()
+    client_secret = (getattr(settings, "FACEBOOK_OAUTH_CLIENT_SECRET", "") or "").strip()
+    return client_id, client_secret
+
+
+def _apple_oauth_config():
+    client_id = (getattr(settings, "APPLE_OAUTH_CLIENT_ID", "") or "").strip()
+    team_id = (getattr(settings, "APPLE_OAUTH_TEAM_ID", "") or "").strip()
+    key_id = (getattr(settings, "APPLE_OAUTH_KEY_ID", "") or "").strip()
+    private_key = (getattr(settings, "APPLE_OAUTH_PRIVATE_KEY", "") or "").strip()
+    return client_id, team_id, key_id, private_key
+
+
+def _clerk_config():
+    publishable_key = (getattr(settings, "CLERK_PUBLISHABLE_KEY", "") or "").strip()
+    secret_key = (getattr(settings, "CLERK_SECRET_KEY", "") or "").strip()
+    frontend_api = (getattr(settings, "CLERK_FRONTEND_API", "") or "").strip()
+    return publishable_key, secret_key, frontend_api
+
+
+def _clerk_frontend_api_from_publishable_key(publishable_key: str) -> str:
+    frontend_api = (getattr(settings, "CLERK_FRONTEND_API", "") or "").strip()
+    if frontend_api:
+        return frontend_api.removeprefix("https://").removeprefix("http://").rstrip("/")
+
+    issuer = (getattr(settings, "JWT_ISSUER", "") or "").strip()
+    if issuer and "clerk" in issuer:
+        return issuer.removeprefix("https://").removeprefix("http://").rstrip("/")
+
+    publishable_key = (publishable_key or "").strip()
+    for prefix in ("pk_test_", "pk_live_"):
+        if not publishable_key.startswith(prefix):
+            continue
+        encoded = publishable_key[len(prefix):]
+        padding = "=" * (-len(encoded) % 4)
+        try:
+            decoded = base64.b64decode(encoded + padding).decode("utf-8").strip()
+        except Exception:
+            return ""
+        return decoded.removeprefix("https://").removeprefix("http://").strip("$").rstrip("/")
+    return ""
+
+
+def _clerk_is_configured():
+    publishable_key, secret_key, _frontend_api = _clerk_config()
+    return bool(
+        publishable_key
+        and secret_key
+        and publishable_key.startswith(("pk_test_", "pk_live_"))
+    )
+
+
+def _clerk_jwks_url():
+    configured_url = (getattr(settings, "JWT_JWKS_URL", "") or "").strip()
+    if configured_url:
+        return configured_url
+
+    issuer = (getattr(settings, "JWT_ISSUER", "") or "").strip().rstrip("/")
+    if issuer:
+        return f"{issuer}/.well-known/jwks.json"
+
+    publishable_key, _secret_key, _frontend_api = _clerk_config()
+    frontend_api = _clerk_frontend_api_from_publishable_key(publishable_key)
+    if frontend_api:
+        return f"https://{frontend_api}/.well-known/jwks.json"
+    return ""
+
+
+@lru_cache(maxsize=4)
+def _clerk_jwks_client(jwks_url):
+    if PyJWKClient is None:  # pragma: no cover
+        raise RuntimeError("PyJWT is required for Clerk login. Install with: pip install PyJWT[crypto]")
+    return PyJWKClient(jwks_url)
+
+
 @lru_cache(maxsize=2)
 def _google_jwks_client():
     if PyJWKClient is None:  # pragma: no cover
         raise RuntimeError("PyJWT is required for Google login. Install with: pip install PyJWT[crypto]")
     return PyJWKClient(_GOOGLE_JWKS_URL)
+
+
+@lru_cache(maxsize=2)
+def _apple_jwks_client():
+    if PyJWKClient is None:  # pragma: no cover
+        raise RuntimeError("PyJWT is required for Apple login. Install with: pip install PyJWT[crypto]")
+    return PyJWKClient(_APPLE_JWKS_URL)
 
 
 def _verify_google_id_token(id_token: str, client_id: str) -> dict:
@@ -2476,6 +2572,40 @@ def _verify_google_id_token(id_token: str, client_id: str) -> dict:
         raise ValueError("Invalid token issuer.")
 
     return claims
+
+
+def _verify_apple_id_token(id_token: str, client_id: str) -> dict:
+    if jwt is None:  # pragma: no cover
+        raise RuntimeError("PyJWT is required for Apple login. Install with: pip install PyJWT[crypto]")
+
+    signing_key = _apple_jwks_client().get_signing_key_from_jwt(id_token).key
+    return jwt.decode(
+        id_token,
+        signing_key,
+        algorithms=["RS256"],
+        audience=client_id,
+        issuer=_APPLE_ISSUER,
+        leeway=60,
+    )
+
+
+def _apple_client_secret(client_id: str, team_id: str, key_id: str, private_key: str) -> str:
+    if jwt is None:  # pragma: no cover
+        raise RuntimeError("PyJWT is required for Apple login. Install with: pip install PyJWT[crypto]")
+
+    now = int(timezone.now().timestamp())
+    return jwt.encode(
+        {
+            "iss": team_id,
+            "iat": now,
+            "exp": now + 60 * 60 * 24 * 30,
+            "aud": _APPLE_ISSUER,
+            "sub": client_id,
+        },
+        private_key,
+        algorithm="ES256",
+        headers={"kid": key_id},
+    )
 
 
 def _safe_next_url(request, next_url: str) -> str:
@@ -2512,7 +2642,238 @@ def _post_login_redirect(request, user, next_url=""):
     return redirect(safe_next or dashboard_url_name)
 
 
+def _login_social_user(request, provider, provider_id, email="", given_name="", family_name="", full_name=""):
+    provider_id = (provider_id or "").strip()
+    email = (email or "").strip().lower()
+    given_name = (given_name or "").strip()
+    family_name = (family_name or "").strip()
+    full_name = (full_name or "").strip()
+
+    if not given_name and full_name:
+        parts = [part for part in full_name.split(" ") if part]
+        given_name = parts[0] if parts else ""
+        if not family_name and len(parts) > 1:
+            family_name = " ".join(parts[1:]).strip()
+
+    fallback_username = f"{provider}_{provider_id}" if provider_id else provider
+    user = None
+    if email:
+        user = User.objects.filter(username__iexact=email).first() or User.objects.filter(email__iexact=email).first()
+    if user is None:
+        user = User.objects.filter(username__iexact=fallback_username).first()
+    if user is None:
+        user = User(username=email or fallback_username, email=email)
+        user.set_unusable_password()
+
+    if email:
+        user.username = email
+        user.email = email
+    elif not user.username:
+        user.username = fallback_username
+    if given_name and not user.first_name:
+        user.first_name = given_name
+    if family_name and not user.last_name:
+        user.last_name = family_name
+    if not user.is_active:
+        user.is_active = True
+    user.save()
+
+    login(request, user)
+    _get_or_create_profile(user)
+    return user
+
+
+def _verify_clerk_session_token(token: str) -> dict:
+    token = (token or "").strip()
+    if not token:
+        raise ValueError("Missing Clerk session token.")
+
+    _publishable_key, secret_key, _frontend_api = _clerk_config()
+    if not secret_key:
+        raise ValueError("Clerk secret key is not configured.")
+
+    try:
+        from clerk_backend_api import Clerk, AuthenticateRequestOptions
+    except Exception as exc:  # pragma: no cover
+        raise RuntimeError("Clerk backend SDK is required for Clerk login.") from exc
+
+    class ClerkTokenRequest:
+        @property
+        def headers(self):
+            return {"Authorization": f"Bearer {token}"}
+
+    audience = (getattr(settings, "JWT_AUDIENCE", "") or "").strip() or None
+    clerk = Clerk(bearer_auth=secret_key)
+    state = clerk.authenticate_request(
+        ClerkTokenRequest(),
+        AuthenticateRequestOptions(
+            secret_key=secret_key,
+            audience=audience,
+            clock_skew_in_ms=int(getattr(settings, "JWT_LEEWAY_SECONDS", 60)) * 1000,
+        ),
+    )
+    if not state.is_signed_in or not state.payload:
+        raise ValueError(state.message or "Unable to verify Clerk session token.")
+    return state.payload
+
+
+def _fetch_clerk_user(clerk_user_id: str) -> dict:
+    _publishable_key, secret_key, _frontend_api = _clerk_config()
+    if not secret_key:
+        raise ValueError("Clerk secret key is not configured.")
+    if requests is None:  # pragma: no cover
+        raise RuntimeError("Clerk login is unavailable (requests not installed).")
+
+    response = requests.get(
+        f"https://api.clerk.com/v1/users/{clerk_user_id}",
+        headers={"Authorization": f"Bearer {secret_key}"},
+        timeout=15,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def _primary_clerk_email(user_data: dict) -> str:
+    primary_id = (user_data.get("primary_email_address_id") or "").strip()
+    email_addresses = user_data.get("email_addresses") or []
+    for email_entry in email_addresses:
+        if (email_entry.get("id") or "").strip() == primary_id:
+            return (email_entry.get("email_address") or "").strip().lower()
+    for email_entry in email_addresses:
+        email = (email_entry.get("email_address") or "").strip().lower()
+        if email:
+            return email
+    return ""
+
+
+def _clerk_base_context(request):
+    publishable_key, _secret_key, _frontend_api = _clerk_config()
+    frontend_api = _clerk_frontend_api_from_publishable_key(publishable_key)
+    clerk_js_url = (
+        f"https://{frontend_api}/npm/@clerk/clerk-js@{_CLERK_JS_VERSION}/dist/clerk.browser.js"
+        if frontend_api
+        else f"https://cdn.jsdelivr.net/npm/@clerk/clerk-js@{_CLERK_JS_VERSION}/dist/clerk.browser.js"
+    )
+    next_url = request.session.get("clerk_oauth_next", "")
+    return {
+        "clerk_publishable_key": publishable_key,
+        "clerk_frontend_api": frontend_api,
+        "clerk_js_url": clerk_js_url,
+        "clerk_complete_url": request.build_absolute_uri(reverse("clerk_complete")),
+        "clerk_session_url": reverse("clerk_session_login"),
+        "clerk_next_url": next_url,
+    }
+
+
+def _clerk_redirect_context(request, provider):
+    context = _clerk_base_context(request)
+    context.update({
+        "clerk_strategy": _CLERK_STRATEGIES[provider],
+        "clerk_provider": provider,
+        "clerk_callback_url": request.build_absolute_uri(reverse("clerk_callback")),
+    })
+    return context
+
+
+def _clerk_page_context(request, mode):
+    next_url = _safe_next_url(request, request.GET.get("next", ""))
+    request.session["clerk_oauth_next"] = next_url
+    context = _clerk_base_context(request)
+    context.update({
+        "clerk_mode": mode,
+        "clerk_is_configured": _clerk_is_configured(),
+        "clerk_sign_in_url": request.build_absolute_uri(reverse("login")),
+        "clerk_sign_up_url": request.build_absolute_uri(reverse("register")),
+    })
+    return context
+
+
+def clerk_oauth_start(request, provider):
+    provider = (provider or "").strip().lower()
+    if provider not in _CLERK_STRATEGIES:
+        messages.error(request, "This sign-in option is not available.")
+        return redirect("login")
+    if not _clerk_is_configured():
+        messages.error(request, "Clerk login is not configured.")
+        return redirect("login")
+
+    next_url = _safe_next_url(request, request.GET.get("next", ""))
+    request.session["clerk_oauth_next"] = next_url
+    request.session["clerk_oauth_provider"] = provider
+    return render(request, "clerk_oauth_start.html", _clerk_redirect_context(request, provider))
+
+
+def clerk_callback(request):
+    if not _clerk_is_configured():
+        messages.error(request, "Clerk login is not configured.")
+        return redirect("login")
+
+    provider = request.session.get("clerk_oauth_provider", "google")
+    if provider not in _CLERK_STRATEGIES:
+        provider = "google"
+    return render(request, "clerk_oauth_callback.html", _clerk_redirect_context(request, provider))
+
+
+def clerk_complete(request):
+    if request.user.is_authenticated:
+        next_url = request.session.pop("clerk_oauth_next", "")
+        request.session.pop("clerk_oauth_provider", None)
+        return _post_login_redirect(request, request.user, next_url)
+    if not _clerk_is_configured():
+        messages.error(request, "Clerk login is not configured.")
+        return redirect("login")
+    return render(request, "clerk_session_sync.html", _clerk_base_context(request))
+
+
+@csrf_exempt
+def clerk_session_login(request):
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "Invalid request method."}, status=405)
+    if not _clerk_is_configured():
+        return JsonResponse({"ok": False, "error": "Clerk login is not configured."}, status=400)
+
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"ok": False, "error": "Invalid Clerk response."}, status=400)
+
+    token = (payload.get("token") or "").strip()
+    try:
+        claims = _verify_clerk_session_token(token)
+        clerk_user_id = (claims.get("sub") or "").strip()
+        if not clerk_user_id:
+            raise ValueError("Missing Clerk user id.")
+        user_data = _fetch_clerk_user(clerk_user_id)
+    except Exception:
+        return JsonResponse({"ok": False, "error": "Unable to verify Clerk login."}, status=400)
+
+    email = _primary_clerk_email(user_data)
+    user = _login_social_user(
+        request,
+        "clerk",
+        clerk_user_id,
+        email=email,
+        given_name=user_data.get("first_name") or "",
+        family_name=user_data.get("last_name") or "",
+        full_name=" ".join(
+            part for part in [
+                user_data.get("first_name") or "",
+                user_data.get("last_name") or "",
+            ] if part
+        ),
+    )
+    next_url = request.session.pop("clerk_oauth_next", "")
+    request.session.pop("clerk_oauth_provider", None)
+    dashboard_url_name = _dashboard_url_name_for_user(user)
+    redirect_url = reverse(dashboard_url_name) if dashboard_url_name != "index" else (_safe_next_url(request, next_url) or reverse("index"))
+    return JsonResponse({"ok": True, "redirect_url": redirect_url})
+
+
 def google_login(request):
+    return clerk_oauth_start(request, "google")
+
+
+def google_login_legacy(request):
     client_id, client_secret = _google_oauth_config()
     if not client_id or not client_secret:
         messages.error(request, "Google login is not configured.")
@@ -2636,6 +2997,242 @@ def google_callback(request):
 
     messages.success(request, f"Welcome, {user.first_name or user.username}!")
     next_url = (request.session.pop("google_oauth_next", "") or "").strip()
+    return _post_login_redirect(request, user, next_url)
+
+
+def facebook_login(request):
+    return clerk_oauth_start(request, "facebook")
+
+
+def facebook_login_legacy(request):
+    client_id, client_secret = _facebook_oauth_config()
+    if not client_id or not client_secret:
+        messages.error(request, "Facebook login is not configured.")
+        return redirect("login")
+
+    state = secrets.token_urlsafe(32)
+    request.session["facebook_oauth_state"] = state
+
+    next_url = (request.GET.get("next") or "").strip()
+    if next_url:
+        request.session["facebook_oauth_next"] = next_url
+
+    redirect_uri = request.build_absolute_uri(reverse("facebook_callback"))
+    params = {
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": "email,public_profile",
+        "state": state,
+    }
+    return redirect(f"{_FACEBOOK_AUTH_URL}?{urlencode(params)}")
+
+
+def facebook_callback(request):
+    client_id, client_secret = _facebook_oauth_config()
+    if not client_id or not client_secret:
+        messages.error(request, "Facebook login is not configured.")
+        return redirect("login")
+
+    if request.GET.get("error"):
+        messages.error(request, "Facebook login was cancelled.")
+        return redirect("login")
+
+    state = (request.GET.get("state") or "").strip()
+    expected_state = (request.session.pop("facebook_oauth_state", "") or "").strip()
+    if not state or not expected_state or state != expected_state:
+        messages.error(request, "Facebook login failed. Please try again.")
+        return redirect("login")
+
+    code = (request.GET.get("code") or "").strip()
+    if not code:
+        messages.error(request, "Facebook login failed. Missing authorization code.")
+        return redirect("login")
+
+    if requests is None:  # pragma: no cover
+        messages.error(request, "Facebook login is unavailable (requests not installed).")
+        return redirect("login")
+
+    redirect_uri = request.build_absolute_uri(reverse("facebook_callback"))
+    try:
+        token_response = requests.get(
+            _FACEBOOK_TOKEN_URL,
+            params={
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "redirect_uri": redirect_uri,
+                "code": code,
+            },
+            timeout=15,
+        )
+        token_data = token_response.json() if token_response.content else {}
+    except Exception:
+        token_data = {}
+        token_response = None
+
+    if not token_data or (token_response is not None and token_response.status_code >= 400):
+        error = token_data.get("error", {})
+        message = error.get("message") if isinstance(error, dict) else token_data.get("error")
+        messages.error(request, f"Facebook login failed: {message or 'Token exchange failed.'}")
+        return redirect("login")
+
+    access_token = (token_data.get("access_token") or "").strip()
+    if not access_token:
+        messages.error(request, "Facebook login failed: missing access token.")
+        return redirect("login")
+
+    try:
+        profile_response = requests.get(
+            _FACEBOOK_PROFILE_URL,
+            params={
+                "fields": "id,name,email,first_name,last_name",
+                "access_token": access_token,
+            },
+            timeout=15,
+        )
+        profile = profile_response.json() if profile_response.content else {}
+    except Exception:
+        profile = {}
+        profile_response = None
+
+    if not profile or (profile_response is not None and profile_response.status_code >= 400):
+        messages.error(request, "Facebook login failed: profile could not be loaded.")
+        return redirect("login")
+
+    facebook_id = (profile.get("id") or "").strip()
+    if not facebook_id:
+        messages.error(request, "Facebook login failed: account ID missing.")
+        return redirect("login")
+
+    user = _login_social_user(
+        request,
+        provider="facebook",
+        provider_id=facebook_id,
+        email=profile.get("email", ""),
+        given_name=profile.get("first_name", ""),
+        family_name=profile.get("last_name", ""),
+        full_name=profile.get("name", ""),
+    )
+
+    messages.success(request, f"Welcome, {user.first_name or user.username}!")
+    next_url = (request.session.pop("facebook_oauth_next", "") or "").strip()
+    return _post_login_redirect(request, user, next_url)
+
+
+def apple_login(request):
+    return clerk_oauth_start(request, "apple")
+
+
+def apple_login_legacy(request):
+    client_id, team_id, key_id, private_key = _apple_oauth_config()
+    if not all([client_id, team_id, key_id, private_key]):
+        messages.error(request, "Apple login is not configured.")
+        return redirect("login")
+
+    state = secrets.token_urlsafe(32)
+    request.session["apple_oauth_state"] = state
+
+    next_url = (request.GET.get("next") or "").strip()
+    if next_url:
+        request.session["apple_oauth_next"] = next_url
+
+    redirect_uri = request.build_absolute_uri(reverse("apple_callback"))
+    params = {
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": "name email",
+        "response_mode": "form_post",
+        "state": state,
+    }
+    return redirect(f"{_APPLE_AUTH_URL}?{urlencode(params)}")
+
+
+@csrf_exempt
+def apple_callback(request):
+    client_id, team_id, key_id, private_key = _apple_oauth_config()
+    if not all([client_id, team_id, key_id, private_key]):
+        messages.error(request, "Apple login is not configured.")
+        return redirect("login")
+
+    data = request.POST if request.method == "POST" else request.GET
+    if data.get("error"):
+        messages.error(request, "Apple login was cancelled.")
+        return redirect("login")
+
+    state = (data.get("state") or "").strip()
+    expected_state = (request.session.pop("apple_oauth_state", "") or "").strip()
+    if not state or not expected_state or state != expected_state:
+        messages.error(request, "Apple login failed. Please try again.")
+        return redirect("login")
+
+    code = (data.get("code") or "").strip()
+    if not code:
+        messages.error(request, "Apple login failed. Missing authorization code.")
+        return redirect("login")
+
+    if requests is None:  # pragma: no cover
+        messages.error(request, "Apple login is unavailable (requests not installed).")
+        return redirect("login")
+
+    redirect_uri = request.build_absolute_uri(reverse("apple_callback"))
+    try:
+        token_response = requests.post(
+            _APPLE_TOKEN_URL,
+            data={
+                "client_id": client_id,
+                "client_secret": _apple_client_secret(client_id, team_id, key_id, private_key),
+                "code": code,
+                "grant_type": "authorization_code",
+                "redirect_uri": redirect_uri,
+            },
+            timeout=15,
+        )
+        token_data = token_response.json() if token_response.content else {}
+    except Exception:
+        token_data = {}
+        token_response = None
+
+    if not token_data or (token_response is not None and token_response.status_code >= 400):
+        message = token_data.get("error_description") or token_data.get("error") or "Token exchange failed."
+        messages.error(request, f"Apple login failed: {message}")
+        return redirect("login")
+
+    id_token = (token_data.get("id_token") or "").strip()
+    if not id_token:
+        messages.error(request, "Apple login failed: missing ID token.")
+        return redirect("login")
+
+    try:
+        claims = _verify_apple_id_token(id_token, client_id=client_id)
+    except Exception:
+        messages.error(request, "Apple login failed: invalid ID token.")
+        return redirect("login")
+
+    apple_id = (claims.get("sub") or "").strip()
+    if not apple_id:
+        messages.error(request, "Apple login failed: account ID missing.")
+        return redirect("login")
+
+    apple_user = {}
+    if data.get("user"):
+        try:
+            apple_user = json.loads(data.get("user"))
+        except json.JSONDecodeError:
+            apple_user = {}
+    apple_name = apple_user.get("name", {}) if isinstance(apple_user, dict) else {}
+
+    user = _login_social_user(
+        request,
+        provider="apple",
+        provider_id=apple_id,
+        email=claims.get("email", ""),
+        given_name=apple_name.get("firstName", ""),
+        family_name=apple_name.get("lastName", ""),
+    )
+
+    messages.success(request, f"Welcome, {user.first_name or user.username}!")
+    next_url = (request.session.pop("apple_oauth_next", "") or "").strip()
     return _post_login_redirect(request, user, next_url)
 
 
@@ -2850,7 +3447,7 @@ def login_view(request):
 
         messages.error(request, "Invalid email or password.")
 
-    return render(request, 'login.html')
+    return render(request, 'login.html', _clerk_page_context(request, "sign_in"))
 
 # Register view
 def register_options_view(request):
@@ -2909,7 +3506,7 @@ def register_view(request):
             messages.error(request, f"Registration failed: {str(e)}")
             return redirect('register')
 
-    return render(request, 'register.html')
+    return render(request, 'register.html', _clerk_page_context(request, "sign_up"))
 
 
 def _partner_flow_data(request):

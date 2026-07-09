@@ -1,4 +1,4 @@
-{% load static i18n %}
+{% load static i18n booking_extras %}
 {% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE|default:'en' }}">
@@ -28,6 +28,8 @@
     <link href="{% static 'css/hover-style.css' %}?v=20260615-2" rel="stylesheet">
     <link href="{% static 'css/style.css' %}?v=20260615-2" rel="stylesheet">
     <link href="{% static 'css/booking-like.css' %}?v=20260615-2" rel="stylesheet">
+    <link href="{% static 'css/skeleton.css' %}?v=20260709-1" rel="stylesheet">
+    <link href="{% static 'css/interactions.css' %}?v=20260709-1" rel="stylesheet">
     <style>
         #header.booking-navbar {
             min-height: 142px;
@@ -45,16 +47,25 @@
             margin: 0 0 18px;
         }
         .local-messages .alert {
-            border-radius: 14px;
+            border-radius: 8px;
             border-width: 1px;
             font-weight: 700;
             box-shadow: 0 12px 24px rgba(15, 23, 42, .08);
         }
-        .local-messages .alert-warning,
         .local-messages .alert-info {
-            color: #7f1d1d;
-            background: #fee2e2;
-            border-color: #fecaca;
+            color: #1e3a8a;
+            background: #eff6ff;
+            border-color: #bfdbfe;
+        }
+        .local-messages .alert-warning {
+            color: #92400e;
+            background: #fffbeb;
+            border-color: #fde68a;
+        }
+        .local-messages .alert-success {
+            color: #166534;
+            background: #f0fdf4;
+            border-color: #bbf7d0;
         }
         .local-messages .alert-error,
         .local-messages .alert-danger {
@@ -911,6 +922,52 @@
 </head>
 
 <body>
+    <div class="rh-skeleton-page-loader" data-page-skeleton aria-hidden="true" role="status" aria-live="polite">
+        <div class="rh-skeleton-page-loader__shell" aria-label="{% trans 'Loading page' %}">
+            <div class="rh-skeleton-page-loader__top">
+                <span class="rh-skeleton-avatar"></span>
+                <span class="rh-skeleton-pill"></span>
+                <span class="rh-skeleton-pill"></span>
+                <span class="rh-skeleton-pill rh-skeleton-page-loader__top-short"></span>
+            </div>
+            <div class="rh-skeleton-page-loader__hero">
+                <div class="rh-skeleton-stack">
+                    <span class="rh-skeleton-line rh-skeleton-line--lg"></span>
+                    <span class="rh-skeleton-line rh-skeleton-line--md"></span>
+                    <span class="rh-skeleton-line rh-skeleton-line--sm"></span>
+                </div>
+                <div class="rh-skeleton-page-loader__search">
+                    <span class="rh-skeleton-line"></span>
+                    <span class="rh-skeleton-line"></span>
+                    <span class="rh-skeleton-line"></span>
+                    <span class="rh-skeleton-pill"></span>
+                </div>
+            </div>
+            <div class="rh-skeleton-page-loader__content">
+                <div class="rh-skeleton-stack">
+                    <span class="rh-skeleton-line rh-skeleton-line--md"></span>
+                    <span class="rh-skeleton-line rh-skeleton-line--sm"></span>
+                </div>
+                <div class="rh-skeleton-grid">
+                    <div class="rh-skeleton-page-card">
+                        <span class="rh-skeleton-media"></span>
+                        <span class="rh-skeleton-line rh-skeleton-line--lg"></span>
+                        <span class="rh-skeleton-line rh-skeleton-line--md"></span>
+                    </div>
+                    <div class="rh-skeleton-page-card">
+                        <span class="rh-skeleton-media"></span>
+                        <span class="rh-skeleton-line rh-skeleton-line--lg"></span>
+                        <span class="rh-skeleton-line rh-skeleton-line--md"></span>
+                    </div>
+                    <div class="rh-skeleton-page-card">
+                        <span class="rh-skeleton-media"></span>
+                        <span class="rh-skeleton-line rh-skeleton-line--lg"></span>
+                        <span class="rh-skeleton-line rh-skeleton-line--md"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     {% with url_name=request.resolver_match.url_name|default:'' %}
     {% if url_name|slice:':6' != 'admin_' and url_name|slice:':6' != 'owner_' %}
     <!-- Header Section Start -->
@@ -1093,15 +1150,26 @@
     {% endif %}
     {% endwith %}
 
-    <!-- Messages Section -->
+    <!-- Toast Messages Section -->
     {% with url_name=request.resolver_match.url_name|default:'' %}
-    {% if url_name|slice:':6' != 'owner_' and url_name != 'hotel_partner_apply' and url_name != 'partner_signin' and url_name != 'partner_register_email' and url_name != 'partner_contact_details' and url_name != 'partner_create_password' %}
+    {% if url_name|slice:':6' != 'owner_' and url_name != 'hotel_partner_apply' and url_name != 'partner_signin' and url_name != 'partner_register_email' and url_name != 'partner_contact_details' and url_name != 'partner_create_password' and url_name != 'login' and url_name != 'register' and url_name != 'password_reset' and url_name != 'password_reset_verify' and url_name != 'password_reset_confirm' %}
     {% if messages %}
-    <div id="messages" class="container mt-3">
+    <div id="messages" class="rh-toast-stack" aria-live="polite" aria-atomic="false">
         {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show rh-toast rh-toast--{{ message.tags }}" role="alert" data-auto-dismiss="6500">
+            <div class="rh-toast__icon" aria-hidden="true">
+                {% if 'success' in message.tags %}
+                    <i class="fa fa-check"></i>
+                {% elif 'error' in message.tags or 'danger' in message.tags %}
+                    <i class="fa fa-exclamation"></i>
+                {% elif 'warning' in message.tags %}
+                    <i class="fa fa-warning"></i>
+                {% else %}
+                    <i class="fa fa-info"></i>
+                {% endif %}
+            </div>
+            <div class="rh-toast__body">{{ message }}</div>
+            <button type="button" class="close rh-toast__close" data-dismiss="alert" aria-label="{% trans 'Close notification' %}">
                 <span aria-hidden="true">&times;</span>
             </button>
         </div>
@@ -1112,7 +1180,7 @@
     {% endwith %}
 
     <!-- Main Content Block -->
-    <main>
+    <main id="rh-page-content" class="rh-page-content" data-partial-root tabindex="-1">
         {% block content %}
         {% endblock %}
     </main>
@@ -1187,20 +1255,18 @@
                         <div class="footer-partners" aria-label="{% trans 'Our partners' %}">
                             {% for partner in footer_business_partners %}
                                 {% if partner.website_url %}
-                                    <a href="{{ partner.website_url }}" target="_blank" rel="noopener" class="footer-partner">
-                                        {% if partner.logo %}
-                                            <img src="{{ partner.logo.url }}" alt="{{ partner.name }}">
-                                        {% else %}
-                                            <span>{{ partner.name }}</span>
-                                        {% endif %}
+                                    <a href="{{ partner.website_url }}" target="_blank" rel="noopener noreferrer" class="footer-partner" aria-label="{{ partner.name }}">
+                                {% else %}
+                                    <span class="footer-partner" aria-label="{{ partner.name }}">
+                                {% endif %}
+                                    {% if partner.logo %}
+                                        <img src="{{ partner.logo|media_image_url }}" alt="{{ partner.name }}">
+                                    {% else %}
+                                        <span>{{ partner.name }}</span>
+                                    {% endif %}
+                                {% if partner.website_url %}
                                     </a>
                                 {% else %}
-                                    <span class="footer-partner">
-                                        {% if partner.logo %}
-                                            <img src="{{ partner.logo.url }}" alt="{{ partner.name }}">
-                                        {% else %}
-                                            <span>{{ partner.name }}</span>
-                                        {% endif %}
                                     </span>
                                 {% endif %}
                             {% empty %}
@@ -1259,6 +1325,9 @@
     
     <!-- Main Javascript File -->
     <script src="{% static 'js/main.js' %}"></script>
+    <script src="{% static 'js/skeleton.js' %}?v=20260709-1"></script>
+    <script src="{% static 'js/section_navigation.js' %}?v=20260709-1"></script>
+    <script src="{% static 'js/interactions.js' %}?v=20260709-1"></script>
     <script src="{% static 'js/password_toggle.js' %}"></script>
     
     {% block extra_js %}{% endblock %}

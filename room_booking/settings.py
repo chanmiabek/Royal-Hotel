@@ -39,9 +39,9 @@ RUNNING_DEPLOYED_APP = bool(
     or os.getenv("RENDER_EXTERNAL_URL", "").strip()
 )
 if not RUNNING_TESTS:
-    # Load local development overrides without clobbering real environment
-    # variables from Render, CI, or the shell.
-    _load_dotenv(BASE_DIR / ".env", override=False)
+    # In local development, the project .env should control the runserver
+    # process. Deployed environments keep platform-provided variables.
+    _load_dotenv(BASE_DIR / ".env", override=not RUNNING_DEPLOYED_APP)
 
 def _env_bool(name, default=False):
     value = os.getenv(name)
@@ -434,6 +434,23 @@ GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', '').strip()
 # Google OAuth (Login with Google / Gmail)
 GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "").strip()
 GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "").strip()
+
+# Social OAuth (optional)
+FACEBOOK_OAUTH_CLIENT_ID = os.getenv("FACEBOOK_OAUTH_CLIENT_ID", "").strip()
+FACEBOOK_OAUTH_CLIENT_SECRET = os.getenv("FACEBOOK_OAUTH_CLIENT_SECRET", "").strip()
+APPLE_OAUTH_CLIENT_ID = os.getenv("APPLE_OAUTH_CLIENT_ID", "").strip()
+APPLE_OAUTH_TEAM_ID = os.getenv("APPLE_OAUTH_TEAM_ID", "").strip()
+APPLE_OAUTH_KEY_ID = os.getenv("APPLE_OAUTH_KEY_ID", "").strip()
+APPLE_OAUTH_PRIVATE_KEY = os.getenv("APPLE_OAUTH_PRIVATE_KEY", "").replace("\\n", "\n").strip()
+
+# Clerk OAuth / hosted auth
+CLERK_SECRET_KEY = os.getenv("CLERK_SECRET_KEY", "").strip()
+CLERK_PUBLISHABLE_KEY = (
+    os.getenv("CLERK_PUBLISHABLE_KEY")
+    or os.getenv("CLERK_PUBLIC_SECRET_KEY")
+    or ""
+).strip()
+CLERK_FRONTEND_API = os.getenv("CLERK_FRONTEND_API", "").strip()
 
 # JWT / OIDC (optional)
 # Used by booking.jwt_auth to validate Bearer tokens against a JWKS endpoint.
