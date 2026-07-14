@@ -27,7 +27,7 @@ Role-based access:
 ## 🚀 Future Improvements
 
 -📱 React Native mobile app
--💳 Payment integration (Stripe / M-Pesa)
+- Payment integration (PayPal / M-Pesa / Paystack)
 -🔔 Real-time notifications (WebSockets)
 -🤖 AI-based hotel recommendations
 -📊 Analytics dashboard

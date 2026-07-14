@@ -190,6 +190,36 @@ textarea:focus-visible {
     transform: scale(.98) !important;
 }
 
+.rh-button-loading {
+    position: relative;
+    cursor: wait !important;
+    pointer-events: none;
+    opacity: .82;
+    transform: none !important;
+}
+
+.rh-button-loading__content {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+}
+
+.rh-button-spinner {
+    width: 17px;
+    height: 17px;
+    flex: 0 0 17px;
+    display: inline-block;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: rh-button-spin .7s linear infinite;
+}
+
+@keyframes rh-button-spin {
+    to { transform: rotate(360deg); }
+}
+
 .rh-toast-stack {
     position: fixed;
     top: 18px;
@@ -375,5 +405,9 @@ textarea:focus-visible {
     .rh-toast,
     .rh-toast.is-dismissing {
         animation: none;
+    }
+
+    .rh-button-spinner {
+        animation-duration: 1.4s !important;
     }
 }

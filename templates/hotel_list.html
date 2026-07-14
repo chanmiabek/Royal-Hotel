@@ -3,6 +3,10 @@
 
 {% block extra_css %}
 <link href="{% static 'css/hotel-cards.css' %}?v=20260702-3" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+    .hotel-search-matrix{display:grid;grid-template-columns:2fr repeat(3,1fr) auto;gap:8px;padding:14px;background:#fff;border:1px solid #e4e7ec;border-radius:14px;position:sticky;top:8px;z-index:20;box-shadow:0 10px 30px rgba(15,23,42,.1);margin-bottom:18px}.hotel-search-matrix input,.hotel-search-matrix button{min-height:44px;border:1px solid #cbd5e1;border-radius:8px;padding:8px 12px}.hotel-search-matrix button{background:#111827;color:#ffd700;font-weight:800}.hotel-view-switch{display:flex;gap:8px;margin:12px 0}.hotel-view-switch button{border:1px solid #d5dae2;background:#fff;padding:8px 14px;border-radius:8px;font-weight:700}.hotel-map-panel{height:560px;border-radius:14px;overflow:hidden;border:1px solid #dce1e8;display:none}.hotel-results-page.is-map .hotel-map-panel{display:block}.hotel-results-page.is-map .hotel-results-list{display:none}.urgency-badge{display:inline-flex;background:#fff0f1;color:#b42318;border:1px solid #fecdca;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:800;margin-top:8px}@media(max-width:767px){.hotel-search-matrix{grid-template-columns:1fr;position:static}.hotel-filter-rail{position:static!important}.hotel-map-panel{height:420px}}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -45,18 +49,17 @@
 
                 <div class="hotel-filter-block">
                     <label>{% trans "Guest Rating" %}</label>
-                    <label class="hotel-filter-check"><input type="checkbox"> <span>{% trans "Amazing 9+" %}</span></label>
-                    <label class="hotel-filter-check"><input type="checkbox"> <span>{% trans "Great 8+" %}</span></label>
-                    <label class="hotel-filter-check"><input type="checkbox"> <span>{% trans "Good 7+" %}</span></label>
-                    <label class="hotel-filter-check"><input type="checkbox"> <span>{% trans "Pleasant 6+" %}</span></label>
+                    <label class="hotel-filter-check"><input type="radio" name="min_review" value="9" {% if min_review == '9' %}checked{% endif %}> <span>{% trans "Amazing 9+" %}</span></label>
+                    <label class="hotel-filter-check"><input type="radio" name="min_review" value="8" {% if min_review == '8' %}checked{% endif %}> <span>{% trans "Great 8+" %}</span></label>
+                    <label class="hotel-filter-check"><input type="radio" name="min_review" value="7" {% if min_review == '7' %}checked{% endif %}> <span>{% trans "Good 7+" %}</span></label>
                 </div>
 
                 <div class="hotel-filter-block">
                     <label>{% trans "Popular filters" %}{% if query %} {% trans "for" %} {{ query }}{% endif %}</label>
-                    <label class="hotel-filter-check"><input type="checkbox"> <span>{% trans "Spa" %}</span></label>
-                    <label class="hotel-filter-check"><input type="checkbox"> <span>{% trans "Breakfast included" %}</span></label>
-                    <label class="hotel-filter-check"><input type="checkbox"> <span>{% trans "Private pool" %}</span></label>
-                    <label class="hotel-filter-check"><input type="checkbox"> <span>{% trans "5-star stays" %}</span></label>
+                    <label class="hotel-filter-check"><input type="checkbox" name="amenities" value="wifi" {% if 'wifi' in selected_amenities %}checked{% endif %}> <span>{% trans "Free Wi-Fi" %}</span></label>
+                    <label class="hotel-filter-check"><input type="checkbox" name="amenities" value="pool" {% if 'pool' in selected_amenities %}checked{% endif %}> <span>{% trans "Swimming pool" %}</span></label>
+                    <label class="hotel-filter-check"><input type="checkbox" name="amenities" value="air conditioning" {% if 'air conditioning' in selected_amenities %}checked{% endif %}> <span>{% trans "Air conditioning" %}</span></label>
+                    <label class="hotel-filter-check"><input type="checkbox" name="amenities" value="parking" {% if 'parking' in selected_amenities %}checked{% endif %}> <span>{% trans "Parking" %}</span></label>
                     <button class="hotel-filter-link" type="button">{% trans "Show more" %}</button>
                 </div>
 
@@ -82,6 +85,13 @@
         </aside>
 
         <main class="hotel-results-main">
+            <form method="get" class="hotel-search-matrix">
+                <input type="text" name="q" value="{{ query }}" placeholder="{% trans 'Where are you going?' %}">
+                <input type="date" name="check_in" value="{{ check_in }}" aria-label="{% trans 'Check-in' %}">
+                <input type="date" name="check_out" value="{{ check_out }}" aria-label="{% trans 'Check-out' %}">
+                <input type="number" name="guests" value="{{ guests }}" min="1" placeholder="{% trans 'Guests' %}">
+                <button type="submit">{% trans "Search" %}</button>
+            </form>
             <header class="hotel-results-header">
                 <h1>
                     {{ hotels_count }} {% if query %}{% trans "Best Hotels in" %} {{ query }}{% else %}{% trans "Best Hotels" %}{% endif %}
@@ -101,6 +111,8 @@
                 <a class="{% if sort == 'closest' %}active{% endif %}" href="?q={{ query|urlencode }}&min_price={{ min_price|urlencode }}&max_price={{ max_price|urlencode }}&sort=closest&view=list{% for star in selected_stars %}&stars={{ star }}{% endfor %}">{% trans "Closest to Downtown" %}</a>
                 <a class="{% if sort == 'top_reviewed' %}active{% endif %}" href="?q={{ query|urlencode }}&min_price={{ min_price|urlencode }}&max_price={{ max_price|urlencode }}&sort=top_reviewed&view=list{% for star in selected_stars %}&stars={{ star }}{% endfor %}">{% trans "Top Reviewed" %}</a>
             </nav>
+            <div class="hotel-view-switch"><button type="button" data-hotel-view="list"><i class="fa fa-list"></i> {% trans "List view" %}</button><button type="button" data-hotel-view="map"><i class="fa fa-map"></i> {% trans "Map view" %}</button></div>
+            <div id="hotelPriceMap" class="hotel-map-panel" aria-label="{% trans 'Hotel price map' %}"></div>
 
             <div class="hotel-results-list">
                 {% for hotel in hotels %}
@@ -186,6 +198,7 @@
                                 "{% trans "A comfortable stay with easy access to rooms, service, and booking details." %}"
                             {% endif %}
                         </p>
+                        {% if hotel.recent_booking_count %}<span class="urgency-badge">{% blocktrans count counter=hotel.recent_booking_count %}Booked {{ counter }} time in the last 48 hours{% plural %}Booked {{ counter }} times in the last 48 hours{% endblocktrans %}</span>{% endif %}
 
                         <a href="{% url 'hotel_detail' hotel.id %}" class="hotel-result-show-more">
                             {% trans "Show More" %} <i class="fa fa-chevron-down" aria-hidden="true"></i>
@@ -250,4 +263,12 @@
         </main>
     </div>
 </section>
+{{ hotel_map_data|json_script:"hotel-map-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){var page=document.querySelector('.hotel-results-page');document.querySelectorAll('[data-hotel-view]').forEach(function(btn){btn.addEventListener('click',function(){page.classList.toggle('is-map',btn.dataset.hotelView==='map');if(window.hotelMap)setTimeout(function(){window.hotelMap.invalidateSize()},50)})});var el=document.getElementById('hotelPriceMap'),raw=document.getElementById('hotel-map-data');if(!el||!raw||!window.L)return;var data=JSON.parse(raw.textContent),points=data.filter(function(h){return h.latitude!==null&&h.longitude!==null});var map=L.map(el).setView([-0.3,36.8],6);window.hotelMap=map;L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(map);var bounds=[];points.forEach(function(h){var marker=L.marker([h.latitude,h.longitude]).addTo(map).bindPopup('<strong>'+h.name+'</strong><br>KES '+Math.round(h.price)+'<br><a href="'+h.url+'">View hotel</a>');bounds.push(marker.getLatLng())});if(bounds.length)map.fitBounds(bounds,{padding:[30,30]})})();
+</script>
 {% endblock %}

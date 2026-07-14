@@ -19,24 +19,6 @@ def google_maps_api_key(request):
 
     return {
         "GOOGLE_MAPS_API_KEY": getattr(settings, "GOOGLE_MAPS_API_KEY", ""),
-        "GOOGLE_OAUTH_ENABLED": bool(
-            (getattr(settings, "GOOGLE_OAUTH_CLIENT_ID", "") or "").strip()
-            and (getattr(settings, "GOOGLE_OAUTH_CLIENT_SECRET", "") or "").strip()
-        ),
-        "FACEBOOK_OAUTH_ENABLED": bool(
-            (getattr(settings, "FACEBOOK_OAUTH_CLIENT_ID", "") or "").strip()
-            and (getattr(settings, "FACEBOOK_OAUTH_CLIENT_SECRET", "") or "").strip()
-        ),
-        "APPLE_OAUTH_ENABLED": bool(
-            (getattr(settings, "APPLE_OAUTH_CLIENT_ID", "") or "").strip()
-            and (getattr(settings, "APPLE_OAUTH_TEAM_ID", "") or "").strip()
-            and (getattr(settings, "APPLE_OAUTH_KEY_ID", "") or "").strip()
-            and (getattr(settings, "APPLE_OAUTH_PRIVATE_KEY", "") or "").strip()
-        ),
-        "CLERK_AUTH_ENABLED": bool(
-            (getattr(settings, "CLERK_PUBLISHABLE_KEY", "") or "").strip()
-            and (getattr(settings, "CLERK_SECRET_KEY", "") or "").strip()
-        ),
         "footer_business_partners": footer_business_partners,
         "footer_approved_hotels": footer_approved_hotels,
     }

@@ -1,0 +1,63 @@
+Internal Server Error: /
+Traceback (most recent call last):
+  File "C:\Users\INGRAM-PDRI\Desktop\Files\Work_Folders\Royal Hotel Booking\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\INGRAM-PDRI\Desktop\Files\Work_Folders\Royal Hotel Booking\.venv\Lib\site-packages\django\db\backends\sqlite3\base.py", line 359, in execute
+    return super().execute(query, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+sqlite3.OperationalError: no such column: booking_hotel.latitude
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\INGRAM-PDRI\Desktop\Files\Work_Folders\Royal Hotel Booking\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\INGRAM-PDRI\Desktop\Files\Work_Folders\Royal Hotel Booking\.venv\Lib\site-packages\django\core\handlers\base.py", line 198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\INGRAM-PDRI\Desktop\Files\Work_Folders\Royal Hotel Booking\booking\views.py", line 533, in home
+    _home_context(include_hotel_groups=False),
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\INGRAM-PDRI\Desktop\Files\Work_Folders\Royal Hotel Booking\booking\views.py", line 511, in _home_context
+    location_hotel = base_hotels.exclude(city='').exclude(country='').order_by('-created_at').first()
+  File "C:\Users\INGRAM-PDRI\Desktop\Files\Work_Folders\Royal Hotel Booking\.venv\Lib\site-packages\django\db\models\query.py", line 1145, in first
+    for obj in queryset[:1]:
+               ~~~~~~~~^^^^
+  File "C:\Users\INGRAM-PDRI\Desktop\Files\Work_Folders\Royal Hotel Booking\.venv\Lib\site-packages\django\db\models\query.py", line 390, in __iter__
+    self._fetch_all()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\INGRAM-PDRI\Desktop\Files\Work_Folders\Royal Hotel Booking\.venv\Lib\site-packages\django\db\models\query.py", line 2000, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\INGRAM-PDRI\Desktop\Files\Work_Folders\Royal Hotel Booking\.venv\Lib\site-packages\django\db\models\query.py", line 95, in __iter__
+    results = compiler.execute_sql(
+        chunked_fetch=self.chunked_fetch, chunk_size=self.chunk_size
+    )
+  File "C:\Users\INGRAM-PDRI\Desktop\Files\Work_Folders\Royal Hotel Booking\.venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1624, in execute_sql
+    cursor.execute(sql, params)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\INGRAM-PDRI\Desktop\Files\Work_Folders\Royal Hotel Booking\.venv\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\INGRAM-PDRI\Desktop\Files\Work_Folders\Royal Hotel Booking\.venv\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        sql, params, many=False, executor=self._execute
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\INGRAM-PDRI\Desktop\Files\Work_Folders\Royal Hotel Booking\.venv\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "C:\Users\INGRAM-PDRI\Desktop\Files\Work_Folders\Royal Hotel Booking\.venv\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\INGRAM-PDRI\Desktop\Files\Work_Folders\Royal Hotel Booking\.venv\Lib\site-packages\django\db\utils.py", line 94, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\INGRAM-PDRI\Desktop\Files\Work_Folders\Royal Hotel Booking\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\INGRAM-PDRI\Desktop\Files\Work_Folders\Royal Hotel Booking\.venv\Lib\site-packages\django\db\backends\sqlite3\base.py", line 359, in execute
+    return super().execute(query, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: no such column: booking_hotel.latitude
+[14/Jul/2026 13:48:45] "HEAD / HTTP/1.1" 500 0

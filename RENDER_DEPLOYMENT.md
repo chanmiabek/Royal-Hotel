@@ -16,8 +16,7 @@ This project is now wired for a safer Render deployment:
 - If you use a custom domain, add that domain to both `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS`.
 - If you use Google OAuth, add the live callback URL in Google Cloud:
   `https://your-service.onrender.com/auth/google/callback/`
-- If you use Stripe, point the live webhook endpoint to:
-  `https://your-service.onrender.com/payments/stripe/webhook/`
+- If you use Paystack, configure its callback for your live HTTPS domain.
 - If you use M-Pesa, set `MPESA_CALLBACK_URL` to your live HTTPS callback URL.
 
 ## Manual Render setup
@@ -57,9 +56,9 @@ This project is now wired for a safer Render deployment:
 - `PAYPAL_BASE_URL=https://api-m.paypal.com`
 - `PAYPAL_CLIENT_ID`
 - `PAYPAL_CLIENT_SECRET`
-- `STRIPE_SECRET_KEY`
-- `STRIPE_PUBLISHABLE_KEY`
-- `STRIPE_WEBHOOK_SECRET`
+- `PAYSTACK_PUBLIC_KEY`
+- `PAYSTACK_SECRET_KEY`
+- `PAYSTACK_BASE_URL=https://api.paystack.co`
 - `MPESA_CONSUMER_KEY`
 - `MPESA_CONSUMER_SECRET`
 - `MPESA_SHORTCODE`

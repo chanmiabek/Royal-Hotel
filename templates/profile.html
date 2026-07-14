@@ -47,6 +47,8 @@
         box-shadow: 0 20px 50px rgba(15, 23, 42, 0.24);
         margin-bottom: 24px;
     }
+    .loyalty-banner {margin-bottom:24px;padding:22px;border-radius:22px;color:#fff;background:linear-gradient(120deg,#3f3520,#a67c00 55%,#f4d06f);box-shadow:0 16px 36px rgba(82,61,0,.22)}
+    .loyalty-banner__top{display:flex;justify-content:space-between;gap:15px;align-items:center}.loyalty-banner__tier{text-transform:uppercase;letter-spacing:.12em;font-weight:900}.loyalty-progress{height:10px;background:rgba(255,255,255,.35);border-radius:99px;overflow:hidden;margin:14px 0 8px}.loyalty-progress span{display:block;height:100%;background:#fff;border-radius:99px}
     .member-chip {
         display: inline-flex;
         align-items: center;
@@ -226,6 +228,11 @@
             <span class="member-chip">{% trans "Member Profile" %}</span>
             <h2 class="member-title">{{ user.first_name|default:user.username }} {{ user.last_name|default:"" }}</h2>
             <p class="member-subtitle">{% trans "Keep your personal details updated, move quickly between your account pages, and return home whenever you need." %}</p>
+        </div>
+        <div class="loyalty-banner">
+            <div class="loyalty-banner__top"><div><div class="loyalty-banner__tier">{{ profile.get_tier_display }} {% trans "Member" %}</div><strong>{{ profile.loyalty_points }} {% trans "reward points" %}</strong></div><i class="fa fa-diamond fa-2x" aria-hidden="true"></i></div>
+            <div class="loyalty-progress" aria-label="{{ tier_progress }}%"><span style="width:{{ tier_progress }}%"></span></div>
+            {% if points_to_next_tier %}<small>{% blocktrans with points=points_to_next_tier tier=next_tier %}Earn {{ points }} more points to reach {{ tier }}.{% endblocktrans %}</small>{% else %}<small>{% trans "You have reached our highest membership tier." %}</small>{% endif %}
         </div>
 
         <div class="member-grid">

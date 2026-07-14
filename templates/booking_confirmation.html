@@ -61,11 +61,16 @@
                         {% endif %}
                     </div>
                     <div class="confirm-actions mt-4">
-                        <a class="btn btn-primary" href="{% url 'payment_page' booking.id %}">{% trans "Pay Now" %}</a>
+                        {% if booking.status == 'CONFIRMED' %}
+                            <a class="btn btn-primary" href="{% url 'invoice_pdf' booking.id %}?access_key={{ access_key }}">{% trans "View invoice" %}</a>
+                        {% else %}
+                            <button class="btn btn-primary" type="button" data-payment-open>{% trans "Pay Now" %}</button>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
+{% include 'includes/payment_card.html' %}
 {% endblock %}

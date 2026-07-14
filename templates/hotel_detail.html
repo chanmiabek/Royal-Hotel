@@ -2,6 +2,7 @@
 {% load static i18n %}
 {% block extra_css %}
 <link href="{% static 'css/hotel-cards.css' %}?v=20260615-4" rel="stylesheet">
+<style>.trust-strip{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.trust-chip{background:#fff1f2;color:#b42318;border-radius:999px;padding:7px 12px;font-weight:800;font-size:13px}.review-breakdown{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:18px 0}.review-metric{display:grid;grid-template-columns:100px 1fr 34px;gap:10px;align-items:center}.review-track{height:9px;background:#e5e7eb;border-radius:20px;overflow:hidden}.review-fill{height:100%;background:linear-gradient(90deg,#b8860b,#ffd700)}.category-score-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.mobile-booking-bar{display:none}@media(max-width:767px){.review-breakdown,.category-score-grid{grid-template-columns:1fr}.mobile-booking-bar{display:flex;position:fixed;z-index:1000;left:0;right:0;bottom:0;background:#fff;box-shadow:0 -8px 24px rgba(15,23,42,.16);padding:12px 16px;align-items:center;justify-content:space-between}.mobile-booking-bar strong{display:block}.mobile-booking-bar .btn{font-weight:800}}</style>
 {% endblock %}
 {% block content %}
 <section class="premium-shell">
@@ -65,6 +66,11 @@
                     <span class="hotel-card__score">{{ hotel.star_rating }}</span>
                     <span>{% trans "Rating" %}</span>
                 </div>
+                <div class="trust-strip">
+                    {% if recent_booking_count %}<span class="trust-chip">{% blocktrans count counter=recent_booking_count %}Booked {{ counter }} time in 48 hours{% plural %}Booked {{ counter }} times in 48 hours{% endblocktrans %}</span>{% endif %}
+                    {% if lowest_inventory and lowest_inventory <= 3 %}<span class="trust-chip">{% blocktrans with count=lowest_inventory %}Only {{ count }} rooms left at this price!{% endblocktrans %}</span>{% endif %}
+                </div>
+                {% if hotel_review_count %}<div class="review-breakdown">{% for category in review_categories %}<div class="review-metric"><span>{{ category.label }}</span><div class="review-track"><div class="review-fill" style="width:{% widthratio category.score 5 100 %}%"></div></div><strong>{{ category.score }}</strong></div>{% endfor %}</div>{% endif %}
                 {% endif %}
                 <div class="hotel-card__rating">
                     <span class="hotel-card__score" id="hotelAverageRating">{{ hotel_average_rating|floatformat:1 }}</span>
@@ -159,6 +165,12 @@
                                 <label>{% trans "Review title" %}</label>
                                 <input type="text" name="title" class="form-control" value="{{ user_hotel_review.title|default:'' }}" required>
                             </div>
+                            <div class="category-score-grid">
+                                <div class="form-group"><label>{% trans "Cleanliness" %}</label><input class="form-control" type="number" name="cleanliness_score" min="1" max="5" value="{{ user_hotel_review.cleanliness_score|default:5 }}" required></div>
+                                <div class="form-group"><label>{% trans "Location" %}</label><input class="form-control" type="number" name="location_score" min="1" max="5" value="{{ user_hotel_review.location_score|default:5 }}" required></div>
+                                <div class="form-group"><label>{% trans "Service" %}</label><input class="form-control" type="number" name="service_score" min="1" max="5" value="{{ user_hotel_review.service_score|default:5 }}" required></div>
+                                <div class="form-group"><label>{% trans "Value" %}</label><input class="form-control" type="number" name="value_score" min="1" max="5" value="{{ user_hotel_review.value_score|default:5 }}" required></div>
+                            </div>
                             <div class="form-group">
                                 <label>{% trans "Your review" %}</label>
                                 <textarea name="comment" class="form-control" rows="4" required>{{ user_hotel_review.comment|default:'' }}</textarea>
@@ -229,6 +241,7 @@
     </div>
 </section>
 </section>
+{% if lowest_price %}<div class="mobile-booking-bar"><div><small>{% trans "From" %}</small><strong>KES {{ lowest_price|floatformat:0 }} / {% trans "night" %}</strong></div>{% if rooms.0 %}<a class="btn btn-primary" href="{% url 'booking' %}?room={{ rooms.0.id }}">{% trans "Book Now" %}</a>{% endif %}</div>{% endif %}
 {% endblock %}
 
 {% block extra_js %}

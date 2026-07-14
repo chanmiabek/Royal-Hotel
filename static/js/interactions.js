@@ -15,9 +15,20 @@
         ".footer-float-btn"
     ].join(",");
     var revealSelector = [
+        "#rh-page-content > section",
+        "#rh-page-content section > .container",
         ".hotel-card",
         ".result-card",
         ".hotel-result-card",
+        ".room-row",
+        ".member-panel",
+        ".member-hero",
+        ".loyalty-banner",
+        ".admin-card",
+        ".dashboard-card",
+        ".review-card",
+        ".hotel-filter-block",
+        ".form-group",
         ".rh-home-trust__card",
         ".rh-home-offer",
         ".rh-featured-group",
@@ -87,7 +98,8 @@
         }
 
         scope.querySelectorAll(pointerSelector).forEach(enhancePointerTarget);
-        scope.querySelectorAll(revealSelector).forEach(function (element) {
+        scope.querySelectorAll(revealSelector).forEach(function (element, index) {
+            element.style.setProperty("--rh-reveal-delay", Math.min(index % 8, 7) * 45 + "ms");
             enhanceRevealTarget(element, observer);
         });
     }
@@ -129,6 +141,72 @@
             }
         });
     }
+
+    function startButtonLoading(button) {
+        if (!button || button.classList.contains("rh-button-loading")) {
+            return;
+        }
+        var isInput = button.tagName === "INPUT";
+        button.dataset.rhLoadingInput = isInput ? "true" : "false";
+        button.dataset.rhLoadingOriginal = isInput ? button.value : button.innerHTML;
+        button.classList.add("rh-button-loading");
+        button.setAttribute("aria-busy", "true");
+        button.disabled = true;
+        var label = button.getAttribute("data-loading-text") || "Please wait…";
+        if (isInput) {
+            button.value = label;
+        } else {
+            button.innerHTML = '<span class="rh-button-loading__content"><span class="rh-button-spinner" aria-hidden="true"></span><span>' + label + '</span></span>';
+        }
+    }
+
+    function stopButtonLoading(button) {
+        if (!button || !button.classList.contains("rh-button-loading")) {
+            return;
+        }
+        if (button.dataset.rhLoadingOriginal !== undefined) {
+            if (button.dataset.rhLoadingInput === "true") {
+                button.value = button.dataset.rhLoadingOriginal;
+            } else {
+                button.innerHTML = button.dataset.rhLoadingOriginal;
+            }
+            delete button.dataset.rhLoadingOriginal;
+            delete button.dataset.rhLoadingInput;
+        }
+        button.classList.remove("rh-button-loading");
+        button.removeAttribute("aria-busy");
+        button.disabled = false;
+    }
+
+    function resetLoadingButtons(root) {
+        (root || document).querySelectorAll(".rh-button-loading").forEach(stopButtonLoading);
+    }
+
+    document.addEventListener("submit", function (event) {
+        var form = event.target;
+        if (!form || form.tagName !== "FORM" || form.hasAttribute("data-no-loading")) {
+            return;
+        }
+        // Target-level AJAX handlers run before this delegated handler. They call
+        // preventDefault(), so only forms that will navigate receive this state.
+        if (event.defaultPrevented) {
+            return;
+        }
+        var button = event.submitter || form.querySelector('button[type="submit"], input[type="submit"]');
+        startButtonLoading(button);
+    });
+
+    document.addEventListener("rh:button-loading-stop", function (event) {
+        if (event.detail && event.detail.button) {
+            stopButtonLoading(event.detail.button);
+        } else {
+            resetLoadingButtons(document);
+        }
+    });
+
+    window.addEventListener("pageshow", function () {
+        resetLoadingButtons(document);
+    });
 
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", function () {

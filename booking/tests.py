@@ -58,8 +58,21 @@ class PublicPagesTests(TestCase):
             guests=2,
             total_price="240.00",
         )
-        response = self.client.get(reverse("payment_page", args=[booking.id]))
+        response = self.client.get(
+            reverse("payment_page", args=[booking.id]),
+            {"access_key": str(booking.public_token)},
+        )
         self.assertEqual(response.status_code, 200)
+
+    def test_payment_page_rejects_guessed_booking_id(self):
+        booking = Booking.objects.create(
+            room=self.room, first_name="Private", last_name="Guest",
+            mobile="+254700000000", email="private@example.com",
+            check_in=date.today(), check_out=date.today() + timedelta(days=1),
+            guests=1, total_price="120.00",
+        )
+        response = self.client.get(reverse("payment_page", args=[booking.id]))
+        self.assertEqual(response.status_code, 404)
 
     def test_jwt_me_requires_bearer_token(self):
         response = self.client.get(reverse("jwt_me"))

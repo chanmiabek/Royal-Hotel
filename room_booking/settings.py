@@ -31,7 +31,6 @@ def _load_dotenv(dotenv_path, override=True):
 RUNNING_TESTS = "test" in sys.argv
 RUNNING_LOCAL_DEV_SERVER = (
     "runserver" in sys.argv
-    and not any(arg.startswith(("0.0.0.0:", "0:")) for arg in sys.argv)
 )
 RUNNING_DEPLOYED_APP = bool(
     os.getenv("RENDER", "").strip()
@@ -270,19 +269,22 @@ if WHITENOISE_AVAILABLE:
     MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
 if not DEBUG and not RUNNING_TESTS:
-    SECURE_SSL_REDIRECT = (
-        _env_bool("SECURE_SSL_REDIRECT", default=True)
-        if RUNNING_DEPLOYED_APP and not RUNNING_LOCAL_DEV_SERVER
-        else False
-    )
-    SESSION_COOKIE_SECURE = RUNNING_DEPLOYED_APP and not RUNNING_LOCAL_DEV_SERVER
-    CSRF_COOKIE_SECURE = RUNNING_DEPLOYED_APP and not RUNNING_LOCAL_DEV_SERVER
+    SECURE_SSL_REDIRECT = _env_bool("SECURE_SSL_REDIRECT", default=not RUNNING_LOCAL_DEV_SERVER)
+    SESSION_COOKIE_SECURE = _env_bool("SESSION_COOKIE_SECURE", default=not RUNNING_LOCAL_DEV_SERVER)
+    CSRF_COOKIE_SECURE = _env_bool("CSRF_COOKIE_SECURE", default=not RUNNING_LOCAL_DEV_SERVER)
     SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "31536000"))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = _env_bool("SECURE_HSTS_INCLUDE_SUBDOMAINS", default=True)
     SECURE_HSTS_PRELOAD = _env_bool("SECURE_HSTS_PRELOAD", default=False)
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_REFERRER_POLICY = os.getenv("SECURE_REFERRER_POLICY", "same-origin")
+else:
+    # Django's development server only supports plain HTTP. Explicit values
+    # prevent production-oriented environment flags from redirecting localhost.
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SECURE_HSTS_SECONDS = 0
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
@@ -393,13 +395,13 @@ DEFAULT_FROM_EMAIL = (
 # Payments (use environment variables for real credentials)
 DEFAULT_CURRENCY = os.getenv('DEFAULT_CURRENCY', 'KES')
 
-STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY') or ''
-STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY') or ''
-STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET') or ''
-
 PAYPAL_BASE_URL = os.getenv('PAYPAL_BASE_URL', 'https://api-m.sandbox.paypal.com')
 PAYPAL_CLIENT_ID = os.getenv('PAYPAL_CLIENT_ID', '') or ''
 PAYPAL_CLIENT_SECRET = os.getenv('PAYPAL_CLIENT_SECRET', '') or ''
+
+PAYSTACK_BASE_URL = os.getenv('PAYSTACK_BASE_URL', 'https://api.paystack.co').rstrip('/')
+PAYSTACK_PUBLIC_KEY = os.getenv('PAYSTACK_PUBLIC_KEY', '').strip()
+PAYSTACK_SECRET_KEY = os.getenv('PAYSTACK_SECRET_KEY', '').strip()
 
 MPESA_CONSUMER_KEY = os.getenv('MPESA_CONSUMER_KEY', '').strip()
 MPESA_CONSUMER_SECRET = os.getenv('MPESA_CONSUMER_SECRET', '').strip()
@@ -430,27 +432,6 @@ MPESA_TRANSACTION_DESC = os.getenv('MPESA_TRANSACTION_DESC', 'Hotel Booking Paym
 
 # Google Maps
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', '').strip()
-
-# Google OAuth (Login with Google / Gmail)
-GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "").strip()
-GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "").strip()
-
-# Social OAuth (optional)
-FACEBOOK_OAUTH_CLIENT_ID = os.getenv("FACEBOOK_OAUTH_CLIENT_ID", "").strip()
-FACEBOOK_OAUTH_CLIENT_SECRET = os.getenv("FACEBOOK_OAUTH_CLIENT_SECRET", "").strip()
-APPLE_OAUTH_CLIENT_ID = os.getenv("APPLE_OAUTH_CLIENT_ID", "").strip()
-APPLE_OAUTH_TEAM_ID = os.getenv("APPLE_OAUTH_TEAM_ID", "").strip()
-APPLE_OAUTH_KEY_ID = os.getenv("APPLE_OAUTH_KEY_ID", "").strip()
-APPLE_OAUTH_PRIVATE_KEY = os.getenv("APPLE_OAUTH_PRIVATE_KEY", "").replace("\\n", "\n").strip()
-
-# Clerk OAuth / hosted auth
-CLERK_SECRET_KEY = os.getenv("CLERK_SECRET_KEY", "").strip()
-CLERK_PUBLISHABLE_KEY = (
-    os.getenv("CLERK_PUBLISHABLE_KEY")
-    or os.getenv("CLERK_PUBLIC_SECRET_KEY")
-    or ""
-).strip()
-CLERK_FRONTEND_API = os.getenv("CLERK_FRONTEND_API", "").strip()
 
 # JWT / OIDC (optional)
 # Used by booking.jwt_auth to validate Bearer tokens against a JWKS endpoint.

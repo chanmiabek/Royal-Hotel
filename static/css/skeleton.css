@@ -122,6 +122,10 @@
     pointer-events: auto;
 }
 
+.rh-skeleton-page-loader[hidden] {
+    display: none !important;
+}
+
 .rh-skeleton-page-loader__shell {
     width: 100%;
     min-height: 100vh;

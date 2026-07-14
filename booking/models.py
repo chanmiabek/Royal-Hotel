@@ -1,4 +1,7 @@
+import uuid
+
 from django.db import models
+from django.db.models import F, Q
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
@@ -11,11 +14,19 @@ class UserProfile(models.Model):
         ('OWNER', 'Owner'),
         ('STAFF', 'Staff'),
     )
+    TIER_CHOICES = (
+        ('BRONZE', 'Bronze'),
+        ('SILVER', 'Silver'),
+        ('GOLD', 'Gold'),
+        ('PLATINUM', 'Platinum'),
+    )
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     user_type = models.CharField(max_length=10, choices=USER_TYPES, default='GUEST')
     mobile = models.CharField(max_length=30, blank=True)
     profile_image = models.ImageField(upload_to='profiles/', blank=True, null=True)
+    tier = models.CharField(max_length=10, choices=TIER_CHOICES, default='BRONZE')
+    loyalty_points = models.PositiveIntegerField(default=0)
 
     @property
     def is_owner(self):
@@ -120,6 +131,8 @@ class Hotel(models.Model):
     phone = models.CharField(max_length=30, blank=True)
     email = models.EmailField(blank=True)
     image = models.ImageField(upload_to='hotel/', blank=True, null=True)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     commission_rate = models.DecimalField(
         max_digits=5,
         decimal_places=4,
@@ -193,6 +206,7 @@ class Room(models.Model):
     image = models.ImageField(upload_to='room/', blank=True, null=True)
     available = models.BooleanField(default=True)
     capacity = models.IntegerField(default=2, help_text="Max guests")
+    total_inventory = models.PositiveIntegerField(default=1, help_text="Rooms of this type available for each night")
     owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='rooms')
     is_approved = models.BooleanField(default=True)
     hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='rooms')
@@ -228,6 +242,14 @@ class Booking(models.Model):
     total_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    public_token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(condition=Q(check_out__gt=F('check_in')), name='booking_checkout_after_checkin'),
+            models.CheckConstraint(condition=Q(guests__gte=1), name='booking_guests_positive'),
+            models.CheckConstraint(condition=Q(total_price__isnull=True) | Q(total_price__gte=0), name='booking_total_nonnegative'),
+        ]
 
     def __str__(self):
         return f"Booking #{self.id} - {self.first_name} {self.last_name}"
@@ -250,6 +272,10 @@ class HotelReview(models.Model):
     hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='hotel_reviews')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='hotel_reviews')
     rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    cleanliness_score = models.PositiveSmallIntegerField(default=5, validators=[MinValueValidator(1), MaxValueValidator(5)])
+    location_score = models.PositiveSmallIntegerField(default=5, validators=[MinValueValidator(1), MaxValueValidator(5)])
+    service_score = models.PositiveSmallIntegerField(default=5, validators=[MinValueValidator(1), MaxValueValidator(5)])
+    value_score = models.PositiveSmallIntegerField(default=5, validators=[MinValueValidator(1), MaxValueValidator(5)])
     title = models.CharField(max_length=200)
     comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -348,9 +374,9 @@ class ContactMessage(models.Model):
 
 class Payment(models.Model):
     PROVIDERS = (
-        ('STRIPE', 'Stripe'),
         ('PAYPAL', 'PayPal'),
         ('MPESA', 'M-Pesa'),
+        ('PAYSTACK', 'Paystack'),
     )
     STATUSES = (
         ('PENDING', 'Pending'),
@@ -369,6 +395,16 @@ class Payment(models.Model):
     raw_response = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['provider', 'reference'],
+                condition=Q(reference__isnull=False) & ~Q(reference=''),
+                name='unique_payment_provider_reference',
+            ),
+            models.CheckConstraint(condition=Q(amount__gt=0), name='payment_amount_positive'),
+        ]
 
     def __str__(self):
         return f"{self.provider} {self.amount} {self.currency} - {self.status}"

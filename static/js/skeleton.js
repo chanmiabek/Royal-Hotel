@@ -10,6 +10,7 @@
         showTimer = window.setTimeout(function () {
             document.documentElement.classList.add(loadingClass);
             if (loader) {
+                loader.removeAttribute("hidden");
                 loader.classList.add("is-active");
                 loader.setAttribute("aria-hidden", "false");
             }
@@ -22,6 +23,7 @@
         if (loader) {
             loader.classList.remove("is-active");
             loader.setAttribute("aria-hidden", "true");
+            loader.setAttribute("hidden", "");
         }
     }
 

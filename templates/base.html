@@ -29,7 +29,7 @@
     <link href="{% static 'css/style.css' %}?v=20260615-2" rel="stylesheet">
     <link href="{% static 'css/booking-like.css' %}?v=20260615-2" rel="stylesheet">
     <link href="{% static 'css/skeleton.css' %}?v=20260709-1" rel="stylesheet">
-    <link href="{% static 'css/interactions.css' %}?v=20260709-1" rel="stylesheet">
+    <link href="{% static 'css/interactions.css' %}?v=20260710-2" rel="stylesheet">
     <style>
         #header.booking-navbar {
             min-height: 142px;
@@ -754,10 +754,20 @@
         }
         @media (max-width: 1199px) {
             #header.booking-navbar {
-                flex-wrap: wrap;
+                display: grid;
+                grid-template-columns: auto minmax(0, 1fr) 44px 44px;
+                grid-template-rows: 72px;
+                align-items: center;
+                column-gap: 10px;
+                row-gap: 0;
                 height: auto;
                 min-height: 72px;
                 padding: 0 24px;
+            }
+            #header.booking-navbar .logo {
+                grid-column: 1;
+                grid-row: 1;
+                min-height: 72px;
             }
             #header.booking-navbar .phone {
                 display: none;
@@ -781,7 +791,9 @@
                 position: relative;
                 width: 44px;
                 height: 44px;
-                margin-left: auto;
+                grid-column: 3;
+                grid-row: 1;
+                margin-left: 0;
                 color: #FFD700;
                 border: 1px solid rgba(255, 215, 0, 0.35);
                 border-radius: 999px;
@@ -800,7 +812,9 @@
                 background: #dc2626;
             }
             #header.booking-navbar .mobile-menu-btn {
-                margin-left: 8px;
+                grid-column: 4;
+                grid-row: 1;
+                margin-left: 0;
             }
             #header.booking-navbar .main-menu {
                 display: none;
@@ -922,7 +936,7 @@
 </head>
 
 <body>
-    <div class="rh-skeleton-page-loader" data-page-skeleton aria-hidden="true" role="status" aria-live="polite">
+    <div class="rh-skeleton-page-loader" data-page-skeleton hidden aria-hidden="true" role="status" aria-live="polite">
         <div class="rh-skeleton-page-loader__shell" aria-label="{% trans 'Loading page' %}">
             <div class="rh-skeleton-page-loader__top">
                 <span class="rh-skeleton-avatar"></span>
@@ -1325,9 +1339,9 @@
     
     <!-- Main Javascript File -->
     <script src="{% static 'js/main.js' %}"></script>
-    <script src="{% static 'js/skeleton.js' %}?v=20260709-1"></script>
+    <script src="{% static 'js/skeleton.js' %}?v=20260710-2"></script>
     <script src="{% static 'js/section_navigation.js' %}?v=20260709-1"></script>
-    <script src="{% static 'js/interactions.js' %}?v=20260709-1"></script>
+    <script src="{% static 'js/interactions.js' %}?v=20260710-2"></script>
     <script src="{% static 'js/password_toggle.js' %}"></script>
     
     {% block extra_js %}{% endblock %}

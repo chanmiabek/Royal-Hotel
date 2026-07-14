@@ -21,7 +21,8 @@ from django.db.models import (
     Value,
     Prefetch,
 )
-from django.db import connection
+from django.db import connection, transaction
+from django.core.cache import cache
 from django.db.utils import ProgrammingError, OperationalError
 from django.utils.translation import gettext as _
 from django.utils.http import (
@@ -1360,12 +1361,30 @@ def contact(request):
 
 # Booking view
 def _room_is_available(room, check_in, check_out):
-    return not Booking.objects.filter(
+    reserved = Booking.objects.filter(
         room=room,
-        status='CONFIRMED',
+        status__in=['PENDING', 'CONFIRMED'],
         check_in__lt=check_out,
         check_out__gt=check_in,
-    ).exists()
+    ).count()
+    return reserved < max(1, room.total_inventory)
+
+
+def _booking_access_key(request):
+    return (request.POST.get('access_key') or request.GET.get('access_key') or '').strip()
+
+
+def _get_accessible_booking(request, booking_id):
+    booking = get_object_or_404(Booking.objects.select_related('room'), id=booking_id)
+    if request.user.is_authenticated and (booking.user_id == request.user.id or request.user.is_staff):
+        return booking
+    if secrets.compare_digest(str(booking.public_token), _booking_access_key(request)):
+        return booking
+    raise Http404('Booking not found')
+
+
+def _booking_access_params(booking):
+    return urlencode({'access_key': str(booking.public_token)})
 
 def _get_booking_amount(booking):
     if booking.total_price:
@@ -1587,7 +1606,7 @@ def booking_view(request):  # sourcery skip: low-code-quality
             admin_emails = _get_notification_emails()
             if admin_emails:
                 import contextlib
-                payment_url = request.build_absolute_uri(reverse('payment_page', args=[new_booking.id]))
+                payment_url = request.build_absolute_uri(f"{reverse('payment_page', args=[new_booking.id])}?{_booking_access_params(new_booking)}")
                 with contextlib.suppress(Exception):
                     send_mail(
                         subject=f"New Booking Created (Pending Payment) #{new_booking.id}",
@@ -1630,7 +1649,7 @@ def booking_view(request):  # sourcery skip: low-code-quality
                     )
 
             messages.success(request, "Your reservation has been submitted successfully!")
-            return redirect('booking_confirmation', booking_id=new_booking.id)
+            return redirect(f"{reverse('booking_confirmation', args=[new_booking.id])}?{_booking_access_params(new_booking)}&pay=1")
             
         except ValueError as e:
             messages.error(request, "Invalid date format. Please use MM/DD/YYYY.")
@@ -1678,10 +1697,10 @@ def booking_view(request):  # sourcery skip: low-code-quality
 
 # Booking confirmation
 def booking_confirmation(request, booking_id):
-    booking = get_object_or_404(Booking, id=booking_id)
+    booking = _get_accessible_booking(request, booking_id)
     if _booking_is_expired_for_payment(booking) or booking.status == "CANCELLED":
         return _redirect_booking_expired(request, booking)
-    return render(request, 'booking_confirmation.html', {'booking': booking})
+    return render(request, 'booking_confirmation.html', _payment_context(booking, request))
 
 
 def _redirect_to_booked_room(request, booking, message_text=None):
@@ -1689,13 +1708,14 @@ def _redirect_to_booked_room(request, booking, message_text=None):
         messages.success(request, message_text)
     if booking.room_id:
         return redirect('room_detail', room_id=booking.room_id)
-    return redirect('booking_confirmation', booking_id=booking.id)
+    return redirect(f"{reverse('booking_confirmation', args=[booking.id])}?{_booking_access_params(booking)}")
 
 
 # Payment result pages
 def payment_success(request, booking_id):
-    booking = get_object_or_404(Booking, id=booking_id)
-    _send_receipt_email(request, booking)
+    booking = _get_accessible_booking(request, booking_id)
+    if booking.status != 'CONFIRMED':
+        raise Http404('Payment is not confirmed')
     return _redirect_to_booked_room(
         request,
         booking,
@@ -1703,7 +1723,7 @@ def payment_success(request, booking_id):
     )
 
 def payment_failed(request, booking_id):
-    booking = get_object_or_404(Booking, id=booking_id)
+    booking = _get_accessible_booking(request, booking_id)
     if reason := request.GET.get('reason'):
         messages.error(request, f"Payment was not successful: {reason}")
     else:
@@ -1712,22 +1732,10 @@ def payment_failed(request, booking_id):
 
 # Payment page
 def payment_page(request, booking_id):
-    booking = get_object_or_404(Booking, id=booking_id)
+    booking = _get_accessible_booking(request, booking_id)
     if _booking_is_expired_for_payment(booking) or booking.status == "CANCELLED":
         return _redirect_booking_expired(request, booking)
-    amount = _ensure_booking_total(booking)
-    return render(
-        request,
-        'payment_page.html',
-        {
-            'booking': booking,
-            'amount': amount,
-            'currency': getattr(settings, 'DEFAULT_CURRENCY', 'KES'),
-            'stripe_publishable_key': getattr(settings, 'STRIPE_PUBLISHABLE_KEY', ''),
-            'paypal_configured': _is_paypal_configured(),
-            'mpesa_configured': _is_mpesa_configured(),
-        },
-    )
+    return render(request, 'payment_page.html', _payment_context(booking, request))
 
 # Stripe: create payment intent
 def stripe_create_intent(request):
@@ -1895,6 +1903,23 @@ def stripe_webhook(request):
 
     return JsonResponse({'received': True})
 
+# Active payment methods
+def _is_paystack_configured():
+    return bool(settings.PAYSTACK_PUBLIC_KEY and settings.PAYSTACK_SECRET_KEY)
+
+
+def _payment_context(booking, request):
+    return {
+        'booking': booking, 'amount': _ensure_booking_total(booking),
+        'currency': getattr(settings, 'DEFAULT_CURRENCY', 'KES'),
+        'access_key': str(booking.public_token),
+        'paypal_configured': _is_paypal_configured(),
+        'mpesa_configured': _is_mpesa_configured(),
+        'paystack_configured': _is_paystack_configured(),
+        'open_payment_card': request.GET.get('pay') == '1',
+    }
+
+
 # PayPal helpers
 def _is_paypal_configured():
     return bool(
@@ -1956,7 +1981,7 @@ def paypal_create_order(request):
     if not booking_id:
         return HttpResponseBadRequest("Missing booking_id")
 
-    booking = get_object_or_404(Booking, id=booking_id)
+    booking = _get_accessible_booking(request, booking_id)
     if _booking_is_expired_for_payment(booking) or booking.status == "CANCELLED":
         return _redirect_booking_expired(request, booking)
     if requests is None:
@@ -2105,7 +2130,7 @@ def paypal_cancel(request):
     return redirect('index')
 
 def invoice_pdf(request, booking_id):
-    booking = get_object_or_404(Booking, id=booking_id)
+    booking = _get_accessible_booking(request, booking_id)
     amount = _ensure_booking_total(booking)
     currency = getattr(settings, "DEFAULT_CURRENCY", "KES")
 
@@ -2263,7 +2288,7 @@ def mpesa_stk_push(request):
         messages.error(request, "Missing booking or phone number.")
         return redirect('index')
 
-    booking = get_object_or_404(Booking, id=booking_id)
+    booking = _get_accessible_booking(request, booking_id)
     if _booking_is_expired_for_payment(booking) or booking.status == "CANCELLED":
         return _redirect_booking_expired(request, booking)
     normalized_phone = _normalize_mpesa_phone(phone)
@@ -2376,7 +2401,7 @@ def mpesa_stk_push(request):
         "STK Push sent to your phone. Complete payment to confirm booking. "
         "You will be notified once payment is verified.",
     )
-    return redirect('booking_confirmation', booking_id=booking.id)
+    return redirect(f"{reverse('booking_confirmation', args=[booking.id])}?{_booking_access_params(booking)}")
 
 
 @csrf_exempt
@@ -2606,6 +2631,48 @@ def _apple_client_secret(client_id: str, team_id: str, key_id: str, private_key:
         algorithm="ES256",
         headers={"kid": key_id},
     )
+
+
+def paystack_initialize(request):
+    if request.method != 'POST':
+        return HttpResponseBadRequest('Invalid method')
+    booking = _get_accessible_booking(request, request.POST.get('booking_id'))
+    if not _is_paystack_configured() or requests is None:
+        return JsonResponse({'error': 'Paystack is not configured.'}, status=503)
+    amount = _ensure_booking_total(booking)
+    reference = f"RH-{booking.id}-{secrets.token_hex(8)}"
+    callback = request.build_absolute_uri(reverse('paystack_callback')) + f"?booking_id={booking.id}&{_booking_access_params(booking)}"
+    payload = {'email': booking.email, 'amount': int(amount * 100), 'currency': settings.DEFAULT_CURRENCY, 'reference': reference, 'callback_url': callback, 'metadata': {'booking_id': booking.id}}
+    try:
+        response = requests.post(f"{settings.PAYSTACK_BASE_URL}/transaction/initialize", json=payload, headers={'Authorization': f'Bearer {settings.PAYSTACK_SECRET_KEY}'}, timeout=20)
+        result = response.json()
+    except Exception:
+        return JsonResponse({'error': 'Paystack is temporarily unavailable.'}, status=502)
+    if response.status_code >= 300 or not result.get('status'):
+        return JsonResponse({'error': result.get('message', 'Paystack initialization failed.')}, status=400)
+    Payment.objects.create(booking=booking, provider='PAYSTACK', amount=amount, currency=settings.DEFAULT_CURRENCY, reference=reference, raw_response=result)
+    return JsonResponse({'authorization_url': result['data']['authorization_url']})
+
+
+def paystack_callback(request):
+    booking = _get_accessible_booking(request, request.GET.get('booking_id'))
+    reference = (request.GET.get('reference') or request.GET.get('trxref') or '').strip()
+    response = None
+    try:
+        response = requests.get(f"{settings.PAYSTACK_BASE_URL}/transaction/verify/{reference}", headers={'Authorization': f'Bearer {settings.PAYSTACK_SECRET_KEY}'}, timeout=20)
+        result = response.json()
+    except Exception:
+        result = {}
+    with transaction.atomic():
+        payment = get_object_or_404(Payment.objects.select_for_update(), booking=booking, provider='PAYSTACK', reference=reference)
+        data = result.get('data') or {}
+        valid = response is not None and response.status_code < 300 and result.get('status') is True and data.get('status') == 'success' and int(data.get('amount') or 0) == int(payment.amount * 100) and str(data.get('currency', '')).upper() == payment.currency.upper() and str((data.get('metadata') or {}).get('booking_id')) == str(booking.id)
+        payment.status = 'SUCCEEDED' if valid else 'FAILED'; payment.raw_response = result
+        payment.save(update_fields=['status', 'raw_response', 'updated_at'])
+        if valid:
+            booking.status = 'CONFIRMED'; booking.save(update_fields=['status', 'updated_at'])
+    target = 'payment_success' if valid else 'payment_failed'
+    return redirect(f"{reverse(target, args=[booking.id])}?{_booking_access_params(booking)}")
 
 
 def _safe_next_url(request, next_url: str) -> str:
@@ -3447,7 +3514,7 @@ def login_view(request):
 
         messages.error(request, "Invalid email or password.")
 
-    return render(request, 'login.html', _clerk_page_context(request, "sign_in"))
+    return render(request, 'login.html')
 
 # Register view
 def register_options_view(request):
@@ -3506,7 +3573,7 @@ def register_view(request):
             messages.error(request, f"Registration failed: {str(e)}")
             return redirect('register')
 
-    return render(request, 'register.html', _clerk_page_context(request, "sign_up"))
+    return render(request, 'register.html')
 
 
 def _partner_flow_data(request):
@@ -4570,6 +4637,14 @@ def owner_team_delete(request, staff_id):
     return redirect('owner_team')
 
 
+def _validate_partner_upload(upload):
+    if upload.size > 10 * 1024 * 1024:
+        raise ValidationError(f"{upload.name}: maximum file size is 10 MB.")
+    header = upload.read(12); upload.seek(0)
+    if not (header.startswith(b'%PDF-') or header.startswith(b'\xff\xd8\xff') or header.startswith(b'\x89PNG\r\n\x1a\n')):
+        raise ValidationError(f"{upload.name}: only genuine PDF, JPEG, or PNG files are accepted.")
+
+
 def hotel_partner_apply(request):
     if not request.user.is_authenticated:
         return redirect('partner_signin')
@@ -4592,6 +4667,16 @@ def hotel_partner_apply(request):
         return redirect('hotel_application_status')
 
     if request.method == "POST":
+        uploads = [item for _, values in request.FILES.lists() for item in values]
+        if len(uploads) > 12:
+            messages.error(request, 'Upload no more than 12 documents at once.')
+            return redirect('hotel_partner_apply')
+        try:
+            for upload in uploads:
+                _validate_partner_upload(upload)
+        except ValidationError as exc:
+            messages.error(request, '; '.join(exc.messages))
+            return redirect('hotel_partner_apply')
         hotel_name = (request.POST.get('hotel_name') or '').strip()
         star_rating = request.POST.get('star_rating')
         description = request.POST.get('description') or ''
