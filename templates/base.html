@@ -1053,7 +1053,7 @@
                     <span class="mobile-more__icon"><i class="fa fa-suitcase"></i></span>
                     <span>{% trans "Bookings & Trips" %}</span>
                 </a>
-                {% if request.user.is_staff or request.user.is_superuser %}
+                {% if request.user.is_superuser or perms.booking.access_platform_admin %}
                 <a href="{% url 'admin_dashboard' %}" class="mobile-more__item">
                     <span class="mobile-more__icon"><i class="fa fa-dashboard"></i></span>
                     <span>{% trans "Admin Dashboard" %}</span>

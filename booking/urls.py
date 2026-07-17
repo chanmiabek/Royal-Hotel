@@ -6,6 +6,7 @@ from . import api_views
 urlpatterns = [
     path('set-language/', set_language, name='set_language'),
     path('health/', api_views.health_check, name='health_check'),
+    path('health/live/', api_views.liveness_check, name='liveness_check'),
     path('api/auth/me/', api_views.jwt_me, name='jwt_me'),
     # Home
     path('', views.home, name='index'),
@@ -42,10 +43,12 @@ urlpatterns = [
     path('payments/paypal/create-order/', views.paypal_create_order, name='paypal_create_order'),
     path('payments/paypal/return/', views.paypal_return, name='paypal_return'),
     path('payments/paypal/cancel/', views.paypal_cancel, name='paypal_cancel'),
+    path('payments/paypal/webhook/', views.paypal_webhook, name='paypal_webhook'),
     path('payments/mpesa/stk-push/', views.mpesa_stk_push, name='mpesa_stk_push'),
     path('payments/mpesa/callback/', views.mpesa_callback, name='mpesa_callback'),
     path('payments/paystack/initialize/', views.paystack_initialize, name='paystack_initialize'),
     path('payments/paystack/callback/', views.paystack_callback, name='paystack_callback'),
+    path('payments/paystack/webhook/', views.paystack_webhook, name='paystack_webhook'),
     
     # Authentication
     path('sign-in/', views.login_options_view, name='login_options'),

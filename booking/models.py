@@ -4,8 +4,23 @@ from django.db import models
 from django.db.models import F, Q
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from decimal import Decimal
+
+
+ALLOWED_UPLOAD_SIGNATURES = (b"%PDF-", b"\xff\xd8\xff", b"\x89PNG\r\n\x1a\n")
+
+
+def validate_private_document(upload):
+    """Reject oversized or disguised partner documents before storage."""
+    if upload.size > 10 * 1024 * 1024:
+        raise ValidationError("Files must not exceed 10 MB.")
+    position = upload.tell()
+    header = upload.read(12)
+    upload.seek(position)
+    if not any(header.startswith(signature) for signature in ALLOWED_UPLOAD_SIGNATURES):
+        raise ValidationError("Only genuine PDF, JPEG, or PNG files are accepted.")
 
 
 class UserProfile(models.Model):
@@ -34,6 +49,11 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} ({self.user_type})"
+
+    class Meta:
+        permissions = [
+            ("access_platform_admin", "Can access the platform administration workspace"),
+        ]
 
 
 class TeamMember(models.Model):
@@ -148,7 +168,6 @@ class Hotel(models.Model):
             ('BANK', 'Bank Transfer'),
             ('MOBILE_MONEY', 'Mobile Money'),
             ('PAYPAL', 'PayPal'),
-            ('STRIPE', 'Stripe Connect'),
             ('PAYSTACK', 'Paystack'),
             
         ),
@@ -372,6 +391,26 @@ class ContactMessage(models.Model):
     def __str__(self):
         return f"Message from {self.full_name} - {self.subject}"
 
+
+class EmailOutbox(models.Model):
+    STATUS_CHOICES = (('PENDING', 'Pending'), ('SENT', 'Sent'), ('FAILED', 'Failed'))
+    subject = models.CharField(max_length=255)
+    body = models.TextField()
+    from_email = models.EmailField(blank=True)
+    recipients = models.JSONField(default=list)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING', db_index=True)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    last_error = models.TextField(blank=True)
+    available_at = models.DateTimeField(default=timezone.now, db_index=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.status}: {self.subject}"
+
 class Payment(models.Model):
     PROVIDERS = (
         ('PAYPAL', 'PayPal'),
@@ -392,6 +431,7 @@ class Payment(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=3, default='KES')
     reference = models.CharField(max_length=100, blank=True, null=True)
+    provider_receipt = models.CharField(max_length=120, blank=True, null=True, db_index=True)
     raw_response = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -404,6 +444,11 @@ class Payment(models.Model):
                 name='unique_payment_provider_reference',
             ),
             models.CheckConstraint(condition=Q(amount__gt=0), name='payment_amount_positive'),
+            models.UniqueConstraint(
+                fields=['provider', 'provider_receipt'],
+                condition=Q(provider_receipt__isnull=False) & ~Q(provider_receipt=''),
+                name='unique_payment_provider_receipt',
+            ),
         ]
 
     def __str__(self):
@@ -420,9 +465,7 @@ class HotelApplication(models.Model):
         ('BANK', 'Bank Transfer'),
         ('MOBILE_MONEY', 'Mobile Money'),
         ('PAYPAL', 'PayPal'),
-        ('STRIPE', 'Stripe Connect'),
         ('PAYSTACK', 'Paystack'),
-        ('RAZORPAY', 'Razorpay'),
     )
     PAYOUT_SCHEDULES = (
         ('WEEKLY', 'Weekly'),
@@ -487,7 +530,7 @@ class HotelDocument(models.Model):
         related_name='documents',
     )
     document_type = models.CharField(max_length=20, choices=DOC_TYPES)
-    file = models.FileField(upload_to='hotel_docs/')
+    file = models.FileField(upload_to='hotel_docs/', validators=[validate_private_document])
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -507,7 +550,7 @@ class HotelAgreement(models.Model):
     status = models.CharField(max_length=20, choices=STATUS, default='DRAFT')
     signed_by_hotel = models.BooleanField(default=False)
     signed_at = models.DateTimeField(null=True, blank=True)
-    document = models.FileField(upload_to='hotel_agreements/', blank=True, null=True)
+    document = models.FileField(upload_to='hotel_agreements/', blank=True, null=True, validators=[validate_private_document])
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -547,9 +590,7 @@ class HotelPayout(models.Model):
         ('BANK', 'Bank Transfer'),
         ('MOBILE_MONEY', 'Mobile Money'),
         ('PAYPAL', 'PayPal'),
-        ('STRIPE', 'Stripe Connect'),
         ('PAYSTACK', 'Paystack'),
-        ('RAZORPAY', 'Razorpay'),
     )
     hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='payouts')
     booking = models.ForeignKey(Booking, on_delete=models.SET_NULL, null=True, blank=True, related_name='payouts')

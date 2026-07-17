@@ -13,3 +13,6 @@ venv.bak/
 .env
 media/
 staticfiles/
+*.log
+.coverage
+htmlcov/

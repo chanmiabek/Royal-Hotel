@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 import sys
 import importlib.util
+import logging
 from urllib.parse import urlparse, parse_qs, unquote
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
@@ -125,12 +126,15 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'booking.middleware.ProductionSecurityHeadersMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'booking.middleware.UploadSafetyMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'booking.middleware.PlatformAdminPermissionMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
@@ -248,11 +252,51 @@ LOCALE_PATHS = [
     BASE_DIR / 'locale',
 ]
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = os.getenv('TIME_ZONE', 'Africa/Nairobi')
 
 USE_I18N = True
 
 USE_TZ = True
+
+PLATFORM_ADMIN_URL_NAMES = {
+    'admin_dashboard', 'admin_users', 'admin_user_detail', 'admin_user_edit',
+    'admin_user_toggle_active', 'admin_hotels', 'admin_hotel_detail',
+    'admin_hotel_edit', 'admin_disable_hotel', 'admin_payments',
+    'admin_booked_rooms', 'admin_team_members', 'admin_team_member_create',
+    'admin_team_member_edit', 'admin_team_member_delete', 'admin_testimonials',
+    'admin_testimonial_create', 'admin_testimonial_edit', 'admin_testimonial_delete',
+    'admin_rooms', 'admin_room_detail', 'admin_room_edit', 'admin_disable_room',
+    'admin_hotel_applications', 'admin_hotel_application_detail',
+    'admin_approve_room', 'admin_reject_room',
+}
+
+CONTENT_SECURITY_POLICY = os.getenv('CONTENT_SECURITY_POLICY', '').strip() or (
+    "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; "
+    "form-action 'self' https://www.paypal.com https://*.paypal.com; "
+    "script-src 'self' 'unsafe-inline' https://unpkg.com https://www.paypal.com https://*.paypal.com https://js.paystack.co https://maps.googleapis.com; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "font-src 'self' https://fonts.gstatic.com data:; "
+    "img-src 'self' data: blob: https:; connect-src 'self' https:; frame-src https://*.paypal.com https://checkout.paystack.com;"
+)
+
+# A shared Redis cache makes throttling and sessions consistent across workers.
+CACHE_URL = os.getenv('CACHE_URL', os.getenv('REDIS_URL', '')).strip()
+if CACHE_URL:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': CACHE_URL,
+            'TIMEOUT': 300,
+            'OPTIONS': {'socket_connect_timeout': 3, 'socket_timeout': 3},
+        }
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'royal-hotel-local',
+        }
+    }
 
 
 # Static files (CSS, JavaScript, Images)
@@ -278,6 +322,7 @@ if not DEBUG and not RUNNING_TESTS:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_REFERRER_POLICY = os.getenv("SECURE_REFERRER_POLICY", "same-origin")
+    X_FRAME_OPTIONS = 'DENY'
 else:
     # Django's development server only supports plain HTTP. Explicit values
     # prevent production-oriented environment flags from redirecting localhost.
@@ -285,6 +330,15 @@ else:
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
     SECURE_HSTS_SECONDS = 0
+
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_AGE = int(os.getenv('SESSION_COOKIE_AGE', '43200'))
+SESSION_SAVE_EVERY_REQUEST = False
+FILE_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('FILE_UPLOAD_MAX_MEMORY_SIZE', str(2 * 1024 * 1024)))
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('DATA_UPLOAD_MAX_MEMORY_SIZE', str(128 * 1024 * 1024)))
+DATA_UPLOAD_MAX_NUMBER_FILES = 12
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
@@ -379,6 +433,7 @@ EMAIL_USE_TLS = _env_bool("EMAIL_USE_TLS", default=True)
 if (EMAIL_USE_SSL := _env_bool("EMAIL_USE_SSL", default=False)):
     EMAIL_USE_TLS = False
 EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "20"))
+EMAIL_QUEUE_ENABLED = _env_bool('EMAIL_QUEUE_ENABLED', default=not DEBUG and not RUNNING_TESTS)
 
 if (_email_backend := (os.getenv("EMAIL_BACKEND") or "").strip()):
     EMAIL_BACKEND = _email_backend
@@ -429,6 +484,9 @@ MPESA_STK_QUERY_URL = os.getenv(
 )
 MPESA_TRANSACTION_TYPE = os.getenv('MPESA_TRANSACTION_TYPE', 'CustomerPayBillOnline')
 MPESA_TRANSACTION_DESC = os.getenv('MPESA_TRANSACTION_DESC', 'Hotel Booking Payment')
+PAYPAL_WEBHOOK_ID = os.getenv('PAYPAL_WEBHOOK_ID', '').strip()
+PAYSTACK_WEBHOOK_SECRET = os.getenv('PAYSTACK_WEBHOOK_SECRET', PAYSTACK_SECRET_KEY).strip()
+PAYMENT_RECONCILE_MINUTES = int(os.getenv('PAYMENT_RECONCILE_MINUTES', '10'))
 
 # Google Maps
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', '').strip()
@@ -440,3 +498,38 @@ JWT_JWKS_URL = os.getenv("JWT_JWKS_URL", "").strip()
 JWT_AUDIENCE = os.getenv("JWT_AUDIENCE", "").strip()
 JWT_ALGORITHMS = _env_csv("JWT_ALGORITHMS", default="RS256") or ["RS256"]
 JWT_LEEWAY_SECONDS = int(os.getenv("JWT_LEEWAY_SECONDS", "60"))
+
+# Structured production logs go to stdout for collection by the hosting platform.
+LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO').upper()
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'json': {
+            'format': '{{"time":"{asctime}","level":"{levelname}","logger":"{name}","message":"{message}"}}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {'class': 'logging.StreamHandler', 'formatter': 'json'},
+    },
+    'root': {'handlers': ['console'], 'level': LOG_LEVEL},
+    'loggers': {
+        'django.request': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
+        'booking': {'handlers': ['console'], 'level': LOG_LEVEL, 'propagate': False},
+    },
+}
+
+SENTRY_DSN = os.getenv('SENTRY_DSN', '').strip()
+if SENTRY_DSN:
+    try:
+        import sentry_sdk
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            environment=os.getenv('APP_ENV', 'production'),
+            release=os.getenv('RENDER_GIT_COMMIT', ''),
+            traces_sample_rate=float(os.getenv('SENTRY_TRACES_SAMPLE_RATE', '0.05')),
+            send_default_pii=False,
+        )
+    except ImportError:
+        logging.getLogger(__name__).warning('SENTRY_DSN is set but sentry-sdk is not installed.')

@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
-from django.core.mail import send_mail, EmailMessage
+from django.core.mail import send_mail as django_send_mail, EmailMessage
 from django.conf import settings
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse, Http404
 from django.core.validators import validate_email
@@ -33,11 +33,16 @@ import json
 import io
 import base64
 import secrets
+import hashlib
+import hmac
+import logging
 from functools import wraps, lru_cache
 from urllib.parse import urlencode
 from django.contrib.auth.models import User
 from datetime import datetime
 from datetime import timedelta
+
+logger = logging.getLogger(__name__)
 
 from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.password_validation import validate_password
@@ -61,7 +66,19 @@ from .models import (
     HotelAgreement,
     TeamMember,
     Testimonial,
+    EmailOutbox,
 )
+
+
+def send_mail(subject, message, from_email, recipient_list, **kwargs):
+    """Queue production mail for retry; keep tests and local development immediate."""
+    if getattr(settings, 'EMAIL_QUEUE_ENABLED', False):
+        EmailOutbox.objects.create(
+            subject=str(subject)[:255], body=message, from_email=from_email or '',
+            recipients=list(recipient_list),
+        )
+        return 1
+    return django_send_mail(subject, message, from_email, recipient_list, **kwargs)
 
 ROOM_AMENITIES = [
     "WiFi",
@@ -82,11 +99,6 @@ try:
     import requests
 except Exception:
     requests = None
-
-try:
-    import stripe
-except Exception:
-    stripe = None
 
 try:
     import jwt  
@@ -1766,172 +1778,6 @@ def payment_page(request, booking_id):
         return _redirect_booking_expired(request, booking)
     return render(request, 'payment_page.html', _payment_context(booking, request))
 
-# Stripe: create payment intent
-def stripe_create_intent(request):
-    if request.method != "POST":
-        return HttpResponseBadRequest("Invalid method")
-
-    booking_id = request.POST.get('booking_id')
-    if not booking_id:
-        return JsonResponse({'error': 'Missing booking_id'}, status=400)
-
-    booking = get_object_or_404(Booking, id=booking_id)
-    if _booking_is_expired_for_payment(booking) or booking.status == "CANCELLED":
-        if booking.status == "PENDING":
-            booking.status = "CANCELLED"
-            booking.save(update_fields=["status", "updated_at"])
-        return JsonResponse({'error': 'Booking expired. Please book again.'}, status=410)
-    if not settings.STRIPE_SECRET_KEY:
-        return JsonResponse({'error': 'Stripe not configured'}, status=400)
-    if requests is None:
-        return JsonResponse({'error': 'Payment dependency not installed'}, status=503)
-
-    amount = _ensure_booking_total(booking)
-    try:
-        amount_cents = int(Decimal(amount) * 100)
-    except (InvalidOperation, TypeError):
-        return JsonResponse({'error': 'Invalid amount'}, status=400)
-
-    payload = {
-        'amount': amount_cents,
-        'currency': getattr(settings, 'DEFAULT_CURRENCY', 'KES').lower(),
-        'automatic_payment_methods[enabled]': 'true',
-        'metadata[booking_id]': str(booking.id),
-        'receipt_email': booking.email,
-    }
-
-    try:
-        response = requests.post(
-            'https://api.stripe.com/v1/payment_intents',
-            data=payload,
-            auth=(settings.STRIPE_SECRET_KEY, ''),
-            timeout=15,
-        )
-    except Exception:
-        return JsonResponse({'error': 'Unable to reach Stripe'}, status=502)
-
-    if response.status_code >= 300:
-        return JsonResponse({'error': 'Stripe error', 'details': response.text}, status=400)
-
-    intent = response.json()
-    payment = Payment.objects.create(
-        booking=booking,
-        provider='STRIPE',
-        status='PENDING',
-        amount=amount,
-        currency=getattr(settings, 'DEFAULT_CURRENCY', 'KES'),
-        reference=intent.get('id'),
-        raw_response=intent,
-    )
-
-    return JsonResponse({'client_secret': intent.get('client_secret'), 'payment_id': payment.id})
-
-# Stripe: confirm intent server-side
-def stripe_confirm(request):
-    if request.method != "POST":
-        return HttpResponseBadRequest("Invalid method")
-
-    payment_id = request.POST.get('payment_id')
-    intent_id = request.POST.get('payment_intent_id')
-    if not payment_id or not intent_id:
-        return JsonResponse({'error': 'Missing payment_id or payment_intent_id'}, status=400)
-
-    payment = get_object_or_404(Payment, id=payment_id, provider='STRIPE')
-    if _booking_is_expired_for_payment(payment.booking) or payment.booking.status == "CANCELLED":
-        if payment.booking.status == "PENDING":
-            payment.booking.status = "CANCELLED"
-            payment.booking.save(update_fields=["status", "updated_at"])
-        payment.status = "CANCELLED"
-        payment.save(update_fields=["status", "updated_at"])
-
-        params = {}
-        if payment.booking.room_id:
-            params["room"] = payment.booking.room_id
-        if payment.booking.check_in:
-            params["check_in"] = payment.booking.check_in.isoformat()
-        if payment.booking.check_out:
-            params["check_out"] = payment.booking.check_out.isoformat()
-        if payment.booking.guests:
-            params["guests"] = payment.booking.guests
-        redirect_url = f"{reverse('booking')}?{urlencode(params)}" if params else reverse("booking")
-        return JsonResponse(
-            {"status": payment.status, "redirect_url": redirect_url, "error": "Booking expired. Please book again."},
-            status=410,
-        )
-    if not settings.STRIPE_SECRET_KEY:
-        return JsonResponse({'error': 'Stripe not configured'}, status=400)
-    if requests is None:
-        return JsonResponse({'error': 'Payment dependency not installed'}, status=503)
-
-    try:
-        response = requests.get(
-            f'https://api.stripe.com/v1/payment_intents/{intent_id}',
-            auth=(settings.STRIPE_SECRET_KEY, ''),
-            timeout=15,
-        )
-    except Exception:
-        return JsonResponse({'error': 'Unable to reach Stripe'}, status=502)
-
-    if response.status_code >= 300:
-        return JsonResponse({'error': 'Stripe error', 'details': response.text}, status=400)
-
-    intent = response.json()
-    payment.raw_response = intent
-    payment.reference = intent.get('id')
-    if intent.get('status') == 'succeeded':
-        payment.status = 'SUCCEEDED'
-        payment.booking.status = 'CONFIRMED'
-        payment.booking.save()
-        _send_receipt_email(request, payment.booking)
-    elif intent.get('status') in ['canceled', 'requires_payment_method']:
-        payment.status = 'FAILED'
-    payment.save()
-
-    if payment.status == 'SUCCEEDED':
-        redirect_url = reverse('payment_success', args=[payment.booking.id])
-    else:
-        reason = intent.get('last_payment_error', {}).get('message') or intent.get('status', 'payment_failed')
-        redirect_url = f"{reverse('payment_failed', args=[payment.booking.id])}?{urlencode({'reason': reason})}"
-    return JsonResponse({'status': payment.status, 'redirect_url': redirect_url})
-
-@csrf_exempt
-def stripe_webhook(request):
-    if stripe is None:
-        return HttpResponseBadRequest("Stripe package not installed.")
-    if not settings.STRIPE_WEBHOOK_SECRET:
-        return HttpResponseBadRequest("Stripe webhook secret not configured.")
-
-    payload = request.body
-    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
-    try:
-        event = stripe.Webhook.construct_event(payload, sig_header, settings.STRIPE_WEBHOOK_SECRET)
-    except ValueError:
-        return HttpResponseBadRequest("Invalid payload")
-    except Exception:
-        return HttpResponseBadRequest("Invalid signature")
-
-    event_type = event.get('type')
-    data = event.get('data', {}).get('object', {})
-    intent_id = data.get('id')
-
-    if event_type == 'payment_intent.succeeded':
-        if payment := Payment.objects.filter(reference=intent_id, provider='STRIPE').first():
-            payment.status = 'SUCCEEDED'
-            payment.raw_response = data
-            payment.booking.status = 'CONFIRMED'
-            payment.booking.save()
-            payment.save()
-            import contextlib
-            with contextlib.suppress(Exception):
-                _send_receipt_email(request, payment.booking)
-    elif event_type == 'payment_intent.payment_failed':
-        if payment := Payment.objects.filter(reference=intent_id, provider='STRIPE').first():
-            payment.status = 'FAILED'
-            payment.raw_response = data
-            payment.save(update_fields=['status', 'raw_response', 'updated_at'])
-
-    return JsonResponse({'received': True})
-
 # Active payment methods
 def _is_paystack_configured():
     return bool(settings.PAYSTACK_PUBLIC_KEY and settings.PAYSTACK_SECRET_KEY)
@@ -2042,6 +1888,8 @@ def paypal_create_order(request):
         "intent": "CAPTURE",
         "purchase_units": [
             {
+                "custom_id": str(booking.id),
+                "invoice_id": f"ROYAL-{booking.id}-{secrets.token_hex(4)}",
                 "amount": {
                     "currency_code": getattr(settings, 'DEFAULT_CURRENCY', 'KES'),
                     "value": str(amount),
@@ -2177,6 +2025,73 @@ def paypal_cancel(request):
         booking = _get_accessible_booking(request, booking_id)
         return redirect(f"{reverse('payment_failed', args=[booking_id])}?{_booking_access_params(booking)}&reason=paypal_payment_cancelled")
     return redirect('index')
+
+
+@csrf_exempt
+def paypal_webhook(request):
+    """Verify PayPal's signature and settle completed captures server-to-server."""
+    if request.method != 'POST':
+        return HttpResponseBadRequest('Invalid method')
+    webhook_id = getattr(settings, 'PAYPAL_WEBHOOK_ID', '')
+    access_token = _paypal_get_access_token()
+    if not webhook_id or not access_token or requests is None:
+        return JsonResponse({'detail': 'Webhook is not configured.'}, status=503)
+    try:
+        event = json.loads(request.body)
+    except json.JSONDecodeError:
+        return HttpResponseBadRequest('Invalid payload')
+    verification = {
+        'auth_algo': request.META.get('HTTP_PAYPAL_AUTH_ALGO', ''),
+        'cert_url': request.META.get('HTTP_PAYPAL_CERT_URL', ''),
+        'transmission_id': request.META.get('HTTP_PAYPAL_TRANSMISSION_ID', ''),
+        'transmission_sig': request.META.get('HTTP_PAYPAL_TRANSMISSION_SIG', ''),
+        'transmission_time': request.META.get('HTTP_PAYPAL_TRANSMISSION_TIME', ''),
+        'webhook_id': webhook_id,
+        'webhook_event': event,
+    }
+    try:
+        response = requests.post(
+            f"{settings.PAYPAL_BASE_URL}/v1/notifications/verify-webhook-signature",
+            headers={'Authorization': f'Bearer {access_token}', 'Content-Type': 'application/json'},
+            json=verification, timeout=15,
+        )
+        verified = response.ok and response.json().get('verification_status') == 'SUCCESS'
+    except Exception:
+        logger.exception('PayPal webhook verification failed')
+        verified = False
+    if not verified:
+        return HttpResponseBadRequest('Invalid signature')
+    if event.get('event_type') != 'PAYMENT.CAPTURE.COMPLETED':
+        return JsonResponse({'received': True})
+
+    resource = event.get('resource') or {}
+    order_id = str(
+        (((resource.get('supplementary_data') or {}).get('related_ids') or {}).get('order_id')) or ''
+    )
+    with transaction.atomic():
+        payment = Payment.objects.select_for_update().select_related('booking').filter(
+            provider='PAYPAL', reference=order_id,
+        ).first()
+        if not payment:
+            return JsonResponse({'received': True})
+        amount = resource.get('amount') or {}
+        valid = (
+            resource.get('status') == 'COMPLETED'
+            and str(amount.get('value')) == str(payment.amount)
+            and str(amount.get('currency_code') or '').upper() == payment.currency.upper()
+        )
+        previous_status = payment.status
+        if valid:
+            payment.status = 'SUCCEEDED'
+            payment.provider_receipt = str(resource.get('id') or order_id)
+            if payment.booking.status == 'PENDING':
+                payment.booking.status = 'CONFIRMED'
+                payment.booking.save(update_fields=['status', 'updated_at'])
+        payment.raw_response = event
+        payment.save(update_fields=['status', 'provider_receipt', 'raw_response', 'updated_at'])
+    if valid and previous_status != 'SUCCEEDED':
+        _send_receipt_email(request, payment.booking)
+    return JsonResponse({'received': True})
 
 def invoice_pdf(request, booking_id):
     booking = _get_accessible_booking(request, booking_id)
@@ -2457,6 +2372,8 @@ def mpesa_stk_push(request):
 
 @csrf_exempt
 def mpesa_callback(request):
+    if request.method != 'POST':
+        return HttpResponseBadRequest('Invalid method')
     try:
         payload = json.loads(request.body or '{}')
     except json.JSONDecodeError:
@@ -2495,8 +2412,12 @@ def mpesa_callback(request):
         except (InvalidOperation, TypeError):
             amount_matches = False
         receipt = str(metadata.get('MpesaReceiptNumber') or '').strip()
-        if result_code_str == '0' and amount_matches and receipt:
+        receipt_is_unique = not receipt or not Payment.objects.filter(
+            provider='MPESA', provider_receipt=receipt,
+        ).exclude(pk=payment.pk).exists()
+        if result_code_str == '0' and amount_matches and receipt and receipt_is_unique:
             payment.status = 'SUCCEEDED'
+            payment.provider_receipt = receipt
             if payment.booking.status == 'PENDING':
                 payment.booking.status = 'CONFIRMED'
                 payment.booking.save(update_fields=['status', 'updated_at'])
@@ -2504,7 +2425,7 @@ def mpesa_callback(request):
             payment.status = 'CANCELLED'
         else:
             payment.status = 'FAILED'
-        payment.save(update_fields=['status', 'raw_response', 'updated_at'])
+        payment.save(update_fields=['status', 'provider_receipt', 'raw_response', 'updated_at'])
 
     if previous_status != 'SUCCEEDED' and payment.status == 'SUCCEEDED':
         _send_receipt_email(request, payment.booking)
@@ -2740,6 +2661,51 @@ def paystack_callback(request):
     return redirect(f"{reverse(target, args=[booking.id])}?{_booking_access_params(booking)}")
 
 
+@csrf_exempt
+def paystack_webhook(request):
+    """Process Paystack events independently of the customer's browser return."""
+    if request.method != 'POST':
+        return HttpResponseBadRequest('Invalid method')
+    secret = getattr(settings, 'PAYSTACK_WEBHOOK_SECRET', '')
+    signature = request.META.get('HTTP_X_PAYSTACK_SIGNATURE', '')
+    expected = hmac.new(secret.encode('utf-8'), request.body, hashlib.sha512).hexdigest() if secret else ''
+    if not secret or not hmac.compare_digest(signature, expected):
+        return HttpResponseBadRequest('Invalid signature')
+    try:
+        event = json.loads(request.body)
+    except json.JSONDecodeError:
+        return HttpResponseBadRequest('Invalid payload')
+    if event.get('event') != 'charge.success':
+        return JsonResponse({'received': True})
+
+    data = event.get('data') or {}
+    reference = str(data.get('reference') or '')
+    with transaction.atomic():
+        payment = Payment.objects.select_for_update().select_related('booking').filter(
+            provider='PAYSTACK', reference=reference,
+        ).first()
+        if not payment:
+            return JsonResponse({'received': True})
+        valid = (
+            str(data.get('status')) == 'success'
+            and int(data.get('amount') or 0) == int(payment.amount * 100)
+            and str(data.get('currency') or '').upper() == payment.currency.upper()
+            and str((data.get('metadata') or {}).get('booking_id')) == str(payment.booking_id)
+        )
+        previous_status = payment.status
+        if valid:
+            payment.status = 'SUCCEEDED'
+            payment.provider_receipt = str(data.get('id') or reference)
+            if payment.booking.status == 'PENDING':
+                payment.booking.status = 'CONFIRMED'
+                payment.booking.save(update_fields=['status', 'updated_at'])
+        payment.raw_response = event
+        payment.save(update_fields=['status', 'provider_receipt', 'raw_response', 'updated_at'])
+    if valid and previous_status != 'SUCCEEDED':
+        _send_receipt_email(request, payment.booking)
+    return JsonResponse({'received': True})
+
+
 def _safe_next_url(request, next_url: str) -> str:
     next_url = (next_url or "").strip()
     if not next_url:
@@ -2756,7 +2722,7 @@ def _safe_next_url(request, next_url: str) -> str:
 def _dashboard_url_name_for_user(user):
     if not user or not user.is_authenticated:
         return "index"
-    if user.is_staff or user.is_superuser:
+    if user.is_superuser or user.has_perm('booking.access_platform_admin'):
         return "admin_dashboard"
     profile = _get_or_create_profile(user)
     if profile and profile.user_type == "OWNER":

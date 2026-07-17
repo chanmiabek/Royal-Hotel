@@ -1,0 +1,55 @@
+services:
+  - type: web
+    name: royal-hotel-web
+    runtime: docker
+    healthCheckPath: /health/live/
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: RUN_MIGRATIONS
+        value: "true"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: royal-hotel-db
+          property: connectionString
+      - key: CACHE_URL
+        sync: false
+      - key: ALLOWED_HOSTS
+        sync: false
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: CLOUDINARY_URL
+        sync: false
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+
+  - type: cron
+    name: royal-hotel-maintenance
+    runtime: python
+    schedule: "*/5 * * * *"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python manage.py send_queued_email --limit 100 && python manage.py maintain_bookings
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: royal-hotel-db
+          property: connectionString
+      - key: CACHE_URL
+        sync: false
+      - key: USE_CLOUDINARY
+        value: "False"
+
+databases:
+  - name: royal-hotel-db
+    databaseName: royal_hotel
+    user: royal_hotel

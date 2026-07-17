@@ -5,4 +5,4 @@ class BookingConfig(AppConfig):
     name = 'booking'
 
     def ready(self):
-        from . import signals  
+        from . import checks, signals  # noqa: F401
