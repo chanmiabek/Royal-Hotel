@@ -1,9 +1,9 @@
-{% extends 'base.html' %}
+{% extends 'admin_base.html' %}
 {% load i18n %}
 
 {% block title %}{% trans "Super Admin Dashboard" %} | Royal Hotel{% endblock %}
 
-{% block extra_css %}
+{% block admin_extra_css %}
 <style>
     .sa-app {
         min-height: 100vh;
@@ -689,7 +689,7 @@
 </style>
 {% endblock %}
 
-{% block content %}
+{% block admin_content %}
 <section class="sa-app">
     <div class="sa-layout">
         <aside class="sa-sidebar" aria-label="{% trans 'Super admin navigation' %}">

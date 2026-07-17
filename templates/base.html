@@ -4,7 +4,7 @@
 <html lang="{{ LANGUAGE_CODE|default:'en' }}">
 <head>
     <meta charset="utf-8">
-    <title>{% block title %}Royal Hotel{% endblock %}</title>
+    <title>{% block title %}Royal{% endblock %}</title>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <meta content="" name="keywords">
     <meta content="" name="description">
@@ -30,6 +30,7 @@
     <link href="{% static 'css/booking-like.css' %}?v=20260615-2" rel="stylesheet">
     <link href="{% static 'css/skeleton.css' %}?v=20260709-1" rel="stylesheet">
     <link href="{% static 'css/interactions.css' %}?v=20260710-2" rel="stylesheet">
+    <link href="{% static 'css/ui-polish.css' %}?v=20260717-1" rel="stylesheet">
     <style>
         #header.booking-navbar {
             min-height: 142px;
@@ -930,7 +931,7 @@
             }
         }
     </style>
-    
+
     {% block extra_css %}{% endblock %}
     <link href="{% static 'css/compact-fonts.css' %}?v=20260707-1" rel="stylesheet">
 </head>
@@ -984,6 +985,7 @@
     </div>
     {% with url_name=request.resolver_match.url_name|default:'' %}
     {% if url_name|slice:':6' != 'admin_' and url_name|slice:':6' != 'owner_' %}
+
     <!-- Header Section Start -->
     <header id="header" class="booking-navbar">
         <a href="{% url 'index' %}" class="logo">
@@ -1341,7 +1343,7 @@
     <script src="{% static 'js/main.js' %}"></script>
     <script src="{% static 'js/skeleton.js' %}?v=20260710-2"></script>
     <script src="{% static 'js/section_navigation.js' %}?v=20260709-1"></script>
-    <script src="{% static 'js/interactions.js' %}?v=20260710-2"></script>
+    <script src="{% static 'js/interactions.js' %}?v=20260717-1"></script>
     <script src="{% static 'js/password_toggle.js' %}"></script>
     
     {% block extra_js %}{% endblock %}

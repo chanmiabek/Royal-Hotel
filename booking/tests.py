@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.conf import settings
 from django.urls import reverse
 
-from .models import Booking, Hotel, Room
+from .models import Booking, Hotel, Payment, Room
 
 
 class PublicPagesTests(TestCase):
@@ -73,6 +73,34 @@ class PublicPagesTests(TestCase):
         )
         response = self.client.get(reverse("payment_page", args=[booking.id]))
         self.assertEqual(response.status_code, 404)
+
+    def test_mpesa_callback_rejects_wrong_amount(self):
+        booking = Booking.objects.create(
+            room=self.room, first_name="M", last_name="Pesa",
+            mobile="254700000000", email="mpesa@example.com",
+            check_in=date.today(), check_out=date.today() + timedelta(days=1),
+            guests=1, total_price="120.00",
+        )
+        payment = Payment.objects.create(
+            booking=booking, provider="MPESA", status="PENDING",
+            amount="120.00", currency="KES", reference="checkout-test",
+        )
+        payload = {
+            "Body": {"stkCallback": {
+                "CheckoutRequestID": "checkout-test", "ResultCode": 0,
+                "CallbackMetadata": {"Item": [
+                    {"Name": "Amount", "Value": 1},
+                    {"Name": "MpesaReceiptNumber", "Value": "TEST123"},
+                ]},
+            }}
+        }
+        response = self.client.post(
+            reverse("mpesa_callback"), data=payload, content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 200)
+        payment.refresh_from_db(); booking.refresh_from_db()
+        self.assertEqual(payment.status, "FAILED")
+        self.assertEqual(booking.status, "PENDING")
 
     def test_jwt_me_requires_bearer_token(self):
         response = self.client.get(reverse("jwt_me"))

@@ -202,7 +202,7 @@ def _database_config_from_url(database_url):
 
 database_url = os.getenv('DATABASE_URL')
 use_database_url_in_debug = _env_bool('USE_DATABASE_URL_IN_DEBUG', default=False)
-if DEBUG and not use_database_url_in_debug:
+if RUNNING_TESTS or (DEBUG and not use_database_url_in_debug):
     database_url = None
 
 DATABASES = {

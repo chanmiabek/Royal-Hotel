@@ -59,7 +59,7 @@
         <span class="nav-user__coin" aria-label="{% trans 'Reward balance' %}">T</span>
         <span class="nav-user__copy">
             <strong>{{ user.first_name|default:user.username }}</strong>
-            <small>{% trans "0 reward points" %}</small>
+            <small>{{ user.profile.loyalty_points|default:0 }} {% trans "reward points" %}</small>
         </span>
     </a>
     <div class="dropdown-menu nav-user__menu" aria-labelledby="userDropdownNav">
@@ -79,8 +79,8 @@
                 <i class="fa fa-angle-right" aria-hidden="true"></i>
             </a>
             <div class="nav-user-card__status">
-                <span class="nav-user-card__badge"><i class="fa fa-shield" aria-hidden="true"></i> {% trans "Silver" %}</span>
-                <span class="nav-user-card__wallet"><span>T</span> 0 (~ US$0)</span>
+                <span class="nav-user-card__badge"><i class="fa fa-shield" aria-hidden="true"></i> {{ user.profile.get_tier_display|default:user.profile.tier }}</span>
+                <span class="nav-user-card__wallet"><span>T</span> {{ user.profile.loyalty_points|default:0 }}</span>
             </div>
         </div>
 

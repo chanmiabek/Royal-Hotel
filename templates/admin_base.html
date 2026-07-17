@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load i18n booking_extras %}
 
 {% block extra_css %}
 <style>
@@ -137,12 +137,25 @@
 {% block content %}
 {% with url_name=request.resolver_match.url_name|default:'' %}
 <div class="container-fluid py-4 admin-shell">
+    <button class="admin-sidebar-toggle" type="button" data-admin-sidebar-toggle aria-controls="admin-sidebar" aria-expanded="false">
+        <i class="fa fa-bars" aria-hidden="true"></i><span>{% trans "Admin menu" %}</span>
+    </button>
+    <button class="admin-sidebar-overlay" type="button" data-admin-sidebar-close aria-label="{% trans 'Close admin menu' %}"></button>
     <div class="row">
         <div class="col-lg-3 col-md-4 mb-4">
-            <div class="card admin-sidebar">
+            <div class="card admin-sidebar" id="admin-sidebar">
                 <div class="card-body">
+                    <button class="admin-sidebar-close" type="button" data-admin-sidebar-close aria-label="{% trans 'Close admin menu' %}">
+                        <i class="fa fa-times" aria-hidden="true"></i>
+                    </button>
                     <div class="admin-profile">
-                        <span class="admin-thumb" aria-hidden="true"><i class="fa fa-user" aria-hidden="true"></i></span>
+                        <span class="admin-thumb" aria-hidden="true">
+                            {% if request.user.profile.profile_image %}
+                                <img src="{{ request.user.profile.profile_image|media_image_url }}" alt="">
+                            {% else %}
+                                {{ request.user.first_name|default:request.user.username|first|upper }}
+                            {% endif %}
+                        </span>
                         <div class="admin-profile__meta flex-grow-1">
                             <p class="admin-profile__name">{{ request.user.first_name|default:request.user.username }}</p>
                             <p class="admin-profile__email">{{ request.user.email|default:"-" }}</p>
@@ -194,6 +207,15 @@
         </div>
 
         <div class="col-lg-9 col-md-8">
+            <header class="admin-workspace-head">
+                <div>
+                    <span>{% trans "Royal Hotel" %}</span>
+                    <strong>{% trans "Super Admin Workspace" %}</strong>
+                </div>
+                <a href="{% url 'admin_user_edit' request.user.id %}" class="admin-workspace-user">
+                    {{ request.user.first_name|default:request.user.username }}
+                </a>
+            </header>
             {% block admin_content %}{% endblock %}
         </div>
     </div>
