@@ -42,6 +42,45 @@ class PublicPagesTests(TestCase):
         response = self.client.get(reverse("register"))
         self.assertEqual(response.status_code, 200)
 
+    def test_footer_section_landing_pages_load(self):
+        for slug in (
+            "footer-contact",
+            "footer-about",
+            "footer-services",
+            "footer-payments",
+            "footer-partners",
+            "footer-awards",
+        ):
+            response = self.client.get(reverse("footer_info", args=[slug]))
+            self.assertEqual(response.status_code, 200)
+
+    def test_registration_logs_user_in_and_redirects_home(self):
+        response = self.client.post(
+            reverse("register"),
+            {
+                "name": "New Guest",
+                "email": "new-guest@example.com",
+                "password": "secure-password-123",
+                "repeat_password": "secure-password-123",
+            },
+        )
+        self.assertRedirects(response, reverse("index"))
+        self.assertTrue(User.objects.filter(username="new-guest@example.com").exists())
+        self.assertIn("_auth_user_id", self.client.session)
+
+    def test_registration_shows_validation_errors(self):
+        response = self.client.post(
+            reverse("register"),
+            {
+                "name": "New Guest",
+                "email": "new-guest@example.com",
+                "password": "secure-password-123",
+                "repeat_password": "different-password",
+            },
+            follow=True,
+        )
+        self.assertContains(response, "Passwords do not match!")
+
     def test_health_check_returns_ok(self):
         response = self.client.get(reverse("health_check"))
         self.assertEqual(response.status_code, 200)

@@ -398,7 +398,7 @@ CLOUDINARY_AVAILABLE = (
 _cloudinary_config = _cloudinary_storage_config()
 USE_CLOUDINARY = _env_bool(
     "USE_CLOUDINARY",
-    default=bool(_cloudinary_config) or RUNNING_DEPLOYED_APP,
+    default=bool(_cloudinary_config),
 )
 
 if USE_CLOUDINARY and not CLOUDINARY_AVAILABLE:

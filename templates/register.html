@@ -310,8 +310,10 @@
         <h1>{% trans "Create your account" %}</h1>
         <p>{% trans "Create a Royal Hotel account to book faster and manage your stays." %}</p>
 
-        <form method="POST">
+        {% include 'includes/local_messages.html' %}
+        <form method="POST" action="{% url 'register' %}">
             {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.GET.next }}">
             <div class="form-group">
                 <label for="name">{% trans "Your name" %}</label>
                 <input id="name" type="text" name="name" class="form-control" required autocomplete="name" placeholder="{% trans 'Enter your name' %}">

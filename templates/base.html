@@ -28,7 +28,6 @@
     <link href="{% static 'css/hover-style.css' %}?v=20260615-2" rel="stylesheet">
     <link href="{% static 'css/style.css' %}?v=20260615-2" rel="stylesheet">
     <link href="{% static 'css/booking-like.css' %}?v=20260615-2" rel="stylesheet">
-    <link href="{% static 'css/skeleton.css' %}?v=20260709-1" rel="stylesheet">
     <link href="{% static 'css/interactions.css' %}?v=20260710-2" rel="stylesheet">
     <link href="{% static 'css/ui-polish.css' %}?v=20260717-1" rel="stylesheet">
     <style>
@@ -236,6 +235,25 @@
             border-radius: 50%;
             font-size: 18px;
             font-weight: 700;
+        }
+        #header.booking-navbar .main-menu ul li.nav-language .nav-flag-toggle[aria-label] {
+            width: auto;
+            min-width: 104px;
+            gap: 8px;
+            padding: 0 12px 0 10px;
+            border-radius: 999px;
+        }
+        #header.booking-navbar .main-menu ul li.nav-language .nav-flag-label {
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 800;
+        }
+        #header.booking-navbar .main-menu ul li.nav-help a[aria-label] {
+            background: rgba(255, 215, 0, .08);
+        }
+        #header.booking-navbar .main-menu ul li.nav-help a[aria-label]:hover {
+            background: #ffd700;
+            color: #222222;
         }
         #header.booking-navbar .main-menu ul li.nav-help a::after {
             content: attr(data-tooltip);
@@ -937,52 +955,6 @@
 </head>
 
 <body>
-    <div class="rh-skeleton-page-loader" data-page-skeleton hidden aria-hidden="true" role="status" aria-live="polite">
-        <div class="rh-skeleton-page-loader__shell" aria-label="{% trans 'Loading page' %}">
-            <div class="rh-skeleton-page-loader__top">
-                <span class="rh-skeleton-avatar"></span>
-                <span class="rh-skeleton-pill"></span>
-                <span class="rh-skeleton-pill"></span>
-                <span class="rh-skeleton-pill rh-skeleton-page-loader__top-short"></span>
-            </div>
-            <div class="rh-skeleton-page-loader__hero">
-                <div class="rh-skeleton-stack">
-                    <span class="rh-skeleton-line rh-skeleton-line--lg"></span>
-                    <span class="rh-skeleton-line rh-skeleton-line--md"></span>
-                    <span class="rh-skeleton-line rh-skeleton-line--sm"></span>
-                </div>
-                <div class="rh-skeleton-page-loader__search">
-                    <span class="rh-skeleton-line"></span>
-                    <span class="rh-skeleton-line"></span>
-                    <span class="rh-skeleton-line"></span>
-                    <span class="rh-skeleton-pill"></span>
-                </div>
-            </div>
-            <div class="rh-skeleton-page-loader__content">
-                <div class="rh-skeleton-stack">
-                    <span class="rh-skeleton-line rh-skeleton-line--md"></span>
-                    <span class="rh-skeleton-line rh-skeleton-line--sm"></span>
-                </div>
-                <div class="rh-skeleton-grid">
-                    <div class="rh-skeleton-page-card">
-                        <span class="rh-skeleton-media"></span>
-                        <span class="rh-skeleton-line rh-skeleton-line--lg"></span>
-                        <span class="rh-skeleton-line rh-skeleton-line--md"></span>
-                    </div>
-                    <div class="rh-skeleton-page-card">
-                        <span class="rh-skeleton-media"></span>
-                        <span class="rh-skeleton-line rh-skeleton-line--lg"></span>
-                        <span class="rh-skeleton-line rh-skeleton-line--md"></span>
-                    </div>
-                    <div class="rh-skeleton-page-card">
-                        <span class="rh-skeleton-media"></span>
-                        <span class="rh-skeleton-line rh-skeleton-line--lg"></span>
-                        <span class="rh-skeleton-line rh-skeleton-line--md"></span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
     {% with url_name=request.resolver_match.url_name|default:'' %}
     {% if url_name|slice:':6' != 'admin_' and url_name|slice:':6' != 'owner_' %}
 
@@ -1207,6 +1179,7 @@
     <div id="footer">
         <div class="container">
             <section class="footer-popular" aria-label="{% trans 'Approved hotel partners' %}">
+                <h3 class="footer-popular__title"><a href="{% url 'hotel_list' %}">{% trans "Explore approved hotel partners" %} <i class="fa fa-angle-right" aria-hidden="true"></i></a></h3>
                 <div class="footer-destinations">
                     {% for hotel in footer_approved_hotels %}
                         <a href="{% url 'hotel_detail' hotel.id %}">
@@ -1220,7 +1193,7 @@
 
             <section class="footer-columns">
                 <div>
-                    <h3>{% trans "Contact us" %}</h3>
+                    <h3><a class="footer-section-link" href="{% url 'footer_info' 'footer-contact' %}">{% trans "Contact us" %} <i class="fa fa-angle-right" aria-hidden="true"></i></a></h3>
                     <a href="/info/contact-customer-service/">{% trans "Customer support" %}</a>
                     <a href="/info/safety-resource-center/">{% trans "Service Guarantee" %}</a>
                     <a href="{% url 'contact' %}">{% trans "More service info" %}</a>
@@ -1231,7 +1204,7 @@
                     </div>
                 </div>
                 <div>
-                    <h3>{% trans "About" %}</h3>
+                    <h3><a class="footer-section-link" href="{% url 'footer_info' 'footer-about' %}">{% trans "About" %} <i class="fa fa-angle-right" aria-hidden="true"></i></a></h3>
                     <a href="/info/about-royal-hotel/">{% trans "About Royal Hotel" %}</a>
                     <a href="/info/press-center/">{% trans "News" %}</a>
                     <a href="/info/careers/">{% trans "Careers" %}</a>
@@ -1241,7 +1214,7 @@
                     <a href="/info/how-we-work/">{% trans "About Royal Hotel Group" %}</a>
                 </div>
                 <div>
-                    <h3>{% trans "Other services" %}</h3>
+                    <h3><a class="footer-section-link" href="{% url 'footer_info' 'footer-services' %}">{% trans "Other services" %} <i class="fa fa-angle-right" aria-hidden="true"></i></a></h3>
                     <a href="/info/corporate-contact/">{% trans "Investor relations" %}</a>
                     <a href="/info/traveller-review-awards/">{% trans "Royal Hotel Rewards" %}</a>
                     <a href="/info/royal-hotel-for-business/">{% trans "Affiliate program" %}</a>
@@ -1252,7 +1225,7 @@
                 </div>
                 <div class="footer-brand-block">
                     <div>
-                        <h3>{% trans "Payment methods" %}</h3>
+                        <h3><a class="footer-section-link" href="{% url 'footer_info' 'footer-payments' %}">{% trans "Payment methods" %} <i class="fa fa-angle-right" aria-hidden="true"></i></a></h3>
                         <div class="footer-badges footer-badges--payments" aria-label="{% trans 'Payment methods' %}">
                             <span>MPESA</span>
                             <span>MC</span>
@@ -1267,7 +1240,7 @@
                         </div>
                     </div>
                     <div>
-                        <h3>{% trans "Our partners" %}</h3>
+                        <h3><a class="footer-section-link" href="{% url 'footer_info' 'footer-partners' %}">{% trans "Our partners" %} <i class="fa fa-angle-right" aria-hidden="true"></i></a></h3>
                         <div class="footer-partners" aria-label="{% trans 'Our partners' %}">
                             {% for partner in footer_business_partners %}
                                 {% if partner.website_url %}
@@ -1295,6 +1268,7 @@
             </section>
 
             <section class="footer-awards" aria-label="{% trans 'Awards' %}">
+                <h3 class="footer-awards__heading"><a href="{% url 'footer_info' 'footer-awards' %}">{% trans "Awards and recognition" %} <i class="fa fa-angle-right" aria-hidden="true"></i></a></h3>
                 <div class="footer-award footer-award--if"><strong>iF</strong><span>{% trans "Design Award 2026" %}</span></div>
                 <div class="footer-award"><strong>G</strong><span>{% trans "GOOD DESIGN AWARD 2024" %}</span></div>
                 <div class="footer-award"><strong>CC</strong><span>{% trans "Contact Center of the year 2025" %}</span></div>
@@ -1331,7 +1305,6 @@
     <script src="{% static 'vendor/tempusdominus/js/moment.min.js' %}"></script>
     <script src="{% static 'vendor/tempusdominus/js/moment-timezone.min.js' %}"></script>
     <script src="{% static 'vendor/tempusdominus/js/tempusdominus-bootstrap-4.min.js' %}"></script>
-    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
     
     <!-- Booking JavaScript Files (if they exist) -->
     {% comment %}
@@ -1341,8 +1314,7 @@
     
     <!-- Main Javascript File -->
     <script src="{% static 'js/main.js' %}"></script>
-    <script src="{% static 'js/skeleton.js' %}?v=20260710-2"></script>
-    <script src="{% static 'js/section_navigation.js' %}?v=20260709-1"></script>
+    <script src="{% static 'js/lazy_load.js' %}?v=20260725-1"></script>
     <script src="{% static 'js/interactions.js' %}?v=20260717-1"></script>
     <script src="{% static 'js/password_toggle.js' %}"></script>
     

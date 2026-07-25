@@ -775,6 +775,78 @@ def about(request):
 
 def _footer_info_pages():
     return {
+        "footer-contact": {
+            "section": _("Footer navigation"),
+            "title": _("Contact and support"),
+            "intro": _("Find the right Royal Hotel support channel for booking questions, account help, safety concerns, and general service information."),
+            "items": [
+                _("Contact Customer Service for reservations, payments, and account support."),
+                _("Review the Safety Resource Center when a booking or property needs attention."),
+                _("Use the contact page to send a detailed request to the Royal Hotel team."),
+            ],
+            "primary_label": _("Contact support"),
+            "primary_url": "contact",
+        },
+        "footer-about": {
+            "section": _("Footer navigation"),
+            "title": _("About Royal Hotel"),
+            "intro": _("Learn about Royal Hotel, our booking platform, and the people, policies, and standards that support guests and hospitality partners."),
+            "items": [
+                _("Read about Royal Hotel and how the platform supports local hospitality."),
+                _("Explore company information, policies, careers, and accessibility commitments."),
+                _("Contact the appropriate team for media, careers, or corporate questions."),
+            ],
+            "primary_label": _("About Royal Hotel"),
+            "primary_url": "about",
+        },
+        "footer-services": {
+            "section": _("Footer navigation"),
+            "title": _("Royal Hotel services"),
+            "intro": _("Explore guest and partner services, including hotel discovery, property onboarding, rewards, security information, and business travel support."),
+            "items": [
+                _("Browse approved hotels and compare available rooms."),
+                _("List a property or sign in to the Partner Extranet."),
+                _("Find security, rewards, affiliate, and business-travel information."),
+            ],
+            "primary_label": _("Browse hotels"),
+            "primary_url": "hotel_list",
+        },
+        "footer-payments": {
+            "section": _("Footer navigation"),
+            "title": _("Payment methods"),
+            "intro": _("Royal Hotel supports secure booking payment flows with the payment methods shown in the footer when they are available for your booking."),
+            "items": [
+                _("Your available payment options are shown before you confirm a booking."),
+                _("Keep booking and payment references available when contacting support."),
+                _("Use the secure Royal Hotel payment page instead of sharing payment details through informal channels."),
+            ],
+            "primary_label": _("View my bookings"),
+            "primary_url": "my_bookings",
+        },
+        "footer-partners": {
+            "section": _("Footer navigation"),
+            "title": _("Partners and suppliers"),
+            "intro": _("Royal Hotel works with hospitality partners and trusted service providers to help guests discover and book quality stays."),
+            "items": [
+                _("Hotel owners can create a partner account and apply to list their property."),
+                _("Approved partners can manage hotels, rooms, bookings, and teams from the Partner Extranet."),
+                _("Organizations and suppliers can use corporate contact for partnership enquiries."),
+            ],
+            "primary_label": _("Partner with Royal Hotel"),
+            "primary_url": "partner_signin",
+        },
+        "footer-awards": {
+            "section": _("Footer navigation"),
+            "title": _("Awards and recognition"),
+            "intro": _("The recognition shown in our footer reflects Royal Hotel’s focus on clear service, hospitality partnerships, and customer experience."),
+            "items": [
+                _("We continue improving the booking experience for guests and partners."),
+                _("Guest feedback helps shape property standards and service improvements."),
+                _("Contact the team with questions about Royal Hotel’s platform and partnerships."),
+            ],
+            "primary_label": _("Contact Royal Hotel"),
+            "primary_url": "contact",
+        },
         "manage-your-trips": {
             "section": _("Support"),
             "title": _("Manage your trips"),
@@ -1213,6 +1285,14 @@ def hotel_detail(request, hotel_id):
     rooms = _with_booking_status(
         Room.objects.filter(hotel=hotel, available=True, is_approved=True)
     )
+    room_list = list(rooms)
+    amenities = []
+    for room in room_list:
+        for amenity in room.amenities_list:
+            if amenity not in amenities:
+                amenities.append(amenity)
+    lowest_price = min((room.price for room in room_list), default=None)
+    total_capacity = sum(room.capacity for room in room_list)
     hotel_reviews = hotel.hotel_reviews.select_related('user')[:8]
     hotel_review_count = hotel.hotel_reviews.count()
     hotel_average_rating = hotel.hotel_reviews.aggregate(avg=Avg('rating')).get('avg') or 0
@@ -1228,7 +1308,11 @@ def hotel_detail(request, hotel_id):
         'hotel_detail.html',
         {
             'hotel': hotel,
-            'rooms': rooms,
+            'rooms': room_list,
+            'amenities': amenities[:12],
+            'lowest_price': lowest_price,
+            'room_count': len(room_list),
+            'total_capacity': total_capacity,
             'map_query': map_query,
             'hotel_reviews': hotel_reviews,
             'hotel_review_count': hotel_review_count,
@@ -3561,9 +3645,12 @@ def register_options_view(request):
 
 
 def register_view(request):
+    if request.user.is_authenticated:
+        return redirect(_dashboard_url_name_for_user(request.user))
+
     if request.method == "POST":
         name = (request.POST.get('name') or '').strip()
-        email = (request.POST.get('email') or '').strip()
+        email = (request.POST.get('email') or '').strip().lower()
         password = request.POST.get('password')
         repeat_password = request.POST.get('repeat_password')
         user_type = request.POST.get('user_type', 'GUEST')
@@ -3604,10 +3691,16 @@ def register_view(request):
                 login(request, user)
                 messages.success(request, "Account created. Please complete the partnership form.")
                 return redirect('hotel_partner_apply')
-            messages.success(request, "Registration successful! Please login.")
-            return redirect('login')
-        except Exception as e:
-            messages.error(request, f"Registration failed: {str(e)}")
+            login(request, user)
+            messages.success(request, "Registration successful. Welcome to Royal Hotel!")
+            return _post_login_redirect(
+                request,
+                user,
+                request.POST.get('next') or request.GET.get('next'),
+            )
+        except Exception:
+            logger.exception("Guest registration failed")
+            messages.error(request, "Registration could not be completed. Please try again.")
             return redirect('register')
 
     return render(request, 'register.html')

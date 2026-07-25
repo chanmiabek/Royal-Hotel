@@ -1853,6 +1853,12 @@
 }
 
 @media (max-width: 767px) {
+    .hotel-grid,
+    #hotels .hotel-grid,
+    #rooms .hotel-grid {
+        grid-template-columns: 1fr;
+    }
+
     .rh-home-hero__inner {
         padding-bottom: 24px;
     }
@@ -1888,10 +1894,19 @@
         flex-direction: column;
     }
 
+    .rh-featured-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        margin: 0;
+        padding: 0;
+        overflow: visible;
+        scroll-snap-type: none;
+    }
+
     .rh-featured-card {
-        flex-basis: 300px;
-        width: 300px;
-        min-width: 300px;
+        width: 100%;
+        min-width: 0;
+        flex: none;
     }
 
     .rh-featured-scroll-btn {

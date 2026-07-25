@@ -2,9 +2,9 @@
 <article class="rh-featured-card">
     <a href="{% url 'hotel_detail' hotel.id %}" class="rh-featured-card__media">
         {% if hotel.image %}
-            <img src="{{ hotel.image|media_image_url }}" alt="{{ hotel.name }}">
+            <img src="{{ hotel.image|media_image_url }}" alt="{{ hotel.name }}" loading="lazy" decoding="async">
         {% else %}
-            <img src="{% static 'img/slider/header-slider-3.jpg' %}" alt="{{ hotel.name }}">
+            <img src="{% static 'img/slider/header-slider-3.jpg' %}" alt="{{ hotel.name }}" loading="lazy" decoding="async">
         {% endif %}
         {% if hotel.review_count or hotel.star_rating %}
         <span class="rh-featured-card__rating-pill">

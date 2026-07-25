@@ -109,30 +109,17 @@
 
 <section
     id="home-hotels"
-    class="hotel-collection hotel-search rh-featured-stays rh-featured-skeleton"
-    hx-get="{% url 'home_hotel_groups_fragment' %}"
-    hx-trigger="load"
-    hx-swap="outerHTML"
+    class="hotel-collection hotel-search rh-featured-stays"
+    data-lazy-fragment="{% url 'home_hotel_groups_fragment' %}"
+    data-loading-text="{% trans 'Loading hotels...' %}"
+    data-error-text="{% trans 'Hotels could not be loaded. Please refresh the page.' %}"
+    aria-busy="false"
 >
     <div class="container">
         <div class="rh-featured-head">
             <div>
                 <h2>{% trans "Explore hotels by location, rating, and visits" %}</h2>
-                <p>{% trans "Loading approved properties..." %}</p>
-            </div>
-            <span class="btn rh-skeleton-pill" aria-hidden="true"></span>
-        </div>
-        <div class="rh-featured-group">
-            <div class="rh-featured-group__head">
-                <div>
-                    <span class="rh-skeleton-line rh-skeleton-line--title"></span>
-                    <span class="rh-skeleton-line rh-skeleton-line--text"></span>
-                </div>
-            </div>
-            <div class="rh-featured-grid rh-featured-grid--skeleton" aria-hidden="true">
-                <span class="rh-featured-card rh-featured-card--skeleton"></span>
-                <span class="rh-featured-card rh-featured-card--skeleton"></span>
-                <span class="rh-featured-card rh-featured-card--skeleton"></span>
+                <p data-lazy-status aria-live="polite">{% trans "Hotel collections load when you reach this section." %}</p>
             </div>
         </div>
     </div>

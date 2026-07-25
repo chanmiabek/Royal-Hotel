@@ -240,3 +240,108 @@ h6 {
     }
 }
 
+/* Lighter visual hierarchy: reserve emphasis for actionable and key data. */
+body {
+    font-size: 12px;
+    font-weight: 400;
+}
+
+body * {
+    font-weight: 400 !important;
+}
+
+body :is(
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    strong,
+    b,
+    th,
+    button,
+    .btn,
+    .badge,
+    .nav-category > a,
+    .nav-list-property > a,
+    .nav-user__trigger,
+    .hotel-result-title,
+    .hotel-card__title,
+    .rh-featured-card__title,
+    .property-room-card__status,
+    .property-room-card__category,
+    .property-review-score,
+    .property-booking-card > span,
+    .property-facts-card dd,
+    .admin-sidebar .list-group-item.active
+) {
+    font-weight: 600 !important;
+}
+
+h1 {
+    font-size: 22px !important;
+    line-height: 1.18 !important;
+}
+
+h2 {
+    font-size: 19px !important;
+    line-height: 1.22 !important;
+}
+
+h3 {
+    font-size: 16px !important;
+    line-height: 1.28 !important;
+}
+
+h4,
+h5,
+h6 {
+    font-size: 14px !important;
+    line-height: 1.32 !important;
+}
+
+#headerSlider .carousel-caption h1,
+#welcome h3,
+.rh-home-hero h1 {
+    font-size: 25px !important;
+    font-weight: 600 !important;
+}
+
+.property-hero h1 {
+    font-size: 36px !important;
+    font-weight: 600 !important;
+}
+
+.property-section__heading h2,
+.property-feedback h2 {
+    font-size: 22px !important;
+}
+
+.property-room-card h3,
+.property-location-panel__details h3,
+.property-feedback__card h3 {
+    font-size: 17px !important;
+}
+
+.property-booking-card strong,
+.property-review-summary strong {
+    font-weight: 600 !important;
+}
+
+@media (max-width: 575.98px) {
+    h1,
+    .property-hero h1,
+    #headerSlider .carousel-caption h1,
+    #welcome h3,
+    .rh-home-hero h1 {
+        font-size: 22px !important;
+    }
+
+    h2,
+    .property-section__heading h2,
+    .property-feedback h2 {
+        font-size: 18px !important;
+    }
+}
+

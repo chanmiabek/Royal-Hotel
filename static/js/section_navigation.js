@@ -19,7 +19,7 @@
             return true;
         }
 
-        if (link.matches("[data-no-partial], [data-no-skeleton], .no-partial, .no-skeleton, [download]")) {
+        if (link.matches("[data-no-partial], .no-partial, [download]")) {
             return true;
         }
 

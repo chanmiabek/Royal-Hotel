@@ -1,287 +1,271 @@
 {% extends 'base.html' %}
-{% load static i18n %}
+{% load static i18n booking_extras %}
+
 {% block extra_css %}
-<link href="{% static 'css/hotel-cards.css' %}?v=20260615-4" rel="stylesheet">
-<style>.trust-strip{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.trust-chip{background:#fff1f2;color:#b42318;border-radius:999px;padding:7px 12px;font-weight:800;font-size:13px}.review-breakdown{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:18px 0}.review-metric{display:grid;grid-template-columns:100px 1fr 34px;gap:10px;align-items:center}.review-track{height:9px;background:#e5e7eb;border-radius:20px;overflow:hidden}.review-fill{height:100%;background:linear-gradient(90deg,#b8860b,#ffd700)}.category-score-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.mobile-booking-bar{display:none}@media(max-width:767px){.review-breakdown,.category-score-grid{grid-template-columns:1fr}.mobile-booking-bar{display:flex;position:fixed;z-index:1000;left:0;right:0;bottom:0;background:#fff;box-shadow:0 -8px 24px rgba(15,23,42,.16);padding:12px 16px;align-items:center;justify-content:space-between}.mobile-booking-bar strong{display:block}.mobile-booking-bar .btn{font-weight:800}}</style>
+<link href="{% static 'css/hotel-cards.css' %}?v=20260702-1" rel="stylesheet">
+<link href="{% static 'css/hotel-detail.css' %}?v=20260725-1" rel="stylesheet">
 {% endblock %}
+
 {% block content %}
-<section class="premium-shell">
-<section class="hotel-collection">
-    <div class="container">
-        <div class="section-header">
-            <h2>{% trans "Hotel" %}</h2>
-            <p>{% trans "Explore rooms at" %} {{ hotel.name }}.</p>
-        </div>
+{% with first_room=rooms.0 %}
+<section class="property-page">
+    <div class="container property-page__container">
+        <nav class="property-breadcrumb" aria-label="{% trans 'Breadcrumb' %}">
+            <a href="{% url 'index' %}">{% trans 'Home' %}</a>
+            <i class="fa fa-angle-right" aria-hidden="true"></i>
+            <a href="{% url 'hotel_list' %}">{% trans 'Hotels' %}</a>
+            <i class="fa fa-angle-right" aria-hidden="true"></i>
+            <span>{{ hotel.name }}</span>
+        </nav>
 
-        <div class="hotel-card hotel-card--detail">
-            <div class="hotel-detail-top">
-                <div class="hotel-detail-top__image">
-                    <div class="hotel-card__media">
-                        {% if hotel.image %}
-                            <img src="{{ hotel.image|media_image_url }}" alt="{{ hotel.name }}">
-                        {% endif %}
-                        <button
-                            type="button"
-                            class="hotel-card__fav js-wishlist-toggle"
-                            data-url="/hotels/{{ hotel.id }}/wishlist/"
-                            aria-label="{% trans 'Save hotel' %}"
-                            aria-pressed="{% if is_wishlisted %}true{% else %}false{% endif %}"
-                        >
-                            <i class="fa {% if is_wishlisted %}fa-heart{% else %}fa-heart-o{% endif %}"></i>
-                        </button>
-                    </div>
-                </div>
-
-                {% if hotel.address or hotel.city or hotel.country %}
-                <div class="hotel-detail-top__map">
-                    <div class="hotel-map-frame">
-                        <iframe
-                            title="{% trans 'Hotel location map' %}"
-                            src="https://www.google.com/maps?q={{ map_query|urlencode }}&output=embed"
-                            loading="lazy"
-                            referrerpolicy="no-referrer-when-downgrade"
-                        ></iframe>
-                        <a
-                            class="hotel-map-frame__btn btn btn-light btn-sm"
-                            href="https://www.google.com/maps/search/?api=1&query={{ map_query|urlencode }}"
-                            target="_blank"
-                            rel="noopener"
-                        >
-                            <i class="fa fa-map-marker" aria-hidden="true"></i> {% trans "Open in Maps" %}
-                        </a>
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-
-            <div class="hotel-card__body">
-                <h3 class="hotel-card__title">{{ hotel.name }}</h3>
-                {% if hotel.city or hotel.country %}
-                <p class="hotel-card__location">
-                    {{ hotel.city }}{% if hotel.city and hotel.country %}, {% endif %}{{ hotel.country }}
-                </p>
-                {% endif %}
-                {% if hotel.star_rating %}
-                <div class="hotel-card__rating">
-                    <span class="hotel-card__score">{{ hotel.star_rating }}</span>
-                    <span>{% trans "Rating" %}</span>
-                </div>
-                <div class="trust-strip">
-                    {% if recent_booking_count %}<span class="trust-chip">{% blocktrans count counter=recent_booking_count %}Booked {{ counter }} time in 48 hours{% plural %}Booked {{ counter }} times in 48 hours{% endblocktrans %}</span>{% endif %}
-                    {% if lowest_inventory and lowest_inventory <= 3 %}<span class="trust-chip">{% blocktrans with count=lowest_inventory %}Only {{ count }} rooms left at this price!{% endblocktrans %}</span>{% endif %}
-                </div>
-                {% if hotel_review_count %}<div class="review-breakdown">{% for category in review_categories %}<div class="review-metric"><span>{{ category.label }}</span><div class="review-track"><div class="review-fill" style="width:{% widthratio category.score 5 100 %}%"></div></div><strong>{{ category.score }}</strong></div>{% endfor %}</div>{% endif %}
-                {% endif %}
-                <div class="hotel-card__rating">
-                    <span class="hotel-card__score" id="hotelAverageRating">{{ hotel_average_rating|floatformat:1 }}</span>
-                    <span><span id="hotelReviewCount">{{ hotel_review_count }}</span> {% trans "guest reviews" %}</span>
-                </div>
-                {% if hotel.description %}
-                <p class="mb-2">{{ hotel.description }}</p>
-                {% endif %}
-                <div class="hotel-card__meta">
-                    {% if hotel.address %}
-                        <div><strong>{% trans "Address:" %}</strong> {{ hotel.address }}</div>
-                    {% endif %}
-                    {% if hotel.phone %}
-                        <div><strong>{% trans "Phone:" %}</strong> {{ hotel.phone }}</div>
-                    {% endif %}
-                    {% if hotel.email %}
-                        <div><strong>{% trans "Email:" %}</strong> {{ hotel.email }}</div>
+        <section class="property-hero" aria-labelledby="property-title">
+            <div class="property-gallery">
+                <div class="property-gallery__main">
+                    {% if hotel.image %}
+                    <img src="{{ hotel.image|media_image_url }}" alt="{{ hotel.name }}" fetchpriority="high">
+                    {% elif first_room and first_room.image %}
+                    <img src="{{ first_room.image|media_image_url }}" alt="{{ hotel.name }}" fetchpriority="high">
+                    {% else %}
+                    <img src="{% static 'img/slider/header-slider-3.jpg' %}" alt="{{ hotel.name }}" fetchpriority="high">
                     {% endif %}
                 </div>
-            </div>
-        </div>
-
-        <div class="section-header">
-            <h2>{% trans "Available Rooms" %}</h2>
-            <p>{% blocktrans with hotel_name=hotel.name %}Explore rooms at {{ hotel_name }}.{% endblocktrans %}</p>
-        </div>
-
-        <div class="room-rows">
-            {% for room in rooms %}
-            <div class="hotel-card room-row">
-                <div class="hotel-card__media">
-                    {% if room.image %}
-                        <img src="{{ room.image|media_image_url }}" alt="{{ room.title }}">
-                    {% endif %}
-                </div>
-                <div class="hotel-card__body">
-                    <div class="room-row__content">
-                        <div class="room-row__info">
-                            <h4 class="hotel-card__title">{{ room.title }}</h4>
-                            <p class="hotel-card__location">{{ room.description|truncatewords:18 }}</p>
-                            <p class="mb-0">
-                                <strong>{% trans "Status:" %}</strong>
-                                {% if room.is_booked %}
-                                    <span class="badge badge-danger">{% trans "Currently Booked" %}</span>
-                                {% else %}
-                                    <span class="badge badge-success">{% trans "Available" %}</span>
-                                {% endif %}
-                            </p>
-                        </div>
-                        <div class="room-row__cta">
-                            <div class="room-row__price">
-                                <span class="room-card__price">KES {{ room.price|floatformat:0 }} / {% trans "night" %}</span>
-                            </div>
-                            <a class="btn btn-outline-primary btn-sm btn-block" href="{% url 'room_detail' room.id %}">
-                                {% trans "View Details" %}
-                            </a>
-                            <a class="btn btn-primary btn-block" href="{% url 'booking' %}?room={{ room.id }}">
-                                {% trans "Book Now" %}
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% empty %}
-            <p class="text-center">{% trans "No rooms available for this hotel yet." %}</p>
-            {% endfor %}
-        </div>
-
-        <div class="section-header mt-5">
-            <h2>{% trans "Guest reviews and complaints" %}</h2>
-            <p>{% trans "Share your experience or report an issue. Hotel admins see new feedback immediately in their dashboard after submission." %}</p>
-        </div>
-
-        <div class="row">
-            <div class="col-lg-6 mb-4">
-                <div class="hotel-card">
-                    <div class="hotel-card__body">
-                        <h3 class="hotel-card__title">{% trans "Rate this hotel" %}</h3>
-                        {% if request.user.is_authenticated %}
-                        <form id="hotelReviewForm" data-url="/hotels/{{ hotel.id }}/review/">
-                            {% csrf_token %}
-                            <div class="form-group">
-                                <label>{% trans "Stars" %}</label>
-                                <select name="rating" class="form-control" required>
-                                    <option value="">{% trans "Select rating" %}</option>
-                                    {% for value in "12345" %}
-                                    <option value="{{ value }}" {% if user_hotel_review and user_hotel_review.rating|stringformat:"s" == value %}selected{% endif %}>{{ value }} {% trans "stars" %}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>{% trans "Review title" %}</label>
-                                <input type="text" name="title" class="form-control" value="{{ user_hotel_review.title|default:'' }}" required>
-                            </div>
-                            <div class="category-score-grid">
-                                <div class="form-group"><label>{% trans "Cleanliness" %}</label><input class="form-control" type="number" name="cleanliness_score" min="1" max="5" value="{{ user_hotel_review.cleanliness_score|default:5 }}" required></div>
-                                <div class="form-group"><label>{% trans "Location" %}</label><input class="form-control" type="number" name="location_score" min="1" max="5" value="{{ user_hotel_review.location_score|default:5 }}" required></div>
-                                <div class="form-group"><label>{% trans "Service" %}</label><input class="form-control" type="number" name="service_score" min="1" max="5" value="{{ user_hotel_review.service_score|default:5 }}" required></div>
-                                <div class="form-group"><label>{% trans "Value" %}</label><input class="form-control" type="number" name="value_score" min="1" max="5" value="{{ user_hotel_review.value_score|default:5 }}" required></div>
-                            </div>
-                            <div class="form-group">
-                                <label>{% trans "Your review" %}</label>
-                                <textarea name="comment" class="form-control" rows="4" required>{{ user_hotel_review.comment|default:'' }}</textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary">{% trans "Submit review" %}</button>
-                            <div class="small mt-2" id="hotelReviewStatus" aria-live="polite"></div>
-                        </form>
+                <div class="property-gallery__side">
+                    {% for room in rooms|slice:':2' %}
+                    <div class="property-gallery__tile">
+                        {% if room.image %}
+                        <img src="{{ room.image|media_image_url }}" alt="{{ room.title }}" loading="lazy" decoding="async">
                         {% else %}
-                        <p>{% trans "Please sign in to leave a star rating and review." %}</p>
-                        <a class="btn btn-primary" href="{% url 'login' %}?next={{ request.path|urlencode }}">{% trans "Sign in" %}</a>
+                        <div class="property-gallery__fallback"><i class="fa fa-bed" aria-hidden="true"></i><span>{{ room.get_category_display }}</span></div>
                         {% endif %}
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-6 mb-4">
-                <div class="hotel-card">
-                    <div class="hotel-card__body">
-                        <h3 class="hotel-card__title">{% trans "Send a complaint" %}</h3>
-                        <form id="hotelComplaintForm" data-url="/hotels/{{ hotel.id }}/complaint/">
-                            {% csrf_token %}
-                            <div class="form-group">
-                                <label>{% trans "Full name" %}</label>
-                                <input type="text" name="full_name" class="form-control" value="{% if request.user.is_authenticated %}{{ request.user.get_full_name|default:request.user.username }}{% endif %}" required>
-                            </div>
-                            <div class="form-group">
-                                <label>{% trans "Email" %}</label>
-                                <input type="email" name="email" class="form-control" value="{% if request.user.is_authenticated %}{{ request.user.email }}{% endif %}" required>
-                            </div>
-                            <div class="form-group">
-                                <label>{% trans "Subject" %}</label>
-                                <input type="text" name="subject" class="form-control" required>
-                            </div>
-                            <div class="form-group">
-                                <label>{% trans "Complaint details" %}</label>
-                                <textarea name="message" class="form-control" rows="4" required></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-outline-primary">{% trans "Submit complaint" %}</button>
-                            <div class="small mt-2" id="hotelComplaintStatus" aria-live="polite"></div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="hotel-card">
-            <div class="hotel-card__body">
-                <h3 class="hotel-card__title">{% trans "Latest hotel reviews" %}</h3>
-                <div id="hotelReviewList">
-                    {% for review in hotel_reviews %}
-                    <div class="review-card mb-3">
-                        <div class="d-flex justify-content-between">
-                            <strong>{{ review.title }}</strong>
-                            <span class="text-warning">
-                                {% for star in "12345" %}
-                                    {% if forloop.counter <= review.rating %}<i class="fa fa-star"></i>{% else %}<i class="fa fa-star-o"></i>{% endif %}
-                                {% endfor %}
-                            </span>
-                        </div>
-                        <p class="mb-1">{{ review.comment }}</p>
-                        <small class="text-muted">{{ review.user.first_name|default:review.user.username }}</small>
                     </div>
                     {% empty %}
-                    <p class="text-muted" id="noHotelReviews">{% trans "No hotel reviews yet." %}</p>
+                    <div class="property-gallery__tile property-gallery__fallback"><i class="fa fa-building-o" aria-hidden="true"></i></div>
+                    <div class="property-gallery__tile property-gallery__fallback"><i class="fa fa-map-marker" aria-hidden="true"></i></div>
                     {% endfor %}
                 </div>
+                <button
+                    type="button"
+                    class="property-save js-wishlist-toggle"
+                    data-url="{% url 'toggle_wishlist' hotel.id %}"
+                    aria-label="{% trans 'Save hotel' %}"
+                    aria-pressed="{% if is_wishlisted %}true{% else %}false{% endif %}"
+                >
+                    <i class="fa {% if is_wishlisted %}fa-heart{% else %}fa-heart-o{% endif %}" aria-hidden="true"></i>
+                    <span>{% if is_wishlisted %}{% trans 'Saved' %}{% else %}{% trans 'Save' %}{% endif %}</span>
+                </button>
             </div>
+
+            <div class="property-hero__content">
+                <div>
+                    <div class="property-kicker"><i class="fa fa-check-circle" aria-hidden="true"></i> {% trans 'Verified property' %}</div>
+                    <h1 id="property-title">{{ hotel.name }}</h1>
+                    <p class="property-location"><i class="fa fa-map-marker" aria-hidden="true"></i> {{ hotel.address|default:hotel.city }}{% if hotel.address and hotel.city %}, {{ hotel.city }}{% endif %}{% if hotel.country %}, {{ hotel.country }}{% endif %}</p>
+                    <div class="property-rating-row">
+                        {% if hotel.star_rating %}
+                        <span class="property-stars" aria-label="{{ hotel.star_rating }} {% trans 'star hotel' %}">
+                            {% for star in '12345' %}{% if forloop.counter <= hotel.star_rating %}<i class="fa fa-star" aria-hidden="true"></i>{% endif %}{% endfor %}
+                        </span>
+                        <span class="property-star-label">{{ hotel.star_rating }} {% trans 'star hotel' %}</span>
+                        {% endif %}
+                        <span class="property-review-score"><strong>{{ hotel_average_rating|floatformat:1 }}</strong> / 5</span>
+                        <a href="#reviews">{{ hotel_review_count }} {% trans 'guest reviews' %}</a>
+                    </div>
+                </div>
+                <div class="property-hero__actions">
+                    <a class="btn btn-primary" href="#rooms">{% trans 'Check availability' %}</a>
+                    {% if hotel.address or hotel.city or hotel.country %}
+                    <a class="btn btn-outline-light" href="#location"><i class="fa fa-map-o" aria-hidden="true"></i> {% trans 'View location' %}</a>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <nav class="property-nav" aria-label="{% trans 'Hotel sections' %}">
+            <a href="#overview">{% trans 'Overview' %}</a>
+            <a href="#rooms">{% trans 'Rooms' %}</a>
+            {% if hotel.address or hotel.city or hotel.country %}<a href="#location">{% trans 'Location' %}</a>{% endif %}
+            <a href="#reviews">{% trans 'Reviews' %}</a>
+        </nav>
+
+        <div class="property-layout">
+            <main class="property-main">
+                <section id="overview" class="property-section">
+                    <div class="property-section__heading">
+                        <span>{% trans 'About this property' %}</span>
+                        <h2>Experience {{ hotel.name }}</h2>
+                    </div>
+                    {% if hotel.description %}
+                    <div class="property-description">{{ hotel.description|linebreaks }}</div>
+                    {% else %}
+                    <p class="property-description">{% trans 'Discover comfortable rooms, attentive service, and a convenient stay at this Royal Hotel partner property.' %}</p>
+                    {% endif %}
+
+                    {% if amenities %}
+                    <div class="property-amenities">
+                        <h3>{% trans 'Property highlights' %}</h3>
+                        <div class="property-amenities__list">
+                            {% for amenity in amenities %}<span><i class="fa fa-check" aria-hidden="true"></i>{{ amenity }}</span>{% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </section>
+
+                <section id="rooms" class="property-section property-section--rooms">
+                    <div class="property-section__heading property-section__heading--inline">
+                        <div>
+                            <span>{% trans 'Stay options' %}</span>
+                            <h2>{% trans 'Available rooms' %}</h2>
+                        </div>
+                        <p>{% blocktrans count counter=room_count %}{{ counter }} room type currently available{% plural %}{{ counter }} room types currently available{% endblocktrans %}</p>
+                    </div>
+
+                    <div class="property-room-list">
+                        {% for room in rooms %}
+                        <article class="property-room-card">
+                            <a class="property-room-card__image" href="{% url 'room_detail' room.id %}">
+                                {% if room.image %}
+                                <img src="{{ room.image|media_image_url }}" alt="{{ room.title }}" loading="lazy" decoding="async">
+                                {% else %}
+                                <span><i class="fa fa-bed" aria-hidden="true"></i></span>
+                                {% endif %}
+                            </a>
+                            <div class="property-room-card__content">
+                                <div class="property-room-card__topline">
+                                    <div>
+                                        <p class="property-room-card__category">{{ room.get_category_display }}</p>
+                                        <h3>{{ room.title }}</h3>
+                                    </div>
+                                    {% if room.is_booked %}<span class="property-room-card__status property-room-card__status--booked">{% trans 'Booked' %}</span>{% else %}<span class="property-room-card__status">{% trans 'Available' %}</span>{% endif %}
+                                </div>
+                                <p class="property-room-card__description">{{ room.description|truncatewords:28 }}</p>
+                                <div class="property-room-card__facts">
+                                    {% if room.capacity %}<span><i class="fa fa-user" aria-hidden="true"></i>{% blocktrans with capacity=room.capacity %}Up to {{ capacity }} guests{% endblocktrans %}</span>{% endif %}
+                                    {% if room.beds %}<span><i class="fa fa-bed" aria-hidden="true"></i>{{ room.beds }}</span>{% endif %}
+                                    {% if room.size %}<span><i class="fa fa-expand" aria-hidden="true"></i>{{ room.size }} {% trans 'sq ft' %}</span>{% endif %}
+                                </div>
+                                {% if room.amenities_list %}<div class="property-room-card__amenities">{% for amenity in room.amenities_list|slice:':4' %}<span>{{ amenity }}</span>{% endfor %}</div>{% endif %}
+                            </div>
+                            <div class="property-room-card__booking">
+                                <span>{% trans 'From' %}</span>
+                                <strong>KES {{ room.price|floatformat:0 }}</strong>
+                                <small>{% trans 'per night' %}</small>
+                                <a class="btn btn-outline-primary" href="{% url 'room_detail' room.id %}">{% trans 'View room' %}</a>
+                                {% if not room.is_booked %}<a class="btn btn-primary" href="{% url 'booking' %}?room={{ room.id }}">{% trans 'Reserve' %}</a>{% endif %}
+                            </div>
+                        </article>
+                        {% empty %}
+                        <div class="property-empty-state"><i class="fa fa-calendar-times-o" aria-hidden="true"></i><h3>{% trans 'No rooms available right now' %}</h3><p>{% trans 'Please check back soon or browse other hotel options.' %}</p><a href="{% url 'hotel_list' %}" class="btn btn-outline-primary">{% trans 'Browse hotels' %}</a></div>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                {% if hotel.address or hotel.city or hotel.country %}
+                <section id="location" class="property-section">
+                    <div class="property-section__heading"><span>{% trans 'Find us' %}</span><h2>{% trans 'Location and contact' %}</h2></div>
+                    <div class="property-location-panel">
+                        <div class="property-map"><iframe title="{% trans 'Hotel location map' %}" src="https://www.google.com/maps?q={{ map_query|urlencode }}&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>
+                        <div class="property-location-panel__details">
+                            <i class="fa fa-map-marker" aria-hidden="true"></i>
+                            <h3>{{ hotel.name }}</h3>
+                            <p>{{ hotel.address }}{% if hotel.address and hotel.city %}, {% endif %}{{ hotel.city }}{% if hotel.city and hotel.country %}, {% endif %}{{ hotel.country }}</p>
+                            <a class="btn btn-outline-primary btn-sm" href="https://www.google.com/maps/search/?api=1&query={{ map_query|urlencode }}" target="_blank" rel="noopener">{% trans 'Open in Google Maps' %}</a>
+                        </div>
+                    </div>
+                </section>
+                {% endif %}
+
+                <section id="reviews" class="property-section">
+                    <div class="property-section__heading property-section__heading--inline"><div><span>{% trans 'Guest feedback' %}</span><h2>{% trans 'What guests say' %}</h2></div><div class="property-review-summary"><strong id="hotelAverageRating">{{ hotel_average_rating|floatformat:1 }}</strong><span>/ 5 · <span id="hotelReviewCount">{{ hotel_review_count }}</span> {% trans 'reviews' %}</span></div></div>
+                    <div id="hotelReviewList" class="property-review-list">
+                        {% for review in hotel_reviews %}
+                        <article class="property-review-card">
+                            <div><strong>{{ review.title }}</strong><span class="property-review-card__stars">{% for star in '12345' %}{% if forloop.counter <= review.rating %}<i class="fa fa-star" aria-hidden="true"></i>{% else %}<i class="fa fa-star-o" aria-hidden="true"></i>{% endif %}{% endfor %}</span></div>
+                            <p>{{ review.comment }}</p>
+                            <small>{{ review.user.first_name|default:review.user.username }} · {{ review.created_at|date:'M j, Y' }}</small>
+                        </article>
+                        {% empty %}
+                        <p class="property-no-reviews" id="noHotelReviews">{% trans 'No hotel reviews yet. Be the first to share your experience.' %}</p>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <section class="property-feedback" aria-label="{% trans 'Feedback and support' %}">
+                    <div class="property-feedback__intro"><span>{% trans 'Your stay matters' %}</span><h2>{% trans 'Share feedback or get help' %}</h2><p>{% trans 'Reviews help future guests choose with confidence. For service concerns, send a private message directly to the hotel team.' %}</p></div>
+                    <div class="property-feedback__forms">
+                        <div class="property-feedback__card">
+                            <h3>{% trans 'Rate this hotel' %}</h3>
+                            {% if request.user.is_authenticated %}
+                            <form id="hotelReviewForm" data-url="{% url 'submit_hotel_review' hotel.id %}">
+                                {% csrf_token %}
+                                <label>{% trans 'Overall rating' %}<select name="rating" required><option value="">{% trans 'Select rating' %}</option>{% for value in '12345' %}<option value="{{ value }}" {% if user_hotel_review and user_hotel_review.rating|stringformat:'s' == value %}selected{% endif %}>{{ value }} {% trans 'stars' %}</option>{% endfor %}</select></label>
+                                <label>{% trans 'Review title' %}<input type="text" name="title" value="{{ user_hotel_review.title|default:'' }}" required></label>
+                                <label>{% trans 'Your review' %}<textarea name="comment" rows="4" required>{{ user_hotel_review.comment|default:'' }}</textarea></label>
+                                <button type="submit" class="btn btn-primary">{% trans 'Submit review' %}</button><p class="property-form-status" id="hotelReviewStatus" aria-live="polite"></p>
+                            </form>
+                            {% else %}
+                            <p>{% trans 'Sign in to rate your stay and share a review.' %}</p><a class="btn btn-primary" href="{% url 'login' %}?next={{ request.path|urlencode }}">{% trans 'Sign in to review' %}</a>
+                            {% endif %}
+                        </div>
+                        <div class="property-feedback__card property-feedback__card--support">
+                            <h3>{% trans 'Need help with this property?' %}</h3>
+                            <form id="hotelComplaintForm" data-url="{% url 'submit_hotel_complaint' hotel.id %}">
+                                {% csrf_token %}
+                                <label>{% trans 'Full name' %}<input type="text" name="full_name" value="{% if request.user.is_authenticated %}{{ request.user.get_full_name|default:request.user.username }}{% endif %}" required></label>
+                                <label>{% trans 'Email' %}<input type="email" name="email" value="{% if request.user.is_authenticated %}{{ request.user.email }}{% endif %}" required></label>
+                                <label>{% trans 'Subject' %}<input type="text" name="subject" required></label>
+                                <label>{% trans 'How can we help?' %}<textarea name="message" rows="4" required></textarea></label>
+                                <button type="submit" class="btn btn-outline-primary">{% trans 'Send private message' %}</button><p class="property-form-status" id="hotelComplaintStatus" aria-live="polite"></p>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <aside class="property-sidebar">
+                <div class="property-booking-card">
+                    <span>{% trans 'Plan your stay' %}</span>
+                    {% if lowest_price %}<p>{% trans 'Rooms from' %}</p><strong>KES {{ lowest_price|floatformat:0 }}</strong><small>{% trans 'per night' %}</small>{% else %}<strong>{% trans 'View available rooms' %}</strong>{% endif %}
+                    <a href="#rooms" class="btn btn-primary btn-block">{% trans 'Check availability' %}</a>
+                    <p class="property-booking-card__note"><i class="fa fa-shield" aria-hidden="true"></i>{% trans 'Secure booking through Royal Hotel' %}</p>
+                </div>
+                <div class="property-facts-card">
+                    <h2>{% trans 'At a glance' %}</h2>
+                    <dl>
+                        <div><dt><i class="fa fa-building-o" aria-hidden="true"></i>{% trans 'Room types' %}</dt><dd>{{ room_count }}</dd></div>
+                        <div><dt><i class="fa fa-users" aria-hidden="true"></i>{% trans 'Guest capacity' %}</dt><dd>{% if total_capacity %}{{ total_capacity }}{% else %}—{% endif %}</dd></div>
+                        <div><dt><i class="fa fa-star" aria-hidden="true"></i>{% trans 'Property rating' %}</dt><dd>{% if hotel.star_rating %}{{ hotel.star_rating }} / 5{% else %}—{% endif %}</dd></div>
+                    </dl>
+                </div>
+                <div class="property-contact-card">
+                    <h2>{% trans 'Contact the property' %}</h2>
+                    {% if hotel.phone %}<a href="tel:{{ hotel.phone }}"><i class="fa fa-phone" aria-hidden="true"></i><span>{% trans 'Call' %}<strong>{{ hotel.phone }}</strong></span></a>{% endif %}
+                    {% if hotel.email %}<a href="mailto:{{ hotel.email }}"><i class="fa fa-envelope-o" aria-hidden="true"></i><span>{% trans 'Email' %}<strong>{{ hotel.email }}</strong></span></a>{% endif %}
+                    {% if not hotel.phone and not hotel.email %}<p>{% trans 'Contact details are available through the booking team.' %}</p>{% endif %}
+                </div>
+            </aside>
         </div>
     </div>
 </section>
-</section>
-{% if lowest_price %}<div class="mobile-booking-bar"><div><small>{% trans "From" %}</small><strong>KES {{ lowest_price|floatformat:0 }} / {% trans "night" %}</strong></div>{% if rooms.0 %}<a class="btn btn-primary" href="{% url 'booking' %}?room={{ rooms.0.id }}">{% trans "Book Now" %}</a>{% endif %}</div>{% endif %}
+{% if lowest_price and first_room %}<div class="property-mobile-booking"><div><span>{% trans 'From' %}</span><strong>KES {{ lowest_price|floatformat:0 }}</strong><small>{% trans 'per night' %}</small></div><a class="btn btn-primary" href="#rooms">{% trans 'View rooms' %}</a></div>{% endif %}
+{% endwith %}
 {% endblock %}
 
 {% block extra_js %}
 <script>
     (function () {
         function postForm(url, form) {
-            return fetch(url, {
-                method: 'POST',
-                body: new FormData(form),
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            }).then(function (response) {
-                return response.json().then(function (data) {
-                    if (!response.ok) {
-                        throw data;
-                    }
-                    return data;
-                });
-            });
+            return fetch(url, { method: 'POST', body: new FormData(form), headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (response) { return response.json().then(function (data) { if (!response.ok) throw data; return data; }); });
         }
 
-        var wishlistBtn = document.querySelector('.js-wishlist-toggle');
-        if (wishlistBtn) {
-            wishlistBtn.addEventListener('click', function () {
+        var wishlistButton = document.querySelector('.js-wishlist-toggle');
+        if (wishlistButton) {
+            wishlistButton.addEventListener('click', function () {
                 var formData = new FormData();
                 formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-                fetch(wishlistBtn.dataset.url, {
-                    method: 'POST',
-                    body: formData,
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                }).then(function (response) {
-                    if (response.status === 403 || response.redirected) {
-                        window.location.href = "{% url 'login' %}?next={{ request.path|urlencode }}";
-                        return null;
-                    }
-                    return response.json();
-                }).then(function (data) {
-                    if (!data) return;
-                    wishlistBtn.setAttribute('aria-pressed', data.saved ? 'true' : 'false');
-                    wishlistBtn.querySelector('i').className = 'fa ' + (data.saved ? 'fa-heart' : 'fa-heart-o');
-                });
+                fetch(wishlistButton.dataset.url, { method: 'POST', body: formData, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(function (response) { if (response.status === 403 || response.redirected) { window.location.href = "{% url 'login' %}?next={{ request.path|urlencode }}"; return null; } return response.json(); })
+                    .then(function (data) { if (!data) return; wishlistButton.setAttribute('aria-pressed', data.saved ? 'true' : 'false'); wishlistButton.querySelector('i').className = 'fa ' + (data.saved ? 'fa-heart' : 'fa-heart-o'); wishlistButton.querySelector('span').textContent = data.saved ? "{% trans 'Saved' %}" : "{% trans 'Save' %}"; });
             });
         }
 
@@ -296,22 +280,15 @@
                     document.getElementById('hotelReviewCount').textContent = data.count;
                     var empty = document.getElementById('noHotelReviews');
                     if (empty) empty.remove();
-                    var list = document.getElementById('hotelReviewList');
                     var stars = '';
-                    for (var i = 1; i <= 5; i++) {
-                        stars += '<i class="fa ' + (i <= data.rating ? 'fa-star' : 'fa-star-o') + '"></i>';
-                    }
-                    list.insertAdjacentHTML('afterbegin',
-                        '<div class="review-card mb-3"><div class="d-flex justify-content-between"><strong></strong><span class="text-warning">' +
-                        stars + '</span></div><p class="mb-1"></p><small class="text-muted"></small></div>'
-                    );
+                    for (var index = 1; index <= 5; index += 1) stars += '<i class="fa ' + (index <= data.rating ? 'fa-star' : 'fa-star-o') + '" aria-hidden="true"></i>';
+                    var list = document.getElementById('hotelReviewList');
+                    list.insertAdjacentHTML('afterbegin', '<article class="property-review-card"><div><strong></strong><span class="property-review-card__stars">' + stars + '</span></div><p></p><small></small></article>');
                     var card = list.firstElementChild;
                     card.querySelector('strong').textContent = data.title;
                     card.querySelector('p').textContent = data.comment;
                     card.querySelector('small').textContent = data.reviewer;
-                }).catch(function (error) {
-                    status.textContent = error.error || "{% trans 'Could not submit review.' %}";
-                });
+                }).catch(function (error) { status.textContent = error.error || "{% trans 'Could not submit review.' %}"; });
             });
         }
 
@@ -320,12 +297,7 @@
             complaintForm.addEventListener('submit', function (event) {
                 event.preventDefault();
                 var status = document.getElementById('hotelComplaintStatus');
-                postForm(complaintForm.dataset.url, complaintForm).then(function (data) {
-                    status.textContent = data.message;
-                    complaintForm.reset();
-                }).catch(function (error) {
-                    status.textContent = error.error || "{% trans 'Could not submit complaint.' %}";
-                });
+                postForm(complaintForm.dataset.url, complaintForm).then(function (data) { status.textContent = data.message; complaintForm.reset(); }).catch(function (error) { status.textContent = error.error || "{% trans 'Could not send your message.' %}"; });
             });
         }
     })();

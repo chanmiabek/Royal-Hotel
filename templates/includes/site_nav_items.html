@@ -20,9 +20,10 @@
     </a>
 </li>
 
-<li class="nav-meta dropdown">
+<li class="nav-meta nav-language dropdown">
     <a class="dropdown-toggle nav-flag-toggle" href="#" id="langDropdownNav" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="{% trans 'Kenya language options' %}">
         <img class="nav-flag-ke" src="{% static 'img/flags/ke.svg' %}" alt="{% trans 'Kenya flag' %}">
+        <span class="nav-flag-label">{% trans 'Kenya' %}</span>
     </a>
     <div class="dropdown-menu" aria-labelledby="langDropdownNav">
         <form method="post" action="{% url 'set_language' %}">
@@ -38,7 +39,7 @@
     </div>
 </li>
 <li class="nav-meta nav-help">
-    <a href="{% url 'contact' %}" aria-label="{% trans 'Help service' %}" data-tooltip="{% trans 'Help service' %}">?</a>
+    <a href="{% url 'contact' %}" aria-label="{% trans 'Help service' %}" data-tooltip="{% trans 'Help service' %}"><i class="fa fa-question" aria-hidden="true"></i></a>
 </li>
 <li class="nav-list-property">
     <a href="{% if request.user.is_authenticated %}{% url 'hotel_partner_apply' %}{% else %}{% url 'partner_signin' %}{% endif %}">
