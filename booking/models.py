@@ -12,6 +12,13 @@ from decimal import Decimal
 ALLOWED_UPLOAD_SIGNATURES = (b"%PDF-", b"\xff\xd8\xff", b"\x89PNG\r\n\x1a\n")
 
 
+def _check_constraint(condition, name):
+    try:
+        return models.CheckConstraint(condition=condition, name=name)
+    except TypeError:
+        return models.CheckConstraint(check=condition, name=name)
+
+
 def validate_private_document(upload):
     """Reject oversized or disguised partner documents before storage."""
     if upload.size > 10 * 1024 * 1024:
@@ -265,9 +272,9 @@ class Booking(models.Model):
 
     class Meta:
         constraints = [
-            models.CheckConstraint(condition=Q(check_out__gt=F('check_in')), name='booking_checkout_after_checkin'),
-            models.CheckConstraint(condition=Q(guests__gte=1), name='booking_guests_positive'),
-            models.CheckConstraint(condition=Q(total_price__isnull=True) | Q(total_price__gte=0), name='booking_total_nonnegative'),
+            _check_constraint(Q(check_out__gt=F('check_in')), 'booking_checkout_after_checkin'),
+            _check_constraint(Q(guests__gte=1), 'booking_guests_positive'),
+            _check_constraint(Q(total_price__isnull=True) | Q(total_price__gte=0), 'booking_total_nonnegative'),
         ]
 
     def __str__(self):
@@ -443,7 +450,7 @@ class Payment(models.Model):
                 condition=Q(reference__isnull=False) & ~Q(reference=''),
                 name='unique_payment_provider_reference',
             ),
-            models.CheckConstraint(condition=Q(amount__gt=0), name='payment_amount_positive'),
+            _check_constraint(Q(amount__gt=0), 'payment_amount_positive'),
             models.UniqueConstraint(
                 fields=['provider', 'provider_receipt'],
                 condition=Q(provider_receipt__isnull=False) & ~Q(provider_receipt=''),

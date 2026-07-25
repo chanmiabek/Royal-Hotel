@@ -4,6 +4,13 @@ from django.db import migrations, models
 import django.db.models.expressions
 
 
+def _check_constraint(condition, name):
+    try:
+        return models.CheckConstraint(condition=condition, name=name)
+    except TypeError:
+        return models.CheckConstraint(check=condition, name=name)
+
+
 def populate_booking_tokens(apps, schema_editor):
     Booking = apps.get_model('booking', 'Booking')
     for booking in Booking.objects.filter(public_token__isnull=True).iterator():
@@ -30,15 +37,15 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='booking',
-            constraint=models.CheckConstraint(condition=models.Q(('check_out__gt', django.db.models.expressions.F('check_in'))), name='booking_checkout_after_checkin'),
+            constraint=_check_constraint(models.Q(('check_out__gt', django.db.models.expressions.F('check_in'))), 'booking_checkout_after_checkin'),
         ),
         migrations.AddConstraint(
             model_name='booking',
-            constraint=models.CheckConstraint(condition=models.Q(('guests__gte', 1)), name='booking_guests_positive'),
+            constraint=_check_constraint(models.Q(('guests__gte', 1)), 'booking_guests_positive'),
         ),
         migrations.AddConstraint(
             model_name='booking',
-            constraint=models.CheckConstraint(condition=models.Q(('total_price__isnull', True), ('total_price__gte', 0), _connector='OR'), name='booking_total_nonnegative'),
+            constraint=_check_constraint(models.Q(('total_price__isnull', True), ('total_price__gte', 0), _connector='OR'), 'booking_total_nonnegative'),
         ),
         migrations.AddConstraint(
             model_name='payment',
@@ -46,6 +53,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='payment',
-            constraint=models.CheckConstraint(condition=models.Q(('amount__gt', 0)), name='payment_amount_positive'),
+            constraint=_check_constraint(models.Q(('amount__gt', 0)), 'payment_amount_positive'),
         ),
     ]
