@@ -2338,7 +2338,11 @@ def mpesa_stk_push(request):
         messages.error(request, "Missing booking or phone number.")
         return redirect('index')
 
-    booking = _get_accessible_booking(request, booking_id)
+    try:
+        booking = _get_accessible_booking(request, booking_id)
+    except Http404:
+        messages.error(request, "This booking could not be found. Please start a new booking.")
+        return redirect('index')
     if _booking_is_expired_for_payment(booking) or booking.status == "CANCELLED":
         return _redirect_booking_expired(request, booking)
     normalized_phone = _normalize_mpesa_phone(phone)
