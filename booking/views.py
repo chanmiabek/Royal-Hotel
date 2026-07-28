@@ -303,7 +303,7 @@ def _with_booking_status(queryset):
     return queryset.annotate(is_booked=Exists(confirmed_bookings))
 
 
-BOOKING_PAYMENT_WINDOW = timedelta(hours=24)
+BOOKING_PAYMENT_WINDOW = timedelta(hours=12)
 
 
 def _expire_stale_pending_bookings():

@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
-from booking.models import Booking, Payment
+from booking.models import Booking, EmailOutbox, Payment
 from booking.views import _expire_stale_pending_bookings, _mpesa_query_stk_status
 
 try:
@@ -16,6 +16,7 @@ except ImportError:  # pragma: no cover
 
 
 logger = logging.getLogger(__name__)
+PAYMENT_REMINDER_AFTER = timedelta(hours=10)
 
 
 class Command(BaseCommand):
@@ -25,6 +26,7 @@ class Command(BaseCommand):
         parser.add_argument('--skip-reconciliation', action='store_true')
 
     def handle(self, *args, **options):
+        reminders = self._queue_payment_reminders()
         expired = _expire_stale_pending_bookings()
         completed = Booking.objects.filter(
             status='CONFIRMED', check_out__lte=timezone.localdate(),
@@ -38,8 +40,36 @@ class Command(BaseCommand):
                 if self._reconcile(payment):
                     reconciled += 1
         self.stdout.write(self.style.SUCCESS(
-            f'Expired {expired}; completed {completed}; reconciled {reconciled} payments.'
+            f'Queued {reminders} reminders; expired {expired}; completed {completed}; reconciled {reconciled} payments.'
         ))
+
+    def _queue_payment_reminders(self):
+        now = timezone.now()
+        reminder_cutoff = now - PAYMENT_REMINDER_AFTER
+        expiry_cutoff = now - timedelta(hours=12)
+        queued = 0
+        for booking in Booking.objects.filter(
+            status='PENDING',
+            email__isnull=False,
+            created_at__lte=reminder_cutoff,
+            created_at__gt=expiry_cutoff,
+        ).iterator():
+            subject = f'Payment reminder for Royal Hotel Booking #{booking.id}'
+            if EmailOutbox.objects.filter(subject=subject).exists():
+                continue
+            EmailOutbox.objects.create(
+                subject=subject,
+                body=(
+                    f'Hello {booking.first_name},\n\n'
+                    f'Please complete payment for booking #{booking.id} within 2 hours '
+                    'to keep your room reservation. Unpaid bookings expire after 12 hours.\n\n'
+                    'Thank you for choosing Royal Hotel.'
+                ),
+                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', ''),
+                recipients=[booking.email],
+            )
+            queued += 1
+        return queued
 
     def _reconcile(self, payment):
         if requests is None or not payment.reference:
