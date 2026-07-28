@@ -283,8 +283,19 @@ def owner_required(view_func):
         if not request.user.is_authenticated:
             return redirect(f"{reverse('login')}?next={request.path}")
         profile = _get_or_create_profile(request.user)
-        if (not profile or profile.user_type != 'OWNER') and not _get_active_hotel_staff(request.user):
+        staff_profile = _get_active_hotel_staff(request.user)
+        if staff_profile:
+            return view_func(request, *args, **kwargs)
+        approved_application = HotelApplication.objects.filter(
+            user=request.user, status='APPROVED',
+        ).exists()
+        approved_hotel = Hotel.objects.filter(
+            owner=request.user, is_approved=True, is_active=True,
+        ).exists()
+        if (not profile or profile.user_type != 'OWNER' or not (approved_application or approved_hotel)):
             messages.info(request, "Please complete the partnership form to access the owner dashboard.")
+            if HotelApplication.objects.filter(user=request.user, status='PENDING').exists():
+                return redirect('hotel_application_status')
             return redirect('hotel_partner_apply')
         return view_func(request, *args, **kwargs)
 
