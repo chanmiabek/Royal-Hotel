@@ -49,6 +49,7 @@ urlpatterns = [
     path('payments/paystack/initialize/', views.paystack_initialize, name='paystack_initialize'),
     path('payments/paystack/callback/', views.paystack_callback, name='paystack_callback'),
     path('payments/paystack/webhook/', views.paystack_webhook, name='paystack_webhook'),
+    path('payments/paystack/banks/', views.paystack_banks, name='paystack_banks'),
     
     # Authentication
     path('sign-in/', views.login_options_view, name='login_options'),

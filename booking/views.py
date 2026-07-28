@@ -1867,6 +1867,28 @@ def _is_paystack_configured():
     return bool(settings.PAYSTACK_PUBLIC_KEY and settings.PAYSTACK_SECRET_KEY)
 
 
+@login_required
+def paystack_banks(request):
+    if requests is None or not settings.PAYSTACK_SECRET_KEY:
+        return JsonResponse({'error': 'Paystack is not configured.'}, status=503)
+    try:
+        response = requests.get(
+            f"{settings.PAYSTACK_BASE_URL}/bank",
+            params={'country': 'kenya', 'currency': 'KES', 'perPage': 100},
+            headers={'Authorization': f'Bearer {settings.PAYSTACK_SECRET_KEY}'},
+            timeout=15,
+        )
+        payload = response.json()
+    except Exception:
+        return JsonResponse({'error': 'Unable to load banks.'}, status=502)
+    if not response.ok or not payload.get('status'):
+        return JsonResponse({'error': 'Unable to load banks.'}, status=502)
+    return JsonResponse({'banks': [
+        {'name': bank.get('name'), 'code': bank.get('code')}
+        for bank in payload.get('data', []) if bank.get('name') and bank.get('code')
+    ]})
+
+
 def _payment_context(booking, request):
     return {
         'booking': booking, 'amount': _ensure_booking_total(booking),

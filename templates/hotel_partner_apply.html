@@ -255,7 +255,9 @@
                                             <div class="form-row">
                                                 <div class="form-group col-md-6">
                                                     <label>{% trans "Bank Name" %}</label>
-                                                    <input type="text" name="bank_name" class="form-control">
+                                                    <select name="bank_name" id="owner-bank-name" class="form-control">
+                                                        <option value="">{% trans "Loading banks..." %}</option>
+                                                    </select>
                                                 </div>
                                                 <div class="form-group col-md-6">
                                                     <label>{% trans "Account Name" %}</label>
@@ -268,8 +270,8 @@
                                                     <input type="text" name="bank_account_number" class="form-control">
                                                 </div>
                                                 <div class="form-group col-md-6">
-                                                    <label>{% trans "Bank Branch" %}</label>
-                                                    <input type="text" name="bank_branch" class="form-control">
+                                                    <label>{% trans "Paystack Bank Code" %}</label>
+                                                    <input type="text" name="bank_branch" id="owner-bank-code" class="form-control" readonly>
                                                 </div>
                                             </div>
                                             <div class="form-row">
@@ -357,5 +359,26 @@
         </div>
     </div>
 </section>
+<script>
+(function () {
+    const bankName = document.getElementById('owner-bank-name');
+    const bankCode = document.getElementById('owner-bank-code');
+    if (!bankName || !bankCode) return;
+    fetch('{% url "paystack_banks" %}', {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+        .then(response => response.json())
+        .then(data => {
+            bankName.innerHTML = '<option value="">Select your bank</option>';
+            (data.banks || []).forEach(bank => {
+                const option = new Option(bank.name, bank.name);
+                option.dataset.code = bank.code;
+                bankName.add(option);
+            });
+            bankName.addEventListener('change', () => {
+                bankCode.value = bankName.selectedOptions[0]?.dataset.code || '';
+            });
+        })
+        .catch(() => { bankName.innerHTML = '<option value="">Banks unavailable</option>'; });
+}());
+</script>
 {% endblock %}
 
