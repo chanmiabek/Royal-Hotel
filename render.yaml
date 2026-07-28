@@ -48,6 +48,12 @@ services:
         sync: false
       - key: USE_CLOUDINARY
         value: "False"
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: EMAIL_QUEUE_ENABLED
+        value: "true"
 
 databases:
   - name: royal-hotel-db
