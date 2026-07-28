@@ -72,7 +72,7 @@ from .models import (
 
 def send_mail(subject, message, from_email, recipient_list, **kwargs):
     """Queue production mail for retry; keep tests and local development immediate."""
-    if getattr(settings, 'EMAIL_QUEUE_ENABLED', False) or not settings.DEBUG:
+    if not getattr(settings, 'RUNNING_TESTS', False):
         EmailOutbox.objects.create(
             subject=str(subject)[:255], body=message, from_email=from_email or '',
             recipients=list(recipient_list),
