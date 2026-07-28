@@ -123,8 +123,9 @@
         <div class="form-page-layout">
             <div class="row no-gutters">
                 <div class="col-lg-5">
-                    <div class="form-page-media">
+                    <div class="form-page-media"{% if selected_room and selected_room.image %} style="background-image: linear-gradient(rgba(34, 34, 34, 0.28), rgba(34, 34, 34, 0.55)), url('{{ selected_room.image.url }}');"{% endif %}>
                         <div class="form-page-media-content">
+                            {% if selected_room %}<p class="mb-2"><strong>{% trans "Selected room" %}: {{ selected_room.title }}</strong></p>{% endif %}
                             <h2>{% trans "Reserve With Confidence" %}</h2>
                             <p>{% trans "Choose your room, share your stay details, and let our team confirm your reservation quickly." %}</p>
                             <ul>

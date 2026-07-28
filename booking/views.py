@@ -1789,6 +1789,7 @@ def booking_view(request):  # sourcery skip: low-code-quality
         hotel__is_active=True,
     )
     selected_room_id = request.GET.get('room', '')
+    selected_room = rooms.filter(id=selected_room_id).first() if selected_room_id else None
     prefill_check_in = request.GET.get('check_in', '')
     prefill_check_out = request.GET.get('check_out', '')
     prefill_guests = request.GET.get('guests', '')
@@ -1808,6 +1809,7 @@ def booking_view(request):  # sourcery skip: low-code-quality
         {
             'rooms': rooms,
             'selected_room_id': str(selected_room_id) if selected_room_id else '',
+            'selected_room': selected_room,
             'prefill_check_in': prefill_check_in,
             'prefill_check_out': prefill_check_out,
             'prefill_guests': prefill_guests,
