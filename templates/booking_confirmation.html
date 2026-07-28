@@ -63,7 +63,7 @@
                     <div class="confirm-actions mt-4">
                         {% if booking.status == 'CONFIRMED' %}
                             <a class="btn btn-primary" href="{% url 'invoice_pdf' booking.id %}?access_key={{ access_key }}">{% trans "View invoice" %}</a>
-                        {% else %}
+                        {% elif booking.status == 'PENDING' %}
                             <button class="btn btn-primary" type="button" data-payment-open>{% trans "Pay Now" %}</button>
                         {% endif %}
                     </div>
