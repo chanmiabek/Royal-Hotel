@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
-from booking.models import Booking, EmailOutbox, Payment
+from booking.models import Booking, BookingCommission, EmailOutbox, HotelPayout, Payment
 from booking.views import _expire_stale_pending_bookings, _mpesa_query_stk_status
 
 try:
@@ -28,6 +28,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         reminders = self._queue_payment_reminders()
         expired = _expire_stale_pending_bookings()
+        settlements = self._create_settlements()
+        payouts = self._release_payouts()
         completed = Booking.objects.filter(
             status='CONFIRMED', check_out__lte=timezone.localdate(),
         ).update(status='COMPLETED', updated_at=timezone.now())
@@ -40,8 +42,82 @@ class Command(BaseCommand):
                 if self._reconcile(payment):
                     reconciled += 1
         self.stdout.write(self.style.SUCCESS(
-            f'Queued {reminders} reminders; expired {expired}; completed {completed}; reconciled {reconciled} payments.'
+            f'Queued {reminders} reminders; expired {expired}; settlements {settlements}; payouts {payouts}; completed {completed}; reconciled {reconciled} payments.'
         ))
+
+    def _create_settlements(self):
+        created = 0
+        for payment in Payment.objects.filter(status='SUCCEEDED').select_related('booking__room__hotel'):
+            booking = payment.booking
+            hotel = booking.room.hotel if booking.room_id else None
+            if not hotel or hasattr(booking, 'commission'):
+                continue
+            rate = hotel.commission_rate
+            commission_amount = (payment.amount * rate).quantize(payment.amount.as_tuple().exponent)
+            hotel_amount = payment.amount - commission_amount
+            BookingCommission.objects.create(
+                booking=booking, hotel=hotel, gross_amount=payment.amount,
+                commission_rate=rate, commission_amount=commission_amount,
+                hotel_amount=hotel_amount,
+            )
+            HotelPayout.objects.create(
+                hotel=hotel, booking=booking, method=hotel.payout_method,
+                account_reference=hotel.payout_account_reference,
+                amount=hotel_amount, currency=payment.currency,
+                scheduled_for=payment.updated_at + timedelta(hours=getattr(settings, 'PAYOUT_HOLD_HOURS', 6)),
+            )
+            created += 1
+        return created
+
+    def _release_payouts(self):
+        if not getattr(settings, 'PAYSTACK_TRANSFER_ENABLED', False) or requests is None:
+            return 0
+        released = 0
+        for payout in HotelPayout.objects.filter(status='PENDING', scheduled_for__lte=timezone.now()).select_related('hotel'):
+            hotel = payout.hotel
+            try:
+                recipient = payout.account_reference or self._create_recipient(hotel)
+                if not recipient:
+                    continue
+                response = requests.post(
+                    f"{settings.PAYSTACK_BASE_URL}/transfer",
+                    headers={'Authorization': f'Bearer {settings.PAYSTACK_SECRET_KEY}', 'Content-Type': 'application/json'},
+                    json={'source': 'balance', 'amount': int(payout.amount * 100), 'recipient': recipient,
+                          'reference': f'royal-payout-{payout.id}', 'reason': f'Royal Hotel booking #{payout.booking_id}',
+                          'currency': payout.currency}, timeout=20,
+                )
+                data = response.json()
+                if response.ok and data.get('status'):
+                    payout.status = 'PROCESSING'
+                    payout.reference = data.get('data', {}).get('transfer_code') or f'royal-payout-{payout.id}'
+                    payout.account_reference = recipient
+                    payout.save(update_fields=['status', 'reference', 'account_reference', 'updated_at'])
+                    payout.booking.commission.status = 'RELEASED'
+                    payout.booking.commission.save(update_fields=['status', 'updated_at'])
+                    released += 1
+            except Exception:
+                logger.exception('Payout release failed for payout %s', payout.pk)
+        return released
+
+    def _create_recipient(self, hotel):
+        method = hotel.payout_method
+        if method == 'BANK' and hotel.bank_account_number and hotel.bank_branch:
+            payload = {'type': 'kepss', 'name': hotel.bank_account_name or hotel.name,
+                       'account_number': hotel.bank_account_number, 'bank_code': hotel.bank_branch,
+                       'currency': 'KES'}
+        elif method == 'MOBILE_MONEY' and hotel.mobile_money_number:
+            payload = {'type': 'mobile_money', 'name': hotel.name,
+                       'account_number': hotel.mobile_money_number,
+                       'bank_code': settings.PAYSTACK_MOBILE_MONEY_CODE, 'currency': 'KES'}
+        else:
+            return ''
+        response = requests.post(
+            f"{settings.PAYSTACK_BASE_URL}/transferrecipient",
+            headers={'Authorization': f'Bearer {settings.PAYSTACK_SECRET_KEY}', 'Content-Type': 'application/json'},
+            json=payload, timeout=20,
+        )
+        data = response.json()
+        return data.get('data', {}).get('recipient_code', '') if response.ok and data.get('status') else ''
 
     def _queue_payment_reminders(self):
         now = timezone.now()
