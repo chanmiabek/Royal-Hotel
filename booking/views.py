@@ -1457,13 +1457,11 @@ def contact(request):
 
 # Booking view
 def _room_is_available(room, check_in, check_out):
-    reserved = Booking.objects.filter(
+    return not Booking.objects.filter(
         room=room,
         status__in=['PENDING', 'CONFIRMED'],
-        check_in__lt=check_out,
-        check_out__gt=check_in,
-    ).count()
-    return reserved < max(1, room.total_inventory)
+        check_out__gt=timezone.localdate(),
+    ).exists()
 
 
 def _booking_access_key(request):
