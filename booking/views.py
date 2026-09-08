@@ -71,8 +71,8 @@ from .models import (
 
 
 def send_mail(subject, message, from_email, recipient_list, **kwargs):
-    """Queue production mail for retry; keep tests and local development immediate."""
-    if not getattr(settings, 'RUNNING_TESTS', False):
+    """Queue mail when enabled; otherwise use Django's configured backend."""
+    if getattr(settings, 'EMAIL_QUEUE_ENABLED', False):
         EmailOutbox.objects.create(
             subject=str(subject)[:255], body=message, from_email=from_email or '',
             recipients=list(recipient_list),
@@ -1162,6 +1162,15 @@ def hotel_list(request):
     sort = (request.GET.get('sort') or 'top').strip().lower()
     min_price = (request.GET.get('min_price') or '').strip()
     max_price = (request.GET.get('max_price') or '').strip()
+    min_review = (request.GET.get('min_review') or '').strip()
+    selected_amenities = [
+        value.strip().lower()
+        for value in request.GET.getlist('amenities')
+        if value.strip()
+    ]
+    check_in = (request.GET.get('check_in') or '').strip()
+    check_out = (request.GET.get('check_out') or '').strip()
+    guests = (request.GET.get('guests') or '').strip()
 
     selected_stars = []
     for value in request.GET.getlist('stars'):
@@ -1268,6 +1277,16 @@ def hotel_list(request):
         view_mode = 'list'
 
     map_query = query or "Kenya"
+    hotel_map_data = [
+        {
+            'name': hotel.name,
+            'latitude': float(hotel.latitude) if hotel.latitude is not None else None,
+            'longitude': float(hotel.longitude) if hotel.longitude is not None else None,
+            'price': float(hotel.starting_price or 0),
+            'url': reverse('hotel_detail', args=[hotel.id]),
+        }
+        for hotel in hotels
+    ]
     return render(
         request,
         'hotel_list.html',
@@ -1279,9 +1298,15 @@ def hotel_list(request):
             'sort': sort,
             'min_price': min_price,
             'max_price': max_price,
+            'min_review': min_review,
+            'selected_amenities': selected_amenities,
+            'check_in': check_in,
+            'check_out': check_out,
+            'guests': guests,
             'map_query': map_query,
             'star_filter_options': star_filter_options,
             'selected_stars': selected_stars,
+            'hotel_map_data': hotel_map_data,
         },
     )
 
@@ -3659,9 +3684,13 @@ def login_view(request):
         user = authenticate(request, username=identifier, password=password)
 
         if user is None and identifier and "@" in identifier:
-            user_obj = User.objects.filter(email__iexact=identifier).order_by("-id").first()
-            if user_obj:
+            # Email addresses were not always enforced as unique. Try every
+            # matching account so a stale duplicate cannot block a valid login.
+            matching_users = User.objects.filter(email__iexact=identifier).order_by("-id")
+            for user_obj in matching_users:
                 user = authenticate(request, username=user_obj.username, password=password)
+                if user is not None:
+                    break
 
         if user is not None:
             login(request, user)
@@ -3762,25 +3791,41 @@ def partner_signin_view(request):
 
     if request.method == "POST":
         identifier = (request.POST.get('identifier') or '').strip()
+        password = request.POST.get('password') or ''
         if not identifier:
-            messages.error(request, "Enter your username or email address.")
+            messages.error(request, "Enter your owner email or username.")
+            return redirect('partner_signin')
+        if not password:
+            messages.error(request, "Enter your password.")
             return redirect('partner_signin')
 
-        request.session['partner_login_identifier'] = identifier
-        user_exists = (
-            User.objects.filter(username__iexact=identifier).exists()
-            or User.objects.filter(email__iexact=identifier).exists()
-        )
-        if user_exists:
-            messages.info(request, "Enter your password to manage your property.")
-            return redirect(f"{reverse('login')}?next={reverse('owner_dashboard')}")
-
-        messages.info(request, "No partner account found. Create one to list your property.")
-        flow = _partner_flow_data(request)
+        candidates = User.objects.filter(username__iexact=identifier)
         if "@" in identifier:
-            flow['email'] = identifier
-            request.session.modified = True
-        return redirect('partner_register_email')
+            candidates = User.objects.filter(
+                Q(username__iexact=identifier) | Q(email__iexact=identifier)
+            ).order_by('-id')
+
+        user = None
+        for candidate in candidates:
+            authenticated = authenticate(
+                request, username=candidate.username, password=password
+            )
+            if authenticated is not None:
+                profile = _get_or_create_profile(authenticated)
+                if (
+                    profile and profile.user_type == 'OWNER'
+                ) or _get_active_hotel_staff(authenticated):
+                    user = authenticated
+                    break
+
+        if user is not None:
+            login(request, user)
+            request.session.pop('partner_onboarding', None)
+            messages.success(request, f"Welcome back, {user.first_name or user.username}!")
+            return redirect('owner_dashboard')
+
+        messages.error(request, "Invalid owner email/username or password.")
+        return redirect('partner_signin')
 
     return _render_partner_onboarding(request, 'signin')
 
@@ -4031,6 +4076,34 @@ def _admin_dashboard_notification_context():
     }
 
 
+def _management_chart_data(bookings_queryset, payments_queryset):
+    """Return twelve-month finance, visitor, and booking series for dashboards."""
+    today = timezone.localdate()
+    year = today.year
+    labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    revenue = {month: Decimal('0.00') for month in range(1, 13)}
+    payments = payments_queryset.filter(
+        status='SUCCEEDED', created_at__year=year,
+    ).values('created_at__month').annotate(total=Sum('amount'))
+    for row in payments:
+        revenue[row['created_at__month']] = row['total'] or Decimal('0.00')
+
+    booking_counts = {month: 0 for month in range(1, 13)}
+    visits = {month: 0 for month in range(1, 13)}
+    for row in bookings_queryset.filter(created_at__year=year).values('created_at__month').annotate(total=Count('id')):
+        booking_counts[row['created_at__month']] = row['total']
+    for row in bookings_queryset.filter(check_in__year=year).values('check_in__month').annotate(total=Count('id')):
+        visits[row['check_in__month']] = row['total']
+
+    return {
+        'labels': labels,
+        'revenue': [float(revenue[month]) for month in range(1, 13)],
+        'bookings': [booking_counts[month] for month in range(1, 13)],
+        'visits': [visits[month] for month in range(1, 13)],
+        'year': year,
+    }
+
+
 @login_required(login_url='login')
 def profile_view(request):
     profile = _get_or_create_profile(request.user)
@@ -4188,6 +4261,10 @@ def owner_dashboard(request):
         rooms = Room.objects.filter(hotel=hotel).order_by('-id')
         owner_bookings_qs = Booking.objects.filter(
             room__hotel=hotel,
+        )
+        management_chart_data = _management_chart_data(
+            owner_bookings_qs,
+            Payment.objects.filter(booking__room__hotel=hotel),
         )
         today = timezone.localdate()
         today_checkins = owner_bookings_qs.filter(check_in=today).count()
@@ -4412,6 +4489,13 @@ def owner_dashboard(request):
             )
         ]
         dashboard_messages = []
+        management_chart_data = {
+            'labels': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            'revenue': [0] * 12,
+            'bookings': [0] * 12,
+            'visits': [0] * 12,
+            'year': timezone.localdate().year,
+        }
 
     total_rooms = rooms.count()
     total_hotels = hotels.count()
@@ -4458,6 +4542,7 @@ def owner_dashboard(request):
             'can_manage_staff': _can_manage_hotel_staff(request.user, hotel),
             'current_year': current_year,
             'revenue_chart': revenue_chart,
+            'management_chart_data': management_chart_data,
             'user_profile': _get_or_create_profile(request.user),
             'today_checkins': today_checkins,
             'today_checkouts': today_checkouts,
@@ -5229,6 +5314,16 @@ def admin_dashboard(request):
     pending_bookings_count = Booking.objects.filter(status='PENDING').count()
     completed_bookings_count = Booking.objects.filter(status='COMPLETED').count()
     cancelled_bookings_count = Booking.objects.filter(status='CANCELLED').count()
+    today = timezone.localdate()
+    today_checkins_count = Booking.objects.filter(check_in=today, status__in=['PENDING', 'CONFIRMED']).count()
+    today_checkouts_count = Booking.objects.filter(check_out=today, status__in=['CONFIRMED', 'COMPLETED']).count()
+    current_stays_count = Booking.objects.filter(
+        status='CONFIRMED', check_in__lte=today, check_out__gt=today,
+    ).count()
+    occupied_rooms_count = Booking.objects.filter(
+        status='CONFIRMED', check_in__lte=today, check_out__gt=today,
+    ).values('room_id').distinct().count()
+    occupancy_rate = round((occupied_rooms_count / available_rooms_count) * 100) if available_rooms_count else 0
     hotel_owner_count = UserProfile.objects.filter(user_type='OWNER').count()
     room_review_count = Review.objects.count()
     hotel_review_count = HotelReview.objects.count()
@@ -5248,6 +5343,10 @@ def admin_dashboard(request):
             avg_rating=Avg('rooms__reviews__rating'),
         )
         .order_by('-total_bookings', '-created_at')[:5]
+    )
+    management_chart_data = _management_chart_data(
+        Booking.objects.all(),
+        Payment.objects.all(),
     )
 
     context = {
@@ -5286,8 +5385,13 @@ def admin_dashboard(request):
             'reviews': review_count,
             'average_review': average_review,
             'complaints': open_complaints_count,
+            'today_checkins': today_checkins_count,
+            'today_checkouts': today_checkouts_count,
+            'current_stays': current_stays_count,
+            'occupancy_rate': occupancy_rate,
         },
         'top_hotels': top_hotels,
+        'management_chart_data': management_chart_data,
     }
     context.update(_admin_dashboard_notification_context())
     return render(request, 'admin_dashboard.html', context)
@@ -6059,3 +6163,4 @@ def custom_404(request, exception):
 
 def custom_500(request):
     return render(request, '500.html', status=500)
+

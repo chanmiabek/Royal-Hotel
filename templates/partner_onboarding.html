@@ -755,13 +755,18 @@
 
         {% if step == 'signin' %}
         <h1>{% trans "Sign in to manage your property" %}</h1>
+        <p>{% trans "Use your owner email or username and password to access the Partner Extranet." %}</p>
         <form method="post">
             {% csrf_token %}
             <div class="form-group">
-                <label for="partner_identifier">{% trans "Username" %}</label>
-                <input id="partner_identifier" type="text" name="identifier" class="form-control" placeholder="{% trans 'Also known as login name or login ID' %}" autocomplete="username" autofocus required>
+                <label for="partner_identifier">{% trans "Email or username" %}</label>
+                <input id="partner_identifier" type="text" name="identifier" class="form-control" placeholder="{% trans 'Enter your owner email or username' %}" autocomplete="username" autofocus required>
             </div>
-            <button type="submit" class="partner-flow__primary">{% trans "Next" %}</button>
+            <div class="form-group">
+                <label for="partner_password">{% trans "Password" %}</label>
+                <input id="partner_password" type="password" name="password" class="form-control" placeholder="{% trans 'Enter your password' %}" autocomplete="current-password" required>
+            </div>
+            <button type="submit" class="partner-flow__primary">{% trans "Sign in" %}</button>
         </form>
         <a href="{% url 'contact' %}" class="partner-flow__link">{% trans "Having trouble signing in?" %}</a>
         <div class="partner-flow__divider"></div>

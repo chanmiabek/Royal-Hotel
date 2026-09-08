@@ -3,7 +3,7 @@
 
 {% block title %}{% trans "Super Admin Dashboard" %} | Royal Hotel{% endblock %}
 
-{% block admin_extra_css %}
+{% block extra_css %}
 <style>
     .sa-app {
         min-height: 100vh;
@@ -11,6 +11,17 @@
         color: #111827;
         overflow-x: hidden;
     }
+    /* Luxuria-inspired light material treatment */
+    .sa-app { background: #f4f7fb; }
+    .sa-sidebar { background: #ffffff; border-right: 1px solid #e7edf5; box-shadow: 4px 0 18px rgba(20, 45, 85, .05); }
+    .sa-brand, .sa-sidebar .sa-nav a { color: #5f6f86; }
+    .sa-sidebar .sa-nav a:hover, .sa-sidebar .sa-nav a.active { background: #eaf2ff; color: #2266d1; }
+    .sa-main { max-width: 1600px; }
+    .sa-topbar, .sa-card, .sa-kpi { border-color: #e5ebf3; box-shadow: 0 8px 24px rgba(31, 56, 96, .05); }
+    .sa-card, .sa-kpi { border-radius: 14px; background: #ffffff; }
+    .sa-kpi__icon { background: #eaf2ff; color: #2266d1; }
+    .sa-badge { border-radius: 999px; }
+    .sa-btn, .sa-btn--primary { border-radius: 8px; }
     .sa-layout {
         display: grid;
         grid-template-columns: 84px minmax(0, 1fr);
@@ -272,6 +283,12 @@
         border: 1px solid #e5e7eb;
         border-radius: 18px;
     }
+    .management-chart {
+        position: relative;
+        height: 320px;
+        padding: 12px 4px 4px;
+    }
+    .management-chart canvas { width: 100% !important; height: 100% !important; }
     .sa-hero-card {
         min-width: 0;
         padding: 24px;
@@ -687,6 +704,36 @@
         }
     }
 </style>
+<style>
+    /* Final dashboard theme overrides: keep these after component rules. */
+    .sa-app { background: #f4f7fb !important; }
+    .sa-sidebar { background: #ffffff !important; border-right: 1px solid #e7edf5 !important; box-shadow: 4px 0 18px rgba(20,45,85,.06) !important; }
+    .sa-brand, .sa-nav a { color: #5f6f86 !important; }
+    .sa-nav a:hover, .sa-nav a.active { background: #eaf2ff !important; color: #2266d1 !important; }
+    .sa-topbar, .sa-card, .sa-kpi { border-color: #e5ebf3 !important; box-shadow: 0 8px 24px rgba(31,56,96,.06) !important; }
+    .sa-card, .sa-kpi { border-radius: 14px !important; background: #ffffff !important; }
+    .sa-kpi__icon { background: #eaf2ff !important; color: #2266d1 !important; }
+    .sa-badge { border-radius: 999px !important; }
+    .sa-live-board__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+    .sa-live-board__grid > div { display: grid; grid-template-columns: 34px 1fr; column-gap: 10px; align-items: center; padding: 16px; border: 1px solid #e5ebf3; border-radius: 12px; background: #f8faff; }
+    .sa-live-board__grid i { grid-row: span 2; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; color: #2266d1; background: #eaf2ff; }
+    .sa-live-board__grid strong { color: #111827; font-size: 22px; line-height: 1; }
+    .sa-live-board__grid span { color: #6b7b91; font-size: 12px; }
+    @media (max-width: 800px) { .sa-live-board__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (min-width: 901px) {
+        .sa-layout { grid-template-columns: 260px minmax(0, 1fr) !important; }
+        .sa-sidebar { width: 260px !important; position: fixed !important; top: 0; bottom: 0; height: 100vh !important; overflow-y: auto !important; }
+        .sa-sidebar .sa-brand > span, .sa-sidebar .sa-admin-card, .sa-sidebar .sa-nav-label, .sa-sidebar .sa-menu-title { opacity: 1 !important; visibility: visible !important; }
+        .sa-sidebar .sa-admin-card { max-height: 220px !important; padding-top: 16px !important; padding-bottom: 16px !important; margin-top: 22px !important; margin-bottom: 20px !important; }
+        .sa-main { grid-column: 2 !important; min-width: 0; }
+    }
+    @media (max-width: 900px) {
+        .sa-layout { grid-template-columns: 1fr !important; }
+        .sa-sidebar { position: relative !important; width: 100% !important; height: auto !important; max-height: none !important; }
+        .sa-sidebar .sa-brand > span, .sa-sidebar .sa-nav-label, .sa-sidebar .sa-menu-title { opacity: 1 !important; visibility: visible !important; }
+        .sa-main { grid-column: 1 !important; }
+    }
+</style>
 {% endblock %}
 
 {% block admin_content %}
@@ -859,6 +906,19 @@
                 </article>
             </div>
 
+            <section class="sa-card sa-live-board" data-animate>
+                <div class="sa-card__head">
+                    <div><h3>{% trans "Today's Hotel Operations" %}</h3><small class="text-muted">{% trans "Live arrival, departure, occupancy, and service overview" %}</small></div>
+                    <span class="sa-badge">{% trans "Live" %}</span>
+                </div>
+                <div class="sa-card__body sa-live-board__grid">
+                    <div><i class="fa fa-sign-in"></i><strong>{{ admin_metrics.today_checkins }}</strong><span>{% trans "Arrivals today" %}</span></div>
+                    <div><i class="fa fa-sign-out"></i><strong>{{ admin_metrics.today_checkouts }}</strong><span>{% trans "Departures today" %}</span></div>
+                    <div><i class="fa fa-bed"></i><strong>{{ admin_metrics.current_stays }}</strong><span>{% trans "Guests in-house" %}</span></div>
+                    <div><i class="fa fa-pie-chart"></i><strong>{{ admin_metrics.occupancy_rate }}%</strong><span>{% trans "Room occupancy" %}</span></div>
+                </div>
+            </section>
+
             <div class="sa-grid">
                 <div>
                     <section id="operations" class="sa-card" data-animate="slide-right">
@@ -874,6 +934,14 @@
                                 <div class="sa-op"><span>{% trans "Cancelled" %}</span><strong>{{ admin_metrics.cancelled_bookings }}</strong></div>
                             </div>
                         </div>
+                    </section>
+
+                    <section id="management-analytics" class="sa-card" data-animate="slide-right">
+                        <div class="sa-card__head">
+                            <div><h3>{% trans "Platform Analytics" %}</h3><small class="text-muted">{% trans "Finance, visits, and booking activity" %}</small></div>
+                            <span class="sa-badge">{{ management_chart_data.year }}</span>
+                        </div>
+                        <div class="sa-card__body management-chart"><canvas id="adminManagementChart" aria-label="{% trans 'Platform analytics chart' %}"></canvas></div>
                     </section>
 
                     <section id="bookings" class="sa-card" data-animate="slide-right">
@@ -995,7 +1063,18 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+{{ management_chart_data|json_script:"admin-management-chart-data" }}
 <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var chartData = JSON.parse(document.getElementById('admin-management-chart-data').textContent);
+        var canvas = document.getElementById('adminManagementChart');
+        if (canvas && window.Chart) new Chart(canvas, {data: {labels: chartData.labels, datasets: [
+            {type: 'line', label: 'Revenue (KES)', data: chartData.revenue, borderColor: '#c58b00', backgroundColor: 'rgba(197,139,0,.12)', fill: true, tension: .35, yAxisID: 'money'},
+            {type: 'bar', label: 'Bookings', data: chartData.bookings, backgroundColor: '#111827', borderRadius: 5, yAxisID: 'count'},
+            {type: 'bar', label: 'Visits', data: chartData.visits, backgroundColor: '#94a3b8', borderRadius: 5, yAxisID: 'count'}
+        ]}, options: {responsive: true, maintainAspectRatio: false, interaction: {mode: 'index', intersect: false}, scales: {money: {position: 'left', beginAtZero: true, grid: {color: '#eef0f4'}}, count: {position: 'right', beginAtZero: true, grid: {drawOnChartArea: false}, ticks: {precision: 0}}}, plugins: {legend: {position: 'bottom'}}}});
+    });
     document.addEventListener('DOMContentLoaded', function () {
         var animated = Array.prototype.slice.call(document.querySelectorAll('[data-animate]'));
         if (!animated.length) {
