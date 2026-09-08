@@ -8,6 +8,17 @@
         color: #111827;
         overflow-x: hidden;
     }
+    /* Luxuria-inspired light material treatment */
+    .hm-app { background: #f4f7fb; }
+    .hm-sidebar { background: #ffffff; border-right: 1px solid #e7edf5; box-shadow: 4px 0 18px rgba(20, 45, 85, .05); }
+    .hm-brand, .hm-nav a { color: #5f6f86; }
+    .hm-nav a:hover, .hm-nav a.active { background: #eaf2ff; color: #2266d1; }
+    .hm-main { max-width: 1600px; }
+    .hm-topbar, .hm-card, .hm-kpi { border-color: #e5ebf3; box-shadow: 0 8px 24px rgba(31, 56, 96, .05); }
+    .hm-card, .hm-kpi { border-radius: 14px; background: #ffffff; }
+    .hm-kpi__icon { background: #eaf2ff; color: #2266d1; }
+    .hm-badge { border-radius: 999px; }
+    .hm-btn { border-radius: 8px; }
     .hm-layout {
         display: grid;
         grid-template-columns: 84px minmax(0, 1fr);
@@ -499,6 +510,12 @@
         height: 210px;
         padding-top: 18px;
     }
+    .management-chart {
+        position: relative;
+        height: 320px;
+        padding: 12px 4px 4px;
+    }
+    .management-chart canvas { width: 100% !important; height: 100% !important; }
     .hm-bar {
         display: grid;
         align-items: end;
@@ -931,6 +948,30 @@
         }
     }
 </style>
+<style>
+    /* Final dashboard theme overrides: keep these after component rules. */
+    .hm-app { background: #f4f7fb !important; }
+    .hm-sidebar { background: #ffffff !important; border-right: 1px solid #e7edf5 !important; box-shadow: 4px 0 18px rgba(20,45,85,.06) !important; }
+    .hm-brand, .hm-nav a { color: #5f6f86 !important; }
+    .hm-nav a:hover, .hm-nav a.active { background: #eaf2ff !important; color: #2266d1 !important; }
+    .hm-topbar, .hm-card, .hm-kpi { border-color: #e5ebf3 !important; box-shadow: 0 8px 24px rgba(31,56,96,.06) !important; }
+    .hm-card, .hm-kpi { border-radius: 14px !important; background: #ffffff !important; }
+    .hm-kpi__icon { background: #eaf2ff !important; color: #2266d1 !important; }
+    .hm-badge { border-radius: 999px !important; }
+    @media (min-width: 901px) {
+        .hm-layout { grid-template-columns: 260px minmax(0, 1fr) !important; }
+        .hm-sidebar { width: 260px !important; position: fixed !important; top: 0; bottom: 0; height: 100vh !important; overflow-y: auto !important; }
+        .hm-sidebar .hm-brand > span, .hm-sidebar .hm-owner-card, .hm-sidebar .hm-nav-label { opacity: 1 !important; visibility: visible !important; }
+        .hm-sidebar .hm-owner-card { max-height: 220px !important; padding-top: 16px !important; padding-bottom: 16px !important; margin-top: 22px !important; margin-bottom: 20px !important; }
+        .hm-main { grid-column: 2 !important; min-width: 0; }
+    }
+    @media (max-width: 900px) {
+        .hm-layout { grid-template-columns: 1fr !important; }
+        .hm-sidebar { position: relative !important; width: 100% !important; height: auto !important; max-height: none !important; }
+        .hm-sidebar .hm-brand > span, .hm-sidebar .hm-nav-label { opacity: 1 !important; visibility: visible !important; }
+        .hm-main { grid-column: 1 !important; }
+    }
+</style>
 {% endblock %}
 {% block content %}
 <section class="hm-app">
@@ -1131,6 +1172,14 @@
                         </div>
                     </section>
 
+                    <section id="management-analytics" class="hm-card" data-animate="slide-right">
+                        <div class="hm-card__head">
+                            <div><h3>{% trans "Management Analytics" %}</h3><small class="text-muted">{% trans "Revenue, visits, and bookings" %}</small></div>
+                            <span class="hm-badge">{{ management_chart_data.year }}</span>
+                        </div>
+                        <div class="hm-card__body management-chart"><canvas id="ownerManagementChart" aria-label="{% trans 'Management analytics chart' %}"></canvas></div>
+                    </section>
+
                     <section id="recent-bookings" class="hm-card" data-animate="slide-right">
                         <div class="hm-card__head">
                             <h3>{% trans "Recent Bookings" %}</h3>
@@ -1290,7 +1339,18 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+{{ management_chart_data|json_script:"owner-management-chart-data" }}
 <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var chartData = JSON.parse(document.getElementById('owner-management-chart-data').textContent);
+        var canvas = document.getElementById('ownerManagementChart');
+        if (canvas && window.Chart) new Chart(canvas, {data: {labels: chartData.labels, datasets: [
+            {type: 'line', label: 'Revenue (KES)', data: chartData.revenue, borderColor: '#c58b00', backgroundColor: 'rgba(197,139,0,.12)', fill: true, tension: .35, yAxisID: 'money'},
+            {type: 'bar', label: 'Bookings', data: chartData.bookings, backgroundColor: '#111827', borderRadius: 5, yAxisID: 'count'},
+            {type: 'bar', label: 'Visits', data: chartData.visits, backgroundColor: '#94a3b8', borderRadius: 5, yAxisID: 'count'}
+        ]}, options: {responsive: true, maintainAspectRatio: false, interaction: {mode: 'index', intersect: false}, scales: {money: {position: 'left', beginAtZero: true, grid: {color: '#eef0f4'}}, count: {position: 'right', beginAtZero: true, grid: {drawOnChartArea: false}, ticks: {precision: 0}}}, plugins: {legend: {position: 'bottom'}}}});
+    });
     document.addEventListener('DOMContentLoaded', function () {
         var animated = Array.prototype.slice.call(document.querySelectorAll('[data-animate]'));
         if (!animated.length) {

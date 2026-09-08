@@ -72,6 +72,25 @@
         padding: 30px;
         box-shadow: 0 22px 52px rgba(15, 23, 42, 0.08);
     }
+    .login-toast {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin: 0 0 20px;
+        padding: 13px 16px;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        color: #7f1d1d;
+        background: #fee2e2;
+        box-shadow: 0 10px 24px rgba(127, 29, 29, .10);
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.45;
+    }
+    .login-toast i {
+        margin-top: 2px;
+        color: #b91c1c;
+    }
     .auth-lite h1 {
         color: #111111;
         font-size: 26px;
@@ -307,6 +326,17 @@
         <div class="auth-lite__card">
         <h1>{% trans "Sign in or create an account" %}</h1>
         <p>{% trans "You can sign in using your Royal Hotel account to access our services." %}</p>
+
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == 'error' or message.tags == 'danger' %}
+                    <div class="login-toast" role="alert" aria-live="assertive">
+                        <i class="fa fa-exclamation-circle" aria-hidden="true"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
 
         <form method="POST">
             {% csrf_token %}
